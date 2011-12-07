@@ -1,0 +1,27 @@
+function phaseDisplay(data,dims)
+
+sub = 2;trace = 100;
+if nargin < 2
+    dims = [8 8];
+end
+
+[u s v] = svds(data,sub);
+
+theta = angle(data);
+amp = abs(data);
+data1 = u*s*v';
+theta1 = angle(data1);
+amp1 = abs(data1);
+scale = 2*std(amp(:));
+for i = 1:(size(data,2)-trace)
+    subplot(321);imagesc(reshape(theta(i,:),dims),[-pi pi]), axis off, colormap hsv
+    alpha(min(reshape(amp(i,:)/scale,dims),1));
+    subplot(322);imagesc(reshape(theta1(i,:),dims),[-pi pi]), axis off, colormap hsv
+    alpha(min(reshape(amp1(i,:)/scale,dims),1));
+    subplot(323);
+    subplot(122);
+    sPlot([abs(v(i+(1:trace)-1,:)) angle(v(i+(1:trace)-1,1))-angle(v(i+(1:trace)-1,2)) ...
+        v(i+(1:trace)-1,1).*conj(v(i+(1:trace)-1,2)) circ_std(theta(:,i+(1:trace)-1))]
+end
+
+%freezeColors

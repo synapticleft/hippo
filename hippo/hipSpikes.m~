@@ -1,0 +1,15 @@
+function spikeMat = hipSpikes(file,bin,subSet)
+
+[a,b,c,d] = LoadCluRes(['/media/work/hippocampus/' file]);
+a = ceil(a/d.SampleRate*1000/bin);
+if ~exist('subSet','var')
+    subSet = max(a);
+else
+    subSet = subSet*1000/bin;
+end
+b(a > subSet) = [];a(a > subSet) = [];
+spikeMat = zeros(max(b),max(a));
+for i = 1:max(b)
+    spikeMat(i,:) = hist(find(b==i),1:max(aa(b == i)) = 1;
+end
+
