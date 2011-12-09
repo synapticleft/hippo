@@ -2,7 +2,7 @@ function  realH5(input,output,numChans)
 
 h5filecreate(output);
 [~,~,nSamples,numChans] = LoadBinary(input,1,[],[],[],[],[1 2]);
-[nSamples numChans]
+[nSamples n
 numChans = 96;
 step = 400000;
 h5datacreate(output,'/hReal','type','int16','size',[numChans nSamples]);

@@ -1,6 +1,6 @@
 function phaseEvol(dat,u,s,v,inds,sp,c)
 
-trails = 0;lags = 10;
+trails = 1;lags = 100;
 rdim = 2;
 if ~exist('inds','var') || isempty(inds)
     inds = 1:size(dat,2);
@@ -26,7 +26,7 @@ else
 end
 circBuff1 = nan*ones(size(c1,1),lags);circBuff2 = nan*ones(size(dat,1),lags);
 inst = circ_mean(circ_dist(angle(v(1:(end-1),1)),angle(v(2:end,1))));
-md = circ_mean(circ_diff(v(:,1).')');
+md = -circ_mean(circ_dist(angle(v(2:end,1)),angle(v(1:(end-1),1))));%circ_diff(v(:,1).')');
 for i = inds
     figure(h);
 phaseShift = -i*md;%-angle(u(:,1)*v(i,1)');%angle(u(:,1)*circ_mean(angle(dat(:,i)),abs(dat(:,i))));%
