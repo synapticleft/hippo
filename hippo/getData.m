@@ -1,10 +1,11 @@
 function [X whiteningMatrix dewhiteningMatrix] = getData(fname,sz,rind,dec,rdim)
 
-data_root = '/media/work/hippocampus/';
+data_root = '/media/Expansion Drive/redwood/';%'/media/work/hippocampus/';
 %fname = 'hippo.h5';%'96elec.h5';%
 padding = 0;%20000;
 info = hdf5info([data_root fname]);
 nSamples = info.GroupHierarchy.Datasets(1).Dims;
+%nSamples(1) = 64;
 if ~exist('dec','var') || isempty(dec)
     dec = 1;
 end

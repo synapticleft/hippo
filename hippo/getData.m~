@@ -1,17 +1,16 @@
 function [X whiteningMatrix dewhiteningMatrix] = getData(fname,sz,rind,dec,rdim)
 
-data_root = '/media/work/hippocampus/';
+data_root = '/media/Expansion Drive/';%'/media/work/hippocampus/';
 %fname = 'hippo.h5';%'96elec.h5';%
 padding = 0;%20000;
 info = hdf5info([data_root fname]);
 nSamples = info.GroupHierarchy.Datasets(1).Dims;
-return
 if ~exist('dec','var') || isempty(dec)
     dec = 1;
 end
 if isempty(sz)
-    sz = nSamples(2);
-    sz = dec*(floor(sz/dec));
+    sz = nSamples(2)
+    sz = dec*(floor(sz/dec))
 end
 %elseif exist('dec','var')
 %    sz = sz*dec;
@@ -38,11 +37,11 @@ if dec > 1
         fprintf([num2str(i) ' ']);
     end
     X = X1;clear X1;
-    X = bsxfun(@minus,X,mean(X,2));
-    X = bsxfun(@rdivide,X,std(X,0,2));
 else
     X = double(h5varget([data_root fname],'/hReal',[0 rind],[nSamples(1) sz]));
 end
+X = bsxfun(@minus,X,mean(X,2));
+X = bsxfun(@rdivide,X,std(X,0,2));
 
 if nargout > 1
     % Calculate the eigenvalues and eigenvectors of covariance matrix.

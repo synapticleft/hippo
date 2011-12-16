@@ -15,7 +15,7 @@ if ~iscell(data)
     if ~exist('xaxis','var') || isempty(xaxis)
         xaxis = 1:size(data,2);
     end
-    spacing = std(data(:));%5*
+    spacing = 5*std(data(:));%5*
     if isreal(data)
         plot(xaxis,data'-repmat(spacing*(1:size(data,1))',[1 size(data,2)])','linewidth',2);
     else

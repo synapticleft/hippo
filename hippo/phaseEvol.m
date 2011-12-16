@@ -1,6 +1,6 @@
 function phaseEvol(dat,u,s,v,inds,sp,c)
 
-trails = 1;lags = 100;
+trails = 0;lags = 10;
 rdim = 2;
 if ~exist('inds','var') || isempty(inds)
     inds = 1:size(dat,2);
@@ -32,7 +32,7 @@ for i = inds
 phaseShift = -i*md;%-angle(u(:,1)*v(i,1)');%angle(u(:,1)*circ_mean(angle(dat(:,i)),abs(dat(:,i))));%
 if exist('sp','var') && ~isempty(sp)
     %imagesc([-.1 .1],[-2 2],[real(sp(:,i)); spa(i-inds(1)+1)] ,s*[-1 1]*2);%colormap gray;
-    ps = phaseShift;%-angle(v(i,1)')
+    ps = 2*phaseShift;%-angle(v(i,1)')
     temp = sp(:,i).*exp(1i*ps)/s/3;
 else
     temp = dat(ord,i).*exp(1i*phaseShift);

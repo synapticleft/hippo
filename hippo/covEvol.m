@@ -12,12 +12,32 @@ end
 c = getCol(size(data,1));
 h = figure;plot([3 3]);
 lims = [0 0];
-for i = 1:step:inf
+tPoints =  1:step:(size(data,2)-window);
+fE = zeros(2*window-1,size(data,1)*numel(tPoints));
+fO = fE;
+for i =tPoints
     figure(h);
     tm = mean(data(:,i+(1:window)));
     for j = 1:size(data,1)
         tcov(j,:) = xcov(data(j,i+(1:window)),tm);
     end
+%     subplot(211);imagesc(tcov+fliplr(tcov));
+%     subplot(212);imagesc(tcov-fliplr(tcov));
+%     fE(:,(i-1)/step*size(data,1)+(1:size(data,1))) = fft(tcov+fliplr(tcov),[],2).';
+%     fO(:,(i-1)/step*size(data,1)+(1:size(data,1))) = fft(tcov-fliplr(tcov),[],2).';
+% end
+% fE = abs(fE);fE = fE/std(fE(:));
+% fO = abs(fO);fO = fO/std(fO(:));
+% fs = abs([fE/std(fE(:)) fO/std(fO(:))]);
+% fm = mean(fs,2);
+% fstd = max(.1,std(fs,0,2));
+% fs = bsxfun(@rdivide,bsxfun(@minus,fs,fm),fstd);
+% [u s v] = svds(fs,3);
+% %plot(log(diag(s)))
+% figure;plot(u)
+%fEm = mean(abs(fE),2);fOm = mean(abs(fO),2);
+%figure;plot(log(fEm/max(fEm)));hold all;plot(log(fOm/max(fOm)));
+%%%%
     lims = [min(lims(1)*decay,min(tcov(:))) max(lims(2)*decay,max(tcov(:)))];
     if exist('dataF','var')
         tm = mean(dataF(:,i+(1:window)));
@@ -27,16 +47,16 @@ for i = 1:step:inf
         lims1 = [min(lims1(1)*decay,min(tcov1(:))) max(lims1(2)*decay,max(tcov1(:)))];
         subplot(212);
         hold off;plot(window,0);
-        %set(gca,'ColorOrder',c,'ylim',lims1);hold on;
-        %plot(tcov1');
-        imagesc(tcov1);
+        set(gca,'ColorOrder',c,'ylim',lims1);hold on;
+        plot((tcov1-tcov)');
+     %   imagesc(tcov1);
         subplot(211);
     end
         hold off;plot(window,0);
-    %set(gca,'ColorOrder',c,'ylim',lims);hold on;
-    %plot(tcov');
+    set(gca,'ColorOrder',c,'ylim',lims);hold on;
+    plot(tcov');
     %plot(mean(tcov + fliplr(tcov))/2,'k','linewidth',3);
-    imagesc(tcov);
+    %imagesc(tcov);
     drawnow;
 end
 
