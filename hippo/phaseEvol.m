@@ -2,8 +2,9 @@ function phaseEvol(dat,u,s,v,inds,sp,c)
 
 trails = 0;lags = 10;
 rdim = 2;
+skip = 3;
 if ~exist('inds','var') || isempty(inds)
-    inds = 1:size(dat,2);
+    inds = 10000:skip:size(dat,2);
 end
 data1 = u(:,1:rdim)*s(1:rdim,1:rdim)*v(inds,1:rdim)';
 [~,ord] = sort(angle(u(:,1)),'descend');
@@ -17,7 +18,24 @@ else
     c = c(ord);
 end
 if exist('sp','var') && ~isempty(sp)
-    s = std(sp(:));
+    sp(sp == -1) = nan;
+    if numel(sp) < size(v,1)
+        v((numel(sp)+1):end,:) = [];
+        dat(:,(numel(sp)+1):end) = [];
+    else
+        sp((size(v,1)+1):end) = [];
+    end
+    if any(isnan(sp))
+        nanInds = find(~isnan(sp));
+        sp = interp1(nanInds,sp(nanInds),1:numel(sp));
+        nanInds = isnan(sp');
+        sp(nanInds) = [];
+        v(nanInds,:) = [];
+        dat(:,nanInds) = [];
+        sp = sp - mean(sp);
+        sp = sp/std(sp);
+    end
+    %s = std(sp(:));
     c1 = getCol(size(sp,1));
     [~,ind] = sort(mean(abs(sp),2),'ascend');
     c1(ind,:) = c1;
@@ -29,11 +47,11 @@ inst = circ_mean(circ_dist(angle(v(1:(end-1),1)),angle(v(2:end,1))));
 md = -circ_mean(circ_dist(angle(v(2:end,1)),angle(v(1:(end-1),1))));%circ_diff(v(:,1).')');
 for i = inds
     figure(h);
-phaseShift = -i*md;%-angle(u(:,1)*v(i,1)');%angle(u(:,1)*circ_mean(angle(dat(:,i)),abs(dat(:,i))));%
+phaseShift = -i*md*skip;%-angle(u(:,1)*v(i,1)');%angle(u(:,1)*circ_mean(angle(dat(:,i)),abs(dat(:,i))));%
 if exist('sp','var') && ~isempty(sp)
     %imagesc([-.1 .1],[-2 2],[real(sp(:,i)); spa(i-inds(1)+1)] ,s*[-1 1]*2);%colormap gray;
-    ps = 2*phaseShift;%-angle(v(i,1)')
-    temp = sp(:,i).*exp(1i*ps)/s/3;
+    ps = 0;%2*phaseShift;%-angle(v(i,1)')
+    temp = sp(:,i).*exp(1i*ps);
 else
     temp = dat(ord,i).*exp(1i*phaseShift);
 %    temp = temp/mean(abs(temp));
