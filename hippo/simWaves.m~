@@ -1,0 +1,11 @@
+function simWaves(space,time)
+
+t1 = arsim(0,.9,1,time);
+t1 = t1/std(t1);
+t2 = real(arsim(0,.9*exp(1i*pi/4),1,10000));
+t2 = t2/std(t2);
+%figure;plot(log(abs(fft(t1))));hold all;plot(log(abs(fft(t2))));
+t1 = repmat(t1,[space 1]);
+t2(2:space,:) = 0;
+for i = 2:space
+    
