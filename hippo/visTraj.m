@@ -1,8 +1,10 @@
 function visTraj(pos,sp,v)
 
-steps = 10;
-decay = .999;
-skip = 10;
+dSkip = 1;
+steps = 5;
+decay = .99;
+Fs = 1250/32;
+skip = steps;
 if size(v,2) < size(v,1)
     v = v.';
 end
@@ -11,6 +13,9 @@ col = rand(size(sp,1),3);
 angCol = colormap('hsv');
 absCol = colormap('jet');
 pos(pos == -1) = nan;
+nanInds = any(isnan(pos'));
+pos = pos(~nanInds,:);
+pos = filtLow(pos',Fs,4,8)';
 pos = bsxfun(@minus,pos,min(pos));
 pos = bsxfun(@rdivide,pos,max(pos));
 v = bsxfun(@rdivide,v,std(v,0,2));
@@ -38,11 +43,14 @@ im = getframe(h);%  hold all;
 for i = 1:skip:size(pos,1)
     image([0 1],[0 1],im.cdata*decay);hold all;%
     inds = i:(i+steps);
-    scatter(pos(inds,1),pos(inds,2),10*abs(v(1,inds)).^2,absCol(abs2Col(sum(sp(fsort(3:end),inds)/10)),:),'filled');%
-    scatter(pos(inds,3),pos(inds,4),10*abs(v(2,inds)).^2,angCol(phase2Col(circ_dist(v(1,inds),v(2,inds))),:),'filled');%
-    
+dist = 100*sqrt(sum((pos(i,1) - pos(i+dSkip,1)).^2));
+dist2 = 100*sqrt(sum((pos(i,3) - pos(i+dSkip,3)).^2));
+    scatter(pos(inds,1),pos(inds,2),50*abs(v(2,inds)).^2,absCol(abs2Col(dist),:),'filled');%
+    scatter(pos(inds,3),pos(inds,4),50*abs(v(2,inds)).^2,absCol(abs2Col(dist2),:),'filled');%
+%    scatter(pos(inds,1),pos(inds,2),50*abs(v(1,inds)).^2,absCol(abs2Col(sum(sp(fsort(3:end),inds)/10)),:),'filled');%
+%    scatter(pos(inds,3),pos(inds,4),50*abs(v(2,inds)).^2,angCol(phase2Col(circ_dist(v(1,inds),v(2,inds))),:),'filled');%
 %    hold off;
-    set(gca,'xlim',[0 1],'ylim',[0 1]);
+    set(gca,'xlim',[0 1],'ylim',[0 1]);%    title(round(num2str(i/Fs)));
     im = getframe(h);
     drawnow;
 hold off;
@@ -52,4 +60,7 @@ function c = phase2Col(ang)
 c = ceil((ang+pi)/(2*pi)*64);
 
 function c = abs2Col(a)
+if isnan(a)
+    a = 0;
+end
 c = 1 + floor(64*min(.99,a));

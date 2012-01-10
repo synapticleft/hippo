@@ -1,8 +1,10 @@
 function visTraj(pos,sp,v)
 
-steps = 10;
-decay = .999;
-skip = 10;
+dSkip = 10;
+steps = 5;
+decay = .99;
+Fs = 1250/32;
+skip = steps;
 if size(v,2) < size(v,1)
     v = v.';
 end
@@ -14,9 +16,10 @@ pos(pos == -1) = nan;
 pos = bsxfun(@minus,pos,min(pos));
 pos = bsxfun(@rdivide,pos,max(pos));
 v = bsxfun(@rdivide,v,std(v,0,2));
+[~,fsort] = sort(sum(sp,2),'descend');
 %% place fields
 % figure;
-% [~,inds] = sort(sum(sp,2),'ascend');
+
 % pos((end+1):size(sp,2),:) = 0;
 % bins{1} = linspace(0,1,20);bins{2} = bins{1};
 % h = hist3(pos(:,1:2),bins);
@@ -34,13 +37,20 @@ v = bsxfun(@rdivide,v,std(v,0,2));
 %% trajectory
 figure;  h = axes('Color','k');
 im = getframe(h);%  hold all;
-for i = 1:skip:size(pos,1)
+for i = 10000:skip:size(pos,1)
     image([0 1],[0 1],im.cdata*decay);hold all;%
     inds = i:(i+steps);
-    scatter(pos(inds,1),pos(inds,2),10*abs(v(1,inds)).^2,'b','filled');%
-    scatter(pos(inds,3),pos(inds,4),10*abs(v(2,inds)).^2,angCol(phase2Col(circ_dist(v(1,inds),v(2,inds))),:),'filled');%
+dist = sqrt(sum(pos(i,1:2) - pos(i+dSkip,1:2)));
+dist2 = sqrt(sum(pos(i,3:4) - pos(i+dSkip,3:4)));
+    scatter(pos(inds,1),pos(inds,2),100*abs(v(1,inds)).^2,absCol(abs2Col(dist),:),'filled');%
+    try
+        scatter(pos(inds,3),pos(inds,4),10*abs(v(2,inds)).^2,absCol(abs2Col(dist2),:),'filled');%
+    catch
+        
+%    scatter(pos(inds,1),pos(inds,2),100*abs(v(1,inds)).^2,absCol(abs2Col(sum(sp(fsort(3:end),inds)/10)),:),'filled');%
+%    scatter(pos(inds,3),pos(inds,4),10*abs(v(2,inds)).^2,angCol(phase2Col(circ_dist(v(1,inds),v(2,inds))),:),'filled');%
 %    hold off;
-    set(gca,'xlim',[0 1],'ylim',[0 1]);
+    set(gca,'xlim',[0 1],'ylim',[0 1]);%    title(round(num2str(i/Fs)));
     im = getframe(h);
     drawnow;
 hold off;
@@ -50,4 +60,7 @@ function c = phase2Col(ang)
 c = ceil((ang+pi)/(2*pi)*64);
 
 function c = abs2Col(a)
-c = 1 + 64*min(.99,
+if isnan(a)
+    a = 0;
+end
+c = 1 + floor(64*min(.99,a));

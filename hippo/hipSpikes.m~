@@ -1,15 +1,18 @@
-function spikeMat = hipSpikes(file,bin,subSet)
+function [spikeMat c] = hipSpikes(file,bin,subSet)
 
-[a,b,c,d] = LoadCluRes(['/media/work/hippocampus/' file]);
+d = '/media/Expansion Drive/';%['/media/work/hippocampus/' file '/'];
+[a,b,c,d] = LoadCluRes([d file]);
 a = ceil(a/d.SampleRate*1000/bin);
 if ~exist('subSet','var')
     subSet = max(a);
 else
     subSet = subSet*1000/bin;
 end
+subSet
 b(a > subSet) = [];a(a > subSet) = [];
 spikeMat = zeros(max(b),max(a));
 for i = 1:max(b)
-    spikeMat(i,:) = hist(find(b==i),1:max(aa(b == i)) = 1;
+    temp = hist(a(b==i),1:(max(a)+1));
+    spikeMat(i,:) = temp(1:(end-1));%a(b == i)) = 1;
 end
 

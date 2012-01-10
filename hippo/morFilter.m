@@ -1,6 +1,6 @@
 function Xf = morFilter(X,Fc,Fs,norm)
 if ~exist('norm','var')
-    norm = 1;
+    norm = 0;
 end
 win = 1;%/5;
 Fb = 1/500;

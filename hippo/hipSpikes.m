@@ -1,6 +1,7 @@
 function [spikeMat c] = hipSpikes(file,bin,subSet)
 
-[a,b,c,d] = LoadCluRes(['/media/work/hippocampus/' file '/' file]);
+d = '/media/Expansion Drive/KenjiMizuseki/';%['/media/work/hippocampus/' file '/'];
+[a,b,c,d] = LoadCluRes([d file]);
 a = ceil(a/d.SampleRate*1000/bin);
 if ~exist('subSet','var')
     subSet = max(a);
