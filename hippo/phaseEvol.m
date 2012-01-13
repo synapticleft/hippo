@@ -2,7 +2,7 @@ function phaseEvol(dat,u,s,v,inds,sp,c)
 
 trails = 0;lags = 10;
 rdim = 2;
-skip = 3;
+skip = 1;
 if ~exist('inds','var') || isempty(inds)
     inds = 10000:skip:size(dat,2);
 end
