@@ -1,10 +1,10 @@
 function phaseEvol(dat,u,s,v,inds,sp,c)
 
-trails = 1;lags = 10;
+trails = 0;lags = 10;
 rdim = 2;
 skip = 1;
 if ~exist('inds','var') || isempty(inds)
-    inds = 10000:skip:size(dat,2);
+    inds = 1:skip:size(dat,2);
 end
 data1 = u(:,1:rdim)*s(1:rdim,1:rdim)*v(inds,1:rdim)';
 [~,ord] = sort(angle(u(:,1)),'descend');
