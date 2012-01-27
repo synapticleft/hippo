@@ -20,7 +20,7 @@ function [L,Ph,LL]=ffa(X,K,cyc,tol)
 if nargin<4  tol=0.0001; end;
 if nargin<3  cyc=100; end;
 [N,D] = size(X);
-tiny=exp(-700);
+%tiny=exp(-700);
 
 X=X-ones(N,1)*mean(X);
 XX=X'*X/N;

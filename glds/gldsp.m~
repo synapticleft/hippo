@@ -23,7 +23,7 @@
 % Iterates until a proportional change < tol in the log likelihood 
 % or cyc steps of EM
 
-function [net net0]=gldsp(X,K,p)
+function [net net0]=gldsp(X,K,pOrder)
 
 xform = 0;
 if size(X,1) < size(X,2) X = X.'; end
@@ -35,17 +35,17 @@ X=bsxfun(@minus,X,Mu);
     % initialize with Factor Analysis
     
     fprintf('\nInitializing with Factor Analysis...\n');
-    [L,Ph,LM]=ffa(X,K,100,0.001);
-    R=Ph;
-    [A,Q] = mvar(X*pinv(L).',p);
-    [A,~,Q] = AR_to_SS(reshape(A,K,K,p),Q(:,(end-K+1):end));
-    [size(A) size(Q)]
-    C = [L zeros(size(L,1)
+    %[L,Ph,LM]=ffa(X,K,100,0.001);%,LM
+    [L,Ph] = fastfa(X.',K);
+    figure;plot(Ph);ho
     return
-    %figure;imagesc(abs(C))
-    x0 = zeros(K*p,1);
+    R=Ph;
+    [A,~,Q] = mvar(X*pinv(L).',pOrder);
+    [A,C,Q] = AR_to_SS(reshape(A,K,K,pOrder),Q(:,(end-K+1):end));
+    C = L*C;
+    x0 = zeros(K*pOrder,1);
     P0 = Q;
-    Phi=diag(1./R);
+    %Phi=diag(1./R);
     fprintf('FA log likelihood %f\nInitialized.\n',LM(end));
     if xform
         [V,D] = eig(Q);

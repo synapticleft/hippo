@@ -35,14 +35,17 @@ X=bsxfun(@minus,X,Mu);
     % initialize with Factor Analysis
     
     fprintf('\nInitializing with Factor Analysis...\n');
-    [L,Ph,LM]=ffa(X,K,100,0.001);
+    [L,Ph,LM]=ffa(X,K,100,0.001);%,LM
+    %[L,Ph] = fastfa(X.',K);
+    figure;plot(Ph);hold all;plot(LM);
+    return
     R=Ph;
-    [A,Q] = mvar(X*pinv(L).',pOrder);
+    [A,~,Q] = mvar(X*pinv(L).',pOrder);
     [A,C,Q] = AR_to_SS(reshape(A,K,K,pOrder),Q(:,(end-K+1):end));
     C = L*C;
-    x0 = zeros(K*p,1);
+    x0 = zeros(K*pOrder,1);
     P0 = Q;
-    Phi=diag(1./R);
+    %Phi=diag(1./R);
     fprintf('FA log likelihood %f\nInitialized.\n',LM(end));
     if xform
         [V,D] = eig(Q);

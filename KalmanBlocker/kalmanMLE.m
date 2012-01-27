@@ -20,7 +20,7 @@
 function [A, W, F, S, a, B, x0, V0, loglik, xsmooth] = kalmanMLE( Z, A0, W0, F0, S0, x0, V0, diagS, diagW, a0, B0, U)
 
 converged = 0;
-maxIter = 20;
+maxIter = 1;
 thresh = 1e-5;
 iter = 0;
 

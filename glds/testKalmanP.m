@@ -7,15 +7,16 @@
 
 ss = 2;p = 2;
 [u s v] = svds(Xf(:,1:1000),ss);
-[A,Q] = mvar(v,p);
+[A,Q] = mvar(conj(v),p);
 [A,C,Q,R] = AR_to_SS(reshape(A,ss,ss,p),Q(:,(end-ss+1):end));
-R = rand(ss).*eye(ss);
+C = u*C;
+
 initx = .1*ones(1,ss);
 T = 1000;
-%[x,y] = sample_lds(A, C, Q, R, initx, T);
-figure;subplot(211);plot(real(x)');
-[net,net0] = gldsp(Xf(:,1:1000),ss,p);
-subplot(212);plot(real(net.xsmooth));
+[x,y] = sample_lds(A, C, Q, R, initx, T);
+%figure;subplot(211);plot(real(x)');
+[net,net0] = gldsp((Xf(:,1:1000)),ss,p);
+%subplot(212);plot(real(net.xsmooth));
 % Initializing the params to sensible values is crucial.
 % Here, we use the true values for everything except F and H,
 % which we initialize randomly (bad idea!)
