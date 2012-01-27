@@ -23,41 +23,29 @@
 % Iterates until a proportional change < tol in the log likelihood 
 % or cyc steps of EM
 
-function [net net0]=glds(X,K,cyc,tol)
+function [net net0]=gldsp(X,K,pOrder)
 
-% net is  [A,C,Q,R,x0,P0,Mu,LL,LM]
-xform = 1;
-%net=struct('type','lds','A',[],'C',[],'Q',[],'R',[],'x0',[],'P0',[],'Mu',[],'LL',[],'LM',[]);
+xform = 0;
 if size(X,1) < size(X,2) X = X.'; end
 [T,p] = size(X);
-
-if nargin<4   tol=0.0001; end;
-if nargin<3   cyc=100; end;
-if nargin<2   K=2; end;
 
 Mu=mean(X);
 X=bsxfun(@minus,X,Mu);
 
-%  if (K<=p) 
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % initialize with Factor Analysis
     
     fprintf('\nInitializing with Factor Analysis...\n');
-    [L,Ph,LM]=ffa(X,K,100,0.001);
-    C=L;
+    %[L,Ph,LM]=ffa(X,K,100,0.001);%,LM
+    [L,Ph] = fastfa(X.',K);
+    figure;plot(Ph);ho
+    return
     R=Ph;
-    Phi=diag(1./R);
-    temp1=Phi*L;
-    temp2=Phi-temp1/(eye(K)+L'*temp1)*temp1';
-    temp1=X*temp2*L;
-    x0=mean(temp1)';
-    Q=cov(temp1);
-    P0=Q;
-    t1=temp1(1:T-1,:);
-    t2=temp1(2:T,:);
-    
-    A=(t1'*t1+Q)\t1'*t2;
-    clear temp1 temp2 Phi t1 t2;
+    [A,~,Q] = mvar(X*pinv(L).',pOrder);
+    [A,C,Q] = AR_to_SS(reshape(A,K,K,pOrder),Q(:,(end-K+1):end));
+    C = L*C;
+    x0 = zeros(K*pOrder,1);
+    P0 = Q;
+    %Phi=diag(1./R);
     fprintf('FA log likelihood %f\nInitialized.\n',LM(end));
     if xform
         [V,D] = eig(Q);

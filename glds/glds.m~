@@ -1,5 +1,5 @@
 %
-% function net=lds(X,K,T,cyc,tol);
+% function net=lds(X,K,cyc,tol);
 % 
 % Adaptive Linear Dynamical System 
 %
@@ -23,15 +23,14 @@
 % Iterates until a proportional change < tol in the log likelihood 
 % or cyc steps of EM
 
-function net0 =glds(X,K,cyc,tol)
+function [net net0]=glds(X,K,cyc,tol)
 
 % net is  [A,C,Q,R,x0,P0,Mu,LL,LM]
 
-% net=struct('type','lds','A',[],'C',[],'Q',[],'R',[],'x0',[],'P0',[],'Mu',[],'LL',[],'LM',[]);
-if size(X,2) > size(X,1)
-    X = X.';
-end
+net=struct('type','lds','A',[],'C',[],'Q',[],'R',[],'x0',[],'P0',[],'Mu',[],'LL',[],'LM',[]);
+if size(X,1) < size(X,2) X = X.'; end
 [T,p] = size(X);
+
 if nargin<4   tol=0.0001; end;
 if nargin<3   cyc=100; end;
 if nargin<2   K=2; end;
@@ -53,26 +52,21 @@ X=bsxfun(@minus,X,Mu);
     temp1=X*temp2*L;
     x0=mean(temp1)';
     Q=cov(temp1);
-    P0=Q;figure;
+    P0=Q;
     t1=temp1(1:T-1,:);
     t2=temp1(2:T,:);
     
     A=(t1'*t1+Q)\t1'*t2;
     clear temp1 temp2 Phi t1 t2;
     fprintf('FA log likelihood %f\nInitialized.\n',LM(end));
-
-%lik=0;
-%LL=[];
-
 Y=reshape(X,T,1,p);
 Y=squeeze(permute(Y,[2 3 1]))'; % Y is (N,p,T), analogously to X
-
+net0.A = A;net0.R = diag(R);net0.C = C;net0.Q = Q;net0.x0 = x0;net0.P0 = P0;
 %YY=sum(X.*X)'/(T);
 %Y = permute(Y,[2 3 1]);
-net0.A = C;net0.W = R; net0.F = A; net0.S = Q;net0.x0 = x0; net0.V0 = P0;
-return
-[A, W, F, S, ~, ~, x0, V0, loglik] = kalmanMLE(Y,C,diag(R),A,Q,x0,P0);
-net.A = A;net.W = W; net.F = F; net.S = S; net.x0 = x0; net.V0 = V0; net.loglik = loglik;
+[C, R, A, , ~,~, x0, V0, loglik] = kalmanMLE(Y,C,diag(R),A,Q,x0,P0);%,1,1);
+
+net.C = C;net.R = R; net.A = A; net.Q = S; net.x0 = x0; net.P0 = V0; net.loglik = loglik;
 %     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %   else
 %     % AR1 model
