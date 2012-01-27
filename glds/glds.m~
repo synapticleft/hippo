@@ -23,7 +23,7 @@
 % Iterates until a proportional change < tol in the log likelihood 
 % or cyc steps of EM
 
-function [net,net0] =glds(X,K,cyc,tol)
+function net0 =glds(X,K,cyc,tol)
 
 % net is  [A,C,Q,R,x0,P0,Mu,LL,LM]
 
@@ -44,9 +44,7 @@ X=bsxfun(@minus,X,Mu);
     % initialize with Factor Analysis
     
     fprintf('\nInitializing with Factor Analysis...\n');
-    [L,Ph,LM]=ffa(X,K,100,0.001); %temp = X'-L*(pinv(L)*X'); scatter(std(temp,0,2).^2,Ph);
-    sPlot(pinv(L)*X')
-    [m,~,n] = mvar((pinv(L)*X').',1,1)
+    [L,Ph,LM]=ffa(X,K,100,0.001);
     C=L;
     R=Ph;
     Phi=diag(1./R);
@@ -55,17 +53,24 @@ X=bsxfun(@minus,X,Mu);
     temp1=X*temp2*L;
     x0=mean(temp1)';
     Q=cov(temp1);
-    P0=Q;
+    P0=Q;figure;
     t1=temp1(1:T-1,:);
     t2=temp1(2:T,:);
+    
     A=(t1'*t1+Q)\t1'*t2;
     clear temp1 temp2 Phi t1 t2;
     fprintf('FA log likelihood %f\nInitialized.\n',LM(end));
 
-Y=reshape(X,T,1,p);
-Y=squeeze(permute(Y,[2 3 1])).'; % Y is (N,p,T), analogously to X
+%lik=0;
+%LL=[];
 
+Y=reshape(X,T,1,p);
+Y=squeeze(permute(Y,[2 3 1]))'; % Y is (N,p,T), analogously to X
+
+%YY=sum(X.*X)'/(T);
+%Y = permute(Y,[2 3 1]);
 net0.A = C;net0.W = R; net0.F = A; net0.S = Q;net0.x0 = x0; net0.V0 = P0;
+return
 [A, W, F, S, ~, ~, x0, V0, loglik] = kalmanMLE(Y,C,diag(R),A,Q,x0,P0);
 net.A = A;net.W = W; net.F = F; net.S = S; net.x0 = x0; net.V0 = V0; net.loglik = loglik;
 %     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -1,4 +1,4 @@
-function regressAll(pcaDat,lfpDat,posDat,inds)
+function [o,i] = regressAll(pcaDat,lfpDat,posDat,inds)
 
 
 if size(lfpDat,1) > size(lfpDat,2)
@@ -26,8 +26,8 @@ posDat = posDat(:,~nanInds);pcaDat = pcaDat(:,~nanInds);lfpDat = lfpDat(:,~nanIn
 if ~exist('inds','var')
     inds = size(posDat,2);
 end
-if inds > 20000
-    decFac = ceil(inds/20000)
+if inds > 50000
+    decFac = ceil(inds/50000)
     posDat = deciMatrix(posDat,decFac);
     pcaDat = deciMatrix(pcaDat,decFac);
     inds = floor(inds/decFac);
@@ -39,15 +39,16 @@ vel = [angVel(posDat')' zeros(size(posDat,1),1)];
 %input = [pcaDat;relPhase;exp(1i*relPhase);abs(pcaDat(1,:)).*exp(1i*relPhase);...
 %    abs(pcaDat(2,:)).*exp(1i*relPhase);circ_std(angle(lfpDat));instPhase];
 %input = (pcaDat(1,:));
-output = vel(1,:);%[vel; abs(vel)];
-input = abs(pcaDat(1,:));
+output = (pcaDat(1,:));%vel(1,:);%[vel; abs(vel)];
+input = (pcaDat(2,:));
 %output = (pcaDat(2,:));
 %output = [pimpOut(posDat,1); pimpOut(posDat,2)];
-output = filtLow(output,1250/32,2,8);
+%output = filtLow(output,1250/32,2,8);
 %input = [input;input.*conj(input)];
 
-offset = 40;
-[c m] = splitToep1(output,input,200,1250/32,2,size(input,2)-offset,offset,1000);
+offset = 20;
+[c,~,~,o,i] = splitToep1(output,input,50,1250/32,1,size(input,2)-offset,offset,1000);
+%figure;plot(abs(o)*10);hold all;plot(abs(i));plot(vel(1,:));
 if numel(c) == 1
     c
 else

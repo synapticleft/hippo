@@ -40,7 +40,11 @@ y = y(:,lags:end);
 %xx = xx(newIdx,:);
 %y = y(:,newIdx);
 [cc mse kern] = pipeLine(y,xx,numCross,ridge,fs,numX);
-kern = squeeze(mean(kern));
+if numCross > 1
+    kern = squeeze(mean(kern));
+else
+    kern = squeeze(kern);
+end
 if size(xx,2) ~= size(kern,1) kern = kern.'; end
 filtSig = xx*kern;%kern*xx';%
 kern = reshape(kern,[lags numel(kern)/lags]);

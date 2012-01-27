@@ -1,4 +1,4 @@
-function regressAll(pcaDat,lfpDat,posDat,inds)
+function [o,i] = regressAll(pcaDat,lfpDat,posDat,inds)
 
 
 if size(lfpDat,1) > size(lfpDat,2)
@@ -23,31 +23,42 @@ for i = 1:size(posDat,1)
 end
 nanInds = any(isnan(posDat));
 posDat = posDat(:,~nanInds);pcaDat = pcaDat(:,~nanInds);lfpDat = lfpDat(:,~nanInds);
-if inds > 10000
-    decFac = ceil(inds
-if size(inds) == 1
-    inds = 1:inds;
+if ~exist('inds','var')
+    inds = size(posDat,2);
 end
-lfpDat = lfpDat(:,inds);pcaDat = pcaDat(:,inds);posDat = posDat(:,inds);
+if inds > 50000
+    decFac = ceil(inds/50000)
+    posDat = deciMatrix(posDat,decFac);
+    pcaDat = deciMatrix(pcaDat,decFac);
+    inds = floor(inds/decFac);
+end
+lfpDat = lfpDat(:,1:inds);pcaDat = pcaDat(:,1:inds);posDat = posDat(:,1:inds);
 relPhase = diff(angle(pcaDat(1:2,:)));
 instPhase = [diff(angle(pcaDat),1,2) zeros(size(pcaDat,1),1)];
 vel = [angVel(posDat')' zeros(size(posDat,1),1)];
 %input = [pcaDat;relPhase;exp(1i*relPhase);abs(pcaDat(1,:)).*exp(1i*relPhase);...
 %    abs(pcaDat(2,:)).*exp(1i*relPhase);circ_std(angle(lfpDat));instPhase];
 %input = (pcaDat(1,:));
-input = [vel; abs(vel)];
-output = abs(pcaDat(1,:));
+output = (pcaDat(1,:));%vel(1,:);%[vel; abs(vel)];
+input = (pcaDat(2,:));
 %output = (pcaDat(2,:));
 %output = [pimpOut(posDat,1); pimpOut(posDat,2)];
-%output = filtLow(output,1250/32,6);
+%output = filtLow(output,1250/32,2,8);
 %input = [input;input.*conj(input)];
 
-offset = 0;
-[c m] = splitToep1(output,input,200,1250/32,3,size(input,2)-offset,offset,1000);
+offset = 20;
+[c,~,~,o,i] = splitToep1(output,input,50,1250/32,1,size(input,2)-offset,offset,1000);
+figure;plot(abs(o)*10);hold all;plot(abs(i));plot(vel(1,:));
 if numel(c) == 1
     c
 else
     figure;plot(abs(c))
+end
+
+function b = deciMatrix(a,r)
+b = zeros(size(a,1),ceil(size(a,2)/r));
+for i = 1:size(b,1)
+    b(i,:) = decimate(a(i,:),r);
 end
 
 %%converting position data into complex-valued!
