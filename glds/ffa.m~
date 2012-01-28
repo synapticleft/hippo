@@ -15,7 +15,7 @@
 % or cyc steps of EM 
 %
 
-function [L,Ph,LL,temp]=ffa(X,K,cyc,tol)
+function [L,Ph,LL]=ffa(X,K,cyc,tol,u)
 
 if nargin<4  tol=0.0001; end;
 if nargin<3  cyc=1000; end;
@@ -28,7 +28,7 @@ XX=X'*X/N;
 diagXX=diag(XX);
 cX=cov(X);%XX;%
 scale=det(cX)^(1/D);
-%[u,~,~]=svds(X.',K);%
+[L,~,~]=svds(X.',K);%
 L = randn(D,K)*sqrt(scale/K);
 Ph=diag(cX);
 
@@ -39,6 +39,7 @@ lik=0; LL=[];
 const=-D/2*log(2*pi);
 
 for i=1:cyc;
+
   %%%% E Step %%%%
   Phd=diag(1./Ph);
   LP=Phd*L;
@@ -52,7 +53,7 @@ for i=1:cyc;
   
   oldlik=lik;
   lik=real(N*const+N*log(dM)-0.5*N*sum(diag(MM*XX)));
-  fprintf('cycle %i lik %g \n',i,lik);
+  %fprintf('cycle %i lik %g \n',i,lik);
   LL=[LL lik];
   
   %%%% M Step %%%%
@@ -71,5 +72,7 @@ for i=1:cyc;
 
 end
 temp = XX-L*XXbeta';
-%figure;subplot(221);imagesc(diag(Ph));subplot(222);imagesc(abs(temp));
+figure;subplot(221);imagesc(diag(Ph));subplot(222);imagesc(abs(temp));
+temp = XX-(L*(pinv(L)*u))*XXbeta';
+subplot(223);imagesc(abs(temp));
 %figure;subplot(121);plot(log(abs(eig(temp))));subplot(122);scatter(Ph,diag(temp));

@@ -26,6 +26,7 @@
 function [net net0]=gldsp(X,K,pOrder)
 
 xform = 0;
+rnd = 0;%.1;
 if size(X,1) < size(X,2) X = X.'; end
 [T,p] = size(X);
 
@@ -35,11 +36,10 @@ X=bsxfun(@minus,X,Mu);
     % initialize with Factor Analysis
     
     fprintf('\nInitializing with Factor Analysis...\n');
-    [L,Ph,LM]=ffa(X,K,100,0.001);%,LM
-    %[L,Ph] = fastfa(X.',K);
-    figure;plot(Ph);hold all;plot(LM);
-    return
-    R=Ph;
+    [L,Ph,LM,Ph1]=ffa(X,K,100,0.001);
+%    [u,~,~] = svds(X,K);
+%    L = L*pinv(L)*u;
+    R=Ph1;%diag(Ph);
     [A,~,Q] = mvar(X*pinv(L).',pOrder);
     [A,C,Q] = AR_to_SS(reshape(A,K,K,pOrder),Q(:,(end-K+1):end));
     C = L*C;
@@ -52,9 +52,11 @@ X=bsxfun(@minus,X,Mu);
         Q = eye(size(Q,1));
         C = C*(V*sqrt(D));
         A = (sqrt(D)\V')*A*(V*sqrt(D));
+    elseif rnd
+        A = A.*(1+rnd*randn(size(A)));R = R.*(1+rnd*randn(size(R)));C = C.*(1+rnd*randn(size(C)));Q = Q.*(1+rnd*randn(size(Q)));
     end
-net0.A = A;net0.R = diag(R);net0.C = C;net0.Q = Q;net0.x0 = x0;net0.P0 = P0;
-[C, R, A, Q, ~,~, x0, V0, loglik,xsmooth] = kalmanMLE(X,C,diag(R),A,Q,x0,P0,0,0);
+net0.A = A;net0.R = R;net0.C = C;net0.Q = Q;net0.x0 = x0;net0.P0 = P0;
+[C, R, A, Q, ~,~, x0, V0, loglik,xsmooth] = kalmanMLE(X,C,R,A,Q,x0,P0,0,0);
 if xform
 [V,D] = eig(Q);
 Q = eye(size(Q,1));
