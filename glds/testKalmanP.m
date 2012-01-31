@@ -15,7 +15,7 @@ ss = 2;p = 2;
 % T = 1000;
 % [x,y] = sample_lds(A, C, Q, R, initx, T);
 %figure;subplot(211);plot(real(x)');
-[net,net0] = gldsp((Xf(:,1:1000)),ss,p);
+[net,net0] = gldsp((Xf(:,1000:3000)),ss,p);
 %subplot(212);plot(real(net.xsmooth));
 % Initializing the params to sensible values is crucial.
 % Here, we use the true values for everything except F and H,

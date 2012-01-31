@@ -6,6 +6,7 @@ v(isnan(v)) = 0;
 vf = filtLow(v(1,:),Fs,.2,1);
 x = findpeaks(vf,thresh);
 x = x(1).loc;
+x(x-lags<1) = [];x((x+lags+1) > size(dat,1)) = [];
 %figure;plot(vf);hold all;scatter(x,vf(x),'r','filled');
 allDat = zeros(numel(x),2*lags+1,size(dat,2));
 allVel = zeros(numel(x),2*lags+1,size(v,1));

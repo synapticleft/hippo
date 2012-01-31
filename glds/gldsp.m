@@ -42,6 +42,7 @@ X=bsxfun(@minus,X,Mu);
     R=Ph1;%diag(Ph);
     [A,~,Q] = mvar(X*pinv(L).',pOrder);
     [A,C,Q] = AR_to_SS(reshape(A,K,K,pOrder),Q(:,(end-K+1):end));
+    %Q(3,3) = .01;Q(4,4) = .01;
     C = L*C;
     x0 = zeros(K*pOrder,1);
     P0 = Q;
