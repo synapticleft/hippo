@@ -1,5 +1,5 @@
 function [spikeMat c] = hipSpikes(file,bin,subSet)
-
+%bin usually 32/1.25
 d = '/media/Expansion Drive/KenjiMizuseki/';%['/media/work/hippocampus/' file '/'];
 [a,b,c,d] = LoadCluRes([d file]);
 a = ceil(a/d.SampleRate*1000/bin);
