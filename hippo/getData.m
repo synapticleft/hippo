@@ -28,7 +28,7 @@ end
 
 if dec > 1
     X1 = zeros(nSamples(1),sz/dec);
-    for i = 1:64%:nSamples(1)
+    for i = 1:nSamples(1)
         tic;
         temp = double(h5varget([data_root fname],'/hReal',[i-1 rind],[1 sz]));%nSamples(1)
         toc

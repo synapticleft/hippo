@@ -76,7 +76,7 @@ plot(real(temp),imag(temp),'k');
 %temp = mean(abs(dat(:,i)))*exp(1i*-(angle(v(i,1))))*exp(1i*phaseShift);%+inst*i
 temp = s(1)*abs(mean(u(:,1)))*conj(v(i,1))*exp(1i*phaseShift);%exp(1i*-(angle(v(i,1))))
 scatter(real(temp),imag(temp),50,'k','filled');
-temp = s(1)*abs(mean(u(:,2)))*conj(v(i,2))*exp(1i*phaseShift);%exp(1i*-(angle(v(i,1))))
+temp = 10*s(1)*abs(mean(u(:,2)))*conj(v(i,2))*exp(1i*phaseShift);%exp(1i*-(angle(v(i,1))))
 scatter(real(temp),imag(temp),50,'r','filled');
 hold off;
 set(gca,'xlim',[-2 2],'ylim',[-2 2]);

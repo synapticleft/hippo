@@ -1,19 +1,23 @@
-function  realH5(input,output,numChans)
+function  realH5(input,output,numChans,samples)
 
-h5filecreate(output);
+if ~exist(output,'file')
+    h5filecreate(output);
+end
+if ~exist('samples','var')
 if exist('numChans','var')
     [~,~,nSamples,numChans] = LoadBinary(input,1,numChans,[],[],[],[1 2]);
 else
     [~,~,nSamples,numChans] = LoadBinary(input,1,[],[],[],[],[1 2]);
 end
-[nSamples numChans]
-%numChans = 96;
+samples = [1 nSamples];
+end
+[samples numChans]
 step = 400000;
-h5datacreate(output,'/hReal','type','int16','size',[numChans nSamples]);
-for i = 1:step:nSamples
-    numElems = min(step,nSamples-i+1);
+h5datacreate(output,'/hReal','type','int16','size',[numChans samples(2)-samples(1)+1]);
+for i = samples(1):step:samples(2)
+    numElems = min(step,samples(2)-i+1);
     a = LoadBinary(input,1:numChans,numChans,[],[],'int16',i+[1 numElems]-1);
-    h5varput(output,'/hReal',[0 i-1],[numChans numElems],a);
+    h5varput(output,'/hReal',[0 i-samples(1)],[numChans numElems],a);
     i
 end
 % 

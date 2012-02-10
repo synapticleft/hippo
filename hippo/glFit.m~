@@ -1,23 +1,26 @@
 function [mod,temp,stats,outHat] = glFit(pos,resp,inds)
 tic;
-link = 'logit';%'identity';
-lags = 2;nAhead = 0;%floor(lags/2);
-pos(pos == -1) = nan;
+if ~exist('inds','var')
+    inds = 1:size(resp,1);
+end
+link = 'identity';%'logit';%
+lags = 1;nAhead = 0;%floor(lags/2);
+%pos(pos == -1) = nan;
 %v = diff(pos);
 v = angVel(pos);
 v = sqrt(v(:,1).^2);%+v(:,2).^2)/2;
-v = filtLow(v',1250/32,3)';plot(v);
+v = filtLow(v',1250/32,1)';
 v = v(inds,:);resp = resp(inds,:);
 %resp = bsxfun(@rdivide,resp,std(resp));
-vp12 = resp(:,1).*conj(resp(:,2));%vp12 = filtLow(vp12,1250/32,1);
-vp1 = resp(:,1).*conj(resp(:,1));%vp1 = filtLow(vp1,1250/32,1);
-vp2 = resp(:,2).*conj(resp(:,2));%vp2 = filtLow(vp2,1250/32,1);
-vp11 = resp(1:end-1,1).*conj(resp(2:end,1));%vp11 = filtLow(vp11,1250/32,1);
+vp12 = resp(:,1).*conj(resp(:,2));vp12 = filtLow(vp12,1250/32,1);
+vp1 = resp(:,1).*conj(resp(:,1));vp1 = filtLow(vp1,1250/32,1);
+vp2 = resp(:,2).*conj(resp(:,2));vp2 = filtLow(vp2,1250/32,1);
+vp11 = resp(1:end-1,1).*conj(resp(2:end,1));vp11 = filtLow(vp11,1250/32,1);
 vp11 = [0;vp11];%vp11 = gsorth(vp11);
-vp12 = vp12*exp(1i*pi/4);%./vp1;%
-state = [toeplitz(real(vp11),nan*ones(lags,1)) toeplitz(imag(vp11),nan*ones(lags,1)) ...
-   toeplitz(real(vp12),nan*ones(lags,1)) toeplitz(imag(vp12),nan*ones(lags,1))];
-state = [toeplitz(real(vp11),nan*ones(lags,1)) toeplitz(imag(vp11),nan*ones(lags,1))]; %toeplitz(vp1,nan*ones(lags,1))];
+%state = [toeplitz(real(vp11),nan*ones(lags,1)) toeplitz(imag(vp11),nan*ones(lags,1)) ...
+%   toeplitz(real(vp12),nan*ones(lags,1)) toeplitz(imag(vp12),nan*ones(lags,1))];
+%state = [toeplitz(real(vp11),nan*ones(lags,1)) toeplitz(imag(vp11),nan*ones(lags,1))];% toeplitz(imag(vp11).*real(vp11),nan*ones(lags,1)) ];%
+%state = [toeplitz(real(vp12),nan*ones(lags,1)) toeplitz(imag(vp12),nan*ones(lags,1))];% toeplitz(real(vp12).*imag(vp12),nan*ones(lags,1))]; %toeplitz(vp1,nan*ones(lags,1))];
 %state = toeplitz(vp1,nan*ones(lags,1));
 state(1:lags-1,:) = [];v(1:lags-1,:) = [];
 state = circshift(state,[nAhead 0]);
@@ -38,6 +41,7 @@ function in = scale(in)
 %in = in + .2;
 in = in/2;
 in(in<=0) = eps;
+in(in >=1) = 1-eps;
 %in = max(in,eps);
 %in = min(in,1-eps);
 

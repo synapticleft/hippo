@@ -85,7 +85,7 @@ end
 
 if nargin<5,
         %Kalman Filter initialsiation (Kp (K predicted or a-priori) equals K(n+1,n) )
-        Kalman=struct('F',eye(L),'H',zeros(M,L),'G',zeros(L,M),'x',zeros(L,1),'Kp',eye(L),'Q1',eye(L)*UC,'Q2',eye(M),'ye',zeros(M,1));
+        Kalman=struct('F',eye(L),'H',zeros(M,L),'G',zeros(L,M),'x',zeros(L,1),'Kp',eye(L),'Q1',eye(L)*UC,'Q2',zeros(M),'ye',zeros(M,1));%eye(M)
 end;
 
 upd = eye(L)/L*UC;		%diagonal matrix containing UC

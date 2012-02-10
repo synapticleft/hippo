@@ -18,10 +18,10 @@ for i = -lags:lags
     allAng(:,i+lags+1) = circ_dist(angle(dat(x+i,1)),angle(dat(x+i,2)));
     allFreq(:,i+lags+1,:) = circ_dist(angle(dat(x+i,:)),angle(dat(x+i+1,:)));
 end
-%temp = repmat(1:size(allAng,2),[size(allAng,1) 1]);
-%t1 = log(squeeze(allDat(:,:,2)./allDat(:,:,1)));
-%[h b] = hist3([temp(:) t1(:)],[60 200]);
-%figure;imagesc(b{1},b{2},log(h)');
+temp = repmat(1:size(allAng,2),[size(allAng,1) 1]);
+t1 = allAng;%log(squeeze(allDat(:,:,2)./allDat(:,:,1)));
+[h b] = hist3([temp(:) t1(:)],[60 200]);
+figure;imagesc(b{1},b{2},(h)');
 figure;plot(squeeze(mean(abs(allDat(:,:,1))))*1000);hold all;plot(circ_std(allAng))
 allAng = circ_mean(allAng);
 %temp = repmat(1:size(allFreq,2),[size(allFreq,1) 1]);
