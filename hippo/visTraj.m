@@ -1,25 +1,30 @@
-function visTraj(pos,sp,v)
+function visTraj(pos,v)%,sp
 
 dSkip = 1;
 steps = 5;
 decay = .99;
 Fs = 1250/32;
 skip = steps;
-if size(v,2) < size(v,1)
+if size(v,2) > size(v,1)
     v = v.';
 end
 
-col = rand(size(sp,1),3);
+%col = rand(size(sp,1),3);
 angCol = colormap('hsv');
 absCol = colormap('jet');
 pos(pos == -1) = nan;
 nanInds = any(isnan(pos'));
+%pos(nanInds,:) = 0;
 pos = pos(~nanInds,:);
-pos = filtLow(pos',Fs,4,8)';
+v(nanInds(2:end),:) = [];
+%pos = filtLow(pos',Fs,4,8)';
 pos = bsxfun(@minus,pos,min(pos));
 pos = bsxfun(@rdivide,pos,max(pos));
-v = bsxfun(@rdivide,v,std(v,0,2));
-[~,fsort] = sort(sum(sp,2),'descend');
+v = bsxfun(@rdivide,v,std(v));
+vp11 = v(2:end,1).*conj(v(1:end-1,1))./abs(v(1:end-1,1));
+vp11 = [0; vp11];
+vp12 = v(:,1).*conj(v(:,2))./abs(v(:,1));
+%[~,fsort] = sort(sum(sp,2),'descend');
 %% place fields
 % figure;
 
@@ -45,10 +50,11 @@ for i = 1:skip:size(pos,1)
     inds = i:(i+steps);
 dist = 100*sqrt(sum((pos(i,1) - pos(i+dSkip,1)).^2));
 dist2 = 100*sqrt(sum((pos(i,3) - pos(i+dSkip,3)).^2));
-    scatter(pos(inds,1),pos(inds,2),50*abs(v(2,inds)).^2,absCol(abs2Col(dist),:),'filled');%
-    scatter(pos(inds,3),pos(inds,4),50*abs(v(2,inds)).^2,absCol(abs2Col(dist2),:),'filled');%
+%    scatter(pos(inds,1),pos(inds,2),50*abs(v(2,inds)).^2,absCol(abs2Col(dist),:),'filled');%
+%    scatter(pos(inds,3),pos(inds,4),50*abs(v(2,inds)).^2,absCol(abs2Col(dist2),:),'filled');%
 %    scatter(pos(inds,1),pos(inds,2),50*abs(v(1,inds)).^2,absCol(abs2Col(sum(sp(fsort(3:end),inds)/10)),:),'filled');%
-%    scatter(pos(inds,3),pos(inds,4),50*abs(v(2,inds)).^2,angCol(phase2Col(circ_dist(v(1,inds),v(2,inds))),:),'filled');%
+    scatter(pos(inds,1),pos(inds,2),50*abs(vp11(inds)),angCol(phase2Col(angle(vp11(inds))),:),'filled');%(sum(sp(fsort(3:end),inds)/10)),:),'filled');%
+    scatter(pos(inds,3),pos(inds,4),50*abs(vp12(inds)),angCol(phase2Col(angle(vp12(inds))),:),'filled');%circ_dist(v(1,inds),v(2,inds))),:),'filled');%
 %    hold off;
     set(gca,'xlim',[0 1],'ylim',[0 1]);%    title(round(num2str(i/Fs)));
     im = getframe(h);
