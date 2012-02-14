@@ -7,10 +7,12 @@ end
 %warning off all;
 %pos(pos == -1) = nan;
 %v = diff(pos);
-v = angVel(pos);
-v = filtLow(v',1250/32,3)';
+%v = angVel(pos);
+%v = filtLow(v',1250/32,3)';
 %v(isnan(v)) = 0;
-v = v(inds,:);resp = resp(inds,:);
+v = pos(inds,:);%v(inds,:);
+v(isnan(v)) = 60;
+resp = resp(inds,:);
 %state = [pos(:,1) v(:,1)];
 vp12 = resp(:,1).*conj(resp(:,2));vp12 = filtLow(vp12,1250/32,1);
 vp1 = resp(:,1).*conj(resp(:,1));vp1 = filtLow(vp1,1250/32,1);
@@ -20,13 +22,14 @@ vp11 = [0;vp11];%vp11 = gsorth(vp11);
 vp12 = vp12;%./vp1
 %state = [real(vp12)-imag(vp12) real(vp12)+imag(vp12)];
 %state = [real(vp11)-imag(vp11) real(vp11)+imag(vp11)];
-state = [real(vp12) imag(vp12)];
+state = v;% [real(vp12) imag(vp12)];
 figure;plot(v(:,1)./max(v(:,1)));hold all;
 %plot(v(:,2)./max(v(:,1)));
 plot(bsxfun(@rdivide,state,max(eps,max(state(:)))));
 %figure;imagesc(log(hist3(state,[100 100])));
-[data al] = binData(state,v(:,1),[40 40]);%resp
-figure;imagesc(data,[0 1.5]);
+[data al] = binData(state,vp12,[60 60]);%resp
+figure;imagesc(imag(data));
+%colormap(hsv);return
 figure;plot(nanmean(data));hold all;plot(nanmean(data,2));
 %figure;imagesc(log(al));
 drawnow;

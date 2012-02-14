@@ -1,67 +1,57 @@
 function posVsTime(pos,v,bounds,inds)%,sp
 
+accumbins = 60;pad = 5;
 if size(v,2) > size(v,1)
     v = v.';
 end
 pos(pos == -1) = nan;
 if size(v,1) < size(pos,1)
-    pos = pos(1:size(v,1),1);
+    pos = pos(1:size(v,1),:);
 end
-nanInds = find(~isnan(pos));
-pos = interp1(nanInds,pos(nanInds),1:numel(pos));
-nanInds = isnan(pos);
-pos = pos(~nanInds);v = v(~nanInds,:);
+nanInds = find(~isnan(pos(:,1)));
+pos(:,1) = interp1(nanInds,pos(nanInds,1),1:size(pos,1));
+pos(:,2) = interp1(nanInds,pos(nanInds,2),1:size(pos,1));
+nanInds = isnan(pos(:,1));
+pos = pos(~nanInds,:);v = v(~nanInds,:);
+pos = bsxfun(@minus,pos,mean(pos));pos = bsxfun(@rdivide,pos,std(pos));
+[a,~,~] = svd(pos(:,1:2),'econ');
+pos = a;pos(:,1) = pos(:,1)-min(pos(:,1));pos(:,1) = pos(:,1)/max(pos(:,1));
 if exist('inds','var')
-    pos = pos(1:inds);
-    v = v(1:inds,:);
+    pos = pos(end-inds:end,:);%(1:inds);
+    v = v(end-inds:end,:);%(1:inds,:);
 end
-b = nan*ones(numel(pos),1);
-b(pos < bounds(1)) = -1;b(pos > bounds(2)) = 1;
-figure;plot(b);
-nanInds = find(~isnan(b));
-b = interp1(nanInds,b(nanInds),1:numel(pos));
-b = [0 diff(b)];
-angCol = colormap('hsv');absCol = colormap('jet');
 v = bsxfun(@rdivide,v,std(v));
 vp11 = v(2:end,1).*conj(v(1:end-1,1))./abs(v(1:end-1,1));
 vp11 = [0; vp11];
-vp12 = v(:,1).*conj(v(:,2))./abs(v(:,1));%
-state = [real(vp12) imag(vp12)];
-[data al] = binData(state(b>0,:),pos(b>0),[20 20]);
-figure;subplot(221);imagesc(data);
-subplot(222);imagesc(al);
-[data al] = binData(state(b>0,:),pos(b>0),[20 20]);
-subplot(223);imagesc(abs(data));
-subplot(224);imagesc(angle(data));
-figure;subplot(211);scatter(1:sum(b>0),pos(b>0),50*abs(vp12(b>0)),angCol(phase2Col(angle(vp12(b>0))),:),'filled');axis tight;
-subplot(212);scatter(1:sum(b<0),pos(b<0),50*abs(vp12(b<0)),angCol(phase2Col(angle(vp12(b<0))),:),'filled');axis tight;
-%vp12 = vp12 + 1i*(1:numel(vp12))'/200;%vp12 = log(vp12);
-pos = pos - min(pos);pos = pos / max(pos);pos = 1-pos;
-figure;subplot(121);%hold all;plot(real(vp12(b<0)),imag(vp12(b<0)));
-scatter(real(vp12(b<0)),imag(vp12(b<0)),15,absCol(abs2Col(pos(b<0)),:),'filled');
-pos = 1-pos;
-subplot(122);%hold all;plot(real(vp12(b>0)),imag(vp12(b>0)));
-scatter(real(vp12(b>0)),imag(vp12(b>0)),15,absCol(abs2Col(pos(b>0)),:),'filled');
-drawnow;
-
-function c = phase2Col(ang)
-c = ceil((ang+pi)/(2*pi)*64);
-
-
-function c = abs2Col(a)
-if isnan(a)
-    a = 0;
+vp12 = v(:,1).*conj(v(:,2))./abs(v(:,1));
+b = nan*ones(size(pos,1),1);
+b(pos(:,1) < bounds(1)) = -1;b(pos(:,1) > bounds(2)) = 1;
+figure;plot(b);return
+nanInds = find(~isnan(b));
+b = interp1(nanInds,b(nanInds),1:size(pos,1));
+b = [0 diff(b)];
+lrRuns = bwlabel(b>0);rlRuns = bwlabel(b<0);
+lrAvg = zeros(accumbins+2*pad,max(lrRuns));
+rlAvg = zeros(accumbins+2*pad,max(rlRuns));
+medBinTime = round((median(hist(rlRuns,1:max(rlRuns)))+median(hist(lrRuns,1:max(lrRuns))))/(2*accumbins));
+lrTimes = zeros(accumbins,max(lrRuns));
+rlTimes = zeros(accumbins,max(rlRuns));
+binsTimes = bounds(1)+((1:accumbins)-.5)/accumbins*diff(bounds);
+accumbins = accumbins+pad*2;
+bins = (bounds(1)-pad+1)+((1:accumbins)-.5)/accumbins*(diff(bounds)+2*pad);
+for i = 1:max(lrRuns)
+    inds = find(lrRuns == i);inds = (min(inds)-pad*medBinTime+1):max(inds)+pad*medBinTime;
+    lrAvg(:,i) = csaps(pos(inds,1),vp12(inds),.5,bins);
+    lrTimes(:,i) = csaps(pos(inds,1),pos(inds,2),.5,binsTimes);%inds-min(inds)
 end
-c = 1 + floor(64*min(.99,a));
-
-function [data al] = binData(x,y,nbins)
-for i = 1:size(x,2)
-    s = std(x(:,i));m = mean(x(:,i));
-    x(:,i) = min(max(x(:,i),m-3*s),m+3*s);
-    x(:,i) = x(:,i) - min(x(:,i));
-    x(:,i) = ceil(nbins(min(i,numel(nbins)))*max(eps,x(:,i))/max(x(:,i)));
-    x(:,i) = min(nbins(min(i,numel(nbins))),x(:,i));
+for i = 1:max(rlRuns)
+    inds = find(rlRuns == i);inds = (min(inds)-pad*medBinTime+1):max(inds)+pad*medBinTime;
+    rlAvg(:,i) = csaps(pos(inds,1),vp12(inds),.5,bins);
+    rlTimes(:,i) = csaps(pos(inds,1),pos(inds,2),.5,binsTimes);
 end
-data = accumarray(x,y,nbins,@mean);
-al = accumarray(x,y,nbins,@std);
-data(data == 0) =nan;
+figure;subplot(211);imagesc(angle(lrAvg));
+subplot(212);imagesc(angle(rlAvg));colormap hsv;
+figure;subplot(211);imagesc(abs(lrAvg));
+subplot(212);imagesc(abs(rlAvg));
+figure;subplot(211);imagesc(rlTimes);
+subplot(212);imagesc(lrTimes);
