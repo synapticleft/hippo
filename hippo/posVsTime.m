@@ -1,6 +1,7 @@
 function posVsTime(pos,v,bounds,inds)%,sp
 shift = 5;
-accumbins = 60;pad = 0;angCol = colormap('hsv');
+accumbins = 60;pad = 0;%angCol = colormap('hsv');
+figure;
 if size(v,2) > size(v,1)
     v = v.';
 end
@@ -59,12 +60,10 @@ for i = 1:max(rlRuns)
     %scatter(binsTimes,rlTimes(:,i)+i,20*abs(lrAvg(:,i)),angCol(phase2Col(angle(rlAvg(:,i))),:),'filled');
     %plot(pos(inds,1),inds-min(inds));hold all;plot(binsTimes,rlTimes(:,i));hold off;pause(.5);
 end
-[~,inds] = sort(mdscale(pdist([real(rlAvg); imag(rlAvg)]'),1));
-subplot(211);imagesc(angle(rlAvg(:,inds)));colormap hsv;
-[~,inds] = sort(mdscale(pdist([real(lrAvg); imag(lrAvg)]'),1));
-subplot(212);imagesc(angle(lrAvg(:,inds)));colormap hsv;
-
-return
+%[~,inds] = sort(mdscale(pdist([real(rlAvg); imag(rlAvg)]'),1));
+subplot(211);imagesc(angle(rlAvg));colormap hsv;
+%[~,inds] = sort(mdscale(pdist([real(lrAvg); imag(lrAvg)]'),1));
+subplot(212);imagesc(angle(lrAvg));colormap hsv;
 %axis tight;
 subplot(211);plot(real(mean(lrAvg,2)));hold all;plot(-imag(mean(lrAvg,2)));
 plot(abs(mean(lrAvg,2)));plot(-angle(mean(lrAvg,2)));%plot(std(lrAvg,0,2));axis tight;
@@ -77,8 +76,8 @@ figure;subplot(211);imagesc(angle(lrAvg));
 subplot(212);imagesc(angle(rlAvg));colormap hsv;
 figure;subplot(211);imagesc(abs(lrAvg));
 subplot(212);imagesc(abs(rlAvg));
-figure;subplot(211);imagesc(lrTimes,mean(lrTimes(:))+std(lrTimes(:))*[-1 1]*2);
-subplot(212);imagesc(rlTimes,mean(rlTimes(:))+std(rlTimes(:))*[-1 1]*2);
+%figure;subplot(211);imagesc(lrTimes,mean(lrTimes(:))+std(lrTimes(:))*[-1 1]*2);
+%subplot(212);imagesc(rlTimes,mean(rlTimes(:))+std(rlTimes(:))*[-1 1]*2);
 
 function c = phase2Col(ang)
 c = ceil((ang+pi)/(2*pi)*64);

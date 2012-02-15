@@ -1,7 +1,9 @@
-function posTimeSim(pos,v,bounds,inds,gauss)%,sp
+function posTimeSim(pos,v,sp,bounds,gauss)
 shift = 1;
 accumbins = gauss(1);pad = 0;
-gaussWeights = 1:accumbins;gaussWeights = exp(-(gaussWeights-gauss(2)).^2/gauss(3)^2);
+%[gx gy] = meshgrid(1:gauss(1));% = (1:accumbins)*(1:accumbins)';
+%gaussWeights = exp(-((gx-gauss(2)).^2+(gy-gauss(2)).^2)/gauss(3).^2);
+gaussWeights = exp(-((1:gauss(1))-gauss(2)).^2/gauss(3).^2);
 if size(v,2) > size(v,1)
     v = v.';
 end
@@ -17,10 +19,6 @@ pos = pos(~nanInds,:);v = v(~nanInds,:);
  pos = bsxfun(@minus,pos,mean(pos));%pos = bsxfun(@rdivide,pos,std(pos));
  [a,~,~] = svd(pos(:,1:2),'econ');pos = a;
 pos(:,1) = pos(:,1)-min(pos(:,1));pos(:,1) = pos(:,1)/max(pos(:,1));
-if exist('inds','var') && ~isempty(inds)
-    pos = pos(end-inds:end,:);%(1:inds);
-    v = v(end-inds:end,:);%(1:inds,:);
-end
 v = bsxfun(@rdivide,v,std(v));
 vp11 = v((shift+1):end,1).*conj(v(1:end-shift,1))./abs(v(1:end-shift,1));
 vp11 = [zeros(shift,1); vp11];
@@ -52,14 +50,18 @@ for i = 1:max(rlRuns)
     rlAvg(:,i) = csaps(pos(inds,1),vp12(inds),1-1e-7,bins);
 %    rlTimes(:,i) = csaps(pos(inds,1),inds-min(inds),1-1e-9,binsTimes);%,pos(inds,1),1-1e-7
 end
-[~,inds] = sort(mdscale(pdist([real(rlAvg); imag(rlAvg)]'),1));
-subplot(211);imagesc(angle(rlAvg(:,inds)));colormap hsv;
-[~,inds] = sort(mdscale(pdist([real(lrAvg); imag(lrAvg)]'),1));
-subplot(212);imagesc(angle(lrAvg(:,inds)));colormap hsv;
-
+lrAvg = bsxfun(@times,lrAvg,gaussWeights');
+rlAvg = bsxfun(@times,rlAvg,gaussWeights');
+[~,indsrl] = sort(mdscale(pdist([real(rlAvg); imag(rlAvg)]'),1));
+figure;subplot(212);imagesc(angle(rlAvg(:,indsrl)));colormap hsv;
+[~,indslr] = sort(mdscale(pdist([real(lrAvg); imag(lrAvg)]'),1));
+subplot(211);imagesc(angle(lrAvg(:,indslr)));colormap hsv;
+figure;subplot(212);imagesc(angle(rlAvg(:,indsrl)));
+[~,indslr] = sort(mdscale(pdist([real(lrAvg); imag(lrAvg)]'),1));
+subplot(211);imagesc(angle(lrAvg(:,indslr)));
 return
 %axis tight;
-subplot(211);plot(real(mean(lrAvg,2)));hold all;plot(-imag(mean(lrAvg,2)));
+figure;subplot(211);plot(real(mean(lrAvg,2)));hold all;plot(-imag(mean(lrAvg,2)));
 plot(abs(mean(lrAvg,2)));plot(-angle(mean(lrAvg,2)));%plot(std(lrAvg,0,2));axis tight;
 subplot(212);plot(real(mean(rlAvg,2)));hold all;plot(-imag(mean(rlAvg,2)));
 plot(abs(mean(rlAvg,2)));plot(-angle(mean(rlAvg,2)));%plot(std(rlAvg,0,2));axis tight;
