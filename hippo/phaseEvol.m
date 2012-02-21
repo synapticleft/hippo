@@ -1,4 +1,4 @@
-function phaseEvol(dat,u,s,v,inds,sp,c)
+function phaseEvol(dat,u,s,v,inds,reds,sp,c)
 
 trails = 0;lags = 10;
 rdim = 2;
@@ -7,7 +7,7 @@ if ~exist('inds','var') || isempty(inds)
     inds = 1:skip:size(dat,2);
 end
 data1 = u(:,1:rdim)*s(1:rdim,1:rdim)*v(inds,1:rdim)';
-[~,ord] = sort(angle(u(:,1)),'descend');
+[~,ord] = sort(circ_dist(angle(u(:,1)),circ_mean(angle(u(:,1)))),'descend');
 %u(:,1) = 1;
 
 h = figure;
@@ -57,12 +57,16 @@ else
 %    temp = temp/mean(abs(temp));
 end
 scatter(real(temp),imag(temp),60,'k','p','filled');%c1
+hold on;
+%scatter(real(temp(reds)),imag(temp(reds)),60,'r','p','filled');
 circBuff1 = circshift(circBuff1,[0 1]);
 circBuff1(:,1) = temp;
 hold on;
 temp = data1(ord,i-inds(1)+1).*exp(1i*phaseShift);
 %%%
 scatter(real(temp),imag(temp),30,c,'o','filled');%c
+%tCol(ord,:) = c;
+%figure;image(reshape(tCol,[16 6 3] ));
 circBuff2 = circshift(circBuff2,[0 1]);
 circBuff2(:,1) = temp;
 if trails
@@ -75,16 +79,16 @@ temp = mean(abs(dat(:,i)))*exp(1i*(-pi:.1:pi));
 plot(real(temp),imag(temp),'k');
 %temp = mean(abs(dat(:,i)))*exp(1i*-(angle(v(i,1))))*exp(1i*phaseShift);%+inst*i
 temp = s(1)*abs(mean(u(:,1)))*conj(v(i,1))*exp(1i*phaseShift);%exp(1i*-(angle(v(i,1))))
-scatter(real(temp),imag(temp),50,'k','filled');
+%scatter(real(temp),imag(temp),50,'k','filled');
 temp = 10*s(1)*abs(mean(u(:,2)))*conj(v(i,2))*exp(1i*phaseShift);%exp(1i*-(angle(v(i,1))))
-scatter(real(temp),imag(temp),50,'r','filled');
+%scatter(real(temp),imag(temp),50,'r','filled');
 hold off;
 set(gca,'xlim',[-2 2],'ylim',[-2 2]);
 title(num2str((i-inds(1)+1)*5/1250));
-%m(i-inds(1)+1) = getframe(gcf);
+m(i-inds(1)+1) = getframe(gcf);
 drawnow;
 end
-%movie2avi(m,'spin.avi');
+movie2avi(m,'spin96.avi');
 %c = colormap;
 %mpgwrite(m,c,'spin.avi');
 

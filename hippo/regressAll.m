@@ -27,7 +27,7 @@ if ~exist('inds','var')
     inds = size(posDat,2);
 end
 if inds > 50000
-    decFac = ceil(inds/50000)
+    decFac = ceil(inds/50000);
     posDat = deciMatrix(posDat,decFac);
     pcaDat = deciMatrix(pcaDat,decFac);
     inds = floor(inds/decFac);

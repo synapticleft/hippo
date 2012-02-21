@@ -1,0 +1,71 @@
+%%1st PC props sm96
+temp = (reshape(angle(u(:,1)),[16 6]));
+figure;subplot(211);
+imagesc(temp);
+[xt yt] = myGradient(temp);xt = -xt;yt = -yt;
+hold all;quiver(xt,yt,'w','linewidth',2);
+set(gca,'fontsize',16)
+title 'angle 1st PC'
+subplot(212);
+drawnow;
+X = getData('sm9603Circ1.h5',10000,0,1);%'ec013.670.h5'
+params.Fs = 1250;params.tapers = [3 5];
+%for i= 1:96
+%[S,f] = mtspectrumc(X(i,:),params);
+%f = find(f > 200 & f < 500);
+%pyr(i) = mean(S(f));
+%end
+imagesc((reshape(pyr,[16 6])));
+hold all;quiver(xt,yt,'w','linewidth',2);
+set(gca,'fontsize',16)
+title 'power 200-500 Hz';
+%% 1st PC props ec014
+pyr = [];
+temp = flipud(reshape(angle(u(:,1)),[8 8]));
+figure;subplot(211);
+imagesc(temp);
+[xt yt] = myGradient(temp);xt = -xt;yt = -yt;
+hold all;quiver(xt,yt,'w','linewidth',2);
+set(gca,'fontsize',16)
+title 'angle 1st PC';
+colorbar
+subplot(212);
+drawnow;
+X = getData('ec014.277.h5',10000,0,1);%'ec013.670.h5'
+params.Fs = 1250;params.tapers = [3 5];
+for i= 1:64
+[S,f] = mtspectrumc(X(i,:),params);
+f = find(f > 200 & f < 500);
+pyr(i) = mean(S(f));
+end
+imagesc(flipud(reshape(pyr,[8 8])));
+hold all;quiver(xt,yt,'w','linewidth',2);
+set(gca,'fontsize',16)
+title 'power 200-500 Hz';colorbar
+%% 2nd fig
+figure;subplot(221);imagesc(angle(reshape(u(:,1),[8 8])));
+set(gca,'fontsize',16)
+title 'angle 1st PC'
+subplot(223);imagesc(real(reshape(u(:,2),[8 8])))
+set(gca,'fontsize',16)
+title 'Re(2nd PC)'
+temp0 = u(:,1)*s(1,1)*v(:,1)';
+for i = 1:64
+temp(i) = corr(Xf(i,:).',temp0(i,:).');
+end
+subplot(222);imagesc(reshape(abs(temp),[8 8]).^2,[.83 1]);
+title 'variance explained, 1PC'
+colorbar
+for i = 1:64
+temp(i) = corr(Xf(i,:).',temp0(i,:).');
+end
+ subplot(224);imagesc(reshape(abs(temp),[8 8]).^2,[.83 1]);
+set(gca,'fontsize',16)
+title 'variance explained, 2PCs'
+colorbar
+%% 3rd
+inds = 191500+(1:200);%86000:90000;
+figure;subplot(411);plot(vel(inds,1));axis tight;%sqrt(vel(inds,1).^2)+sqrt(vel(inds,2).^2));
+subplot(412);imagesc(real(u(:,1)*s(1,1)*v(inds,1)'));
+%subplot(413);imagesc(abs(u(:,1)*s(1,1)*v(inds,1)'));
+subplot(414);imagesc(imag(bsxfun(@times,Xf(:,inds),conj(v(inds,1)./abs(v(inds,1)))')));

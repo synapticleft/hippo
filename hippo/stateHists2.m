@@ -7,10 +7,10 @@ end
 %warning off all;
 %pos(pos == -1) = nan;
 %v = diff(pos);
-%v = angVel(pos);
+vel = angVel(pos);inds = vel(:,1) > .1;
 %v = filtLow(v',1250/32,3)';
 %v(isnan(v)) = 0;
-v = pos(inds,:);%v(inds,:);
+v = pos(inds,1:2);%v(inds,:);
 v(isnan(v)) = 60;
 resp = resp(inds,:);
 %state = [pos(:,1) v(:,1)];
@@ -23,9 +23,9 @@ vp12 = vp12;%./vp1
 %state = [real(vp12)-imag(vp12) real(vp12)+imag(vp12)];
 %state = [real(vp11)-imag(vp11) real(vp11)+imag(vp11)];
 state = v;% [real(vp12) imag(vp12)];
-figure;plot(v(:,1)./max(v(:,1)));hold all;
+%figure;plot(v(:,1)./max(v(:,1)));hold all;
 %plot(v(:,2)./max(v(:,1)));
-plot(bsxfun(@rdivide,state,max(eps,max(state(:)))));
+%plot(bsxfun(@rdivide,state,max(eps,max(state(:)))));
 %figure;imagesc(log(hist3(state,[100 100])));
 [data al] = binData(state,vp12,[60 60]);%resp
 figure;imagesc(imag(data));
@@ -44,6 +44,7 @@ for i = 1:size(x,2)
     x(:,i) = ceil(nbins(min(i,numel(nbins)))*max(eps,x(:,i))/max(x(:,i)));
     x(:,i) = min(nbins(min(i,numel(nbins))),x(:,i));
 end
+[size(x) size(y) size(nbins)]
 data = accumarray(x,y,nbins,@nanmean);
 al = accumarray(x,y,nbins,@ste);
 al = accumarray(x,y,nbins,@histo);
