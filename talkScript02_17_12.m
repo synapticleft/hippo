@@ -64,16 +64,20 @@ set(gca,'fontsize',16)
 title 'variance explained, 2PCs'
 colorbar
 %% 3rd
-inds = 191500+(1:200);%86000:90000;
-figure;subplot(411);plot(vel(inds,1));axis tight;%sqrt(vel(inds,1).^2)+sqrt(vel(inds,2).^2));
-set(gca,'fontsize',16);title 'velocity';colorbar
-subplot(412);imagesc(real(u(:,1)*s(1,1)*v(inds,1)'));colorbar
-set(gca,'fontsize',16);title 'LFP';
+inds = 191500+(1:205);%86000:90000;
+temp = getData('ec014.277.h5',205*32,191500*32);
+figure;subplot(511);plot((1:numel(inds))*32/1250,vel(inds,1));axis tight;%sqrt(vel(inds,1).^2)+sqrt(vel(inds,2).^2));
+set(gca,'fontsize',16,'xtick',[]);ylabel 'velocity';colorbar
+subplot(512);imagesc((1:numel(inds)*32)/1250,1:64,temp,[prctile(temp(:),1) prctile(temp(:),99)]);colorbar%real(u(:,1)*s(1,1)*v(inds,1)'));colorbar
+set(gca,'fontsize',16);axis off;%title 'LFP';
 %subplot(413);imagesc(abs(u(:,1)*s(1,1)*v(inds,1)'));
-subplot(413);imagesc(imag(bsxfun(@times,Xf(:,inds),conj(v(inds,1)./abs(v(inds,1)))')),[-.4 1.7]);colorbar
-set(gca,'fontsize',16);title 'Im(projected LFP)'
-subplot(414);imagesc(imag(bsxfun(@times,u(:,1:2)*s(1:2,1:2)*v(inds,1:2)',conj(v(inds,1)./abs(v(inds,1)))')),[-.4 1.7]);colorbar
-set(gca,'fontsize',16);title 'Im(2-PC approximation)'
+temp = imag(bsxfun(@times,Xf(:,inds),conj(v(inds,1)./abs(v(inds,1)))'));
+subplot(513);imagesc((1:numel(inds))*32/1250,1:64,temp,[prctile(temp(:),1) prctile(temp(:),99)]);colorbar
+set(gca,'fontsize',16);axis off;%title 'Im(projected LFP)'
+subplot(514);imagesc((1:numel(inds))*32/1250,1:64,temp-imag(bsxfun(@times,u(:,1)*s(1,1)*v(inds,1)',conj(v(inds,1)./abs(v(inds,1)))')),[-1 1]/2);colorbar
+set(gca,'fontsize',16);axis off;%title 'Im(2-PC approximation)'
+subplot(515);imagesc((1:numel(inds))*32/1250,1:64,temp-imag(bsxfun(@times,u(:,1:2)*s(1:2,1:2)*v(inds,1:2)',conj(v(inds,1)./abs(v(inds,1)))')),[-1 1]/2);colorbar
+set(gca,'fontsize',16,'ytick',[]);%title 'Im(2-PC approximation)'
 %% 4th
 runTrigger(pos,v(:,1:2),.3,200);
 %% 5th
