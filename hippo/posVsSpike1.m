@@ -1,4 +1,4 @@
-function [ccs] = posVsSpike(pos,sp,v,bounds,gauss)% lrVa rlVa
+function [rlV rlAvg] = posVsSpike1(pos,sp,v,bounds,gauss)% lrVa rlVa ccs
 accumbins = gauss(1);shift = 1;shifts = 0;
 % if numel(gauss) == 1
 %     gaussWeights = ones(gauss(1),1);
@@ -82,15 +82,18 @@ end
 lrAvg = lrAvg(:,(shifts+1):(end-shifts),:);
 rlAvg = rlAvg(:,(shifts+1):(end-shifts),:);
 lrV = lrV((shifts+1):(end-shifts),:);rlV = rlV((shifts+1):(end-shifts),:);
-inds = randperm(size(lrAvg,3));%1:size(lrAvg,3);%
+%%%
+inds = 1:size(lrAvg,3);%randperm(size(lrAvg,3));%
 lrV = lrV(:,inds);%lrAvg = lrAvg(:,:,inds);
 allX = lrAvg(:,:).';%allX = [allX conj(allX) abs(allX)];%ones(size(allX,1),1) 
 allX = [ones(size(allX,1),1) real(allX) imag(allX) abs(allX)];
+size(allX)
 [cclrc,mse,kernlr] = pipeLine(lrV(:).',allX,4,1000);
 lrAvg = lrAvg(:,:,inds);
-allX = lrAvg(:,:).';%allX = [allX conj(allX) abs(allX)];%ones(size(allX,1),1) 
+allX = lrAvg(:,:).';
 allX = [ones(size(allX,1),1) real(allX) imag(allX) abs(allX)];
 [cclr,mse,kernlr] = pipeLine(lrV(:).',allX,4,1000);
+
 %figure;subplot(221);imagesc(imag(lrV));
 %subplot(222);imagesc(reshape(-imag(mean(kernlr)*allX'),size(lrV)));
 %temp = mean(reshape(conj(mean(kernlr)*allX'),size(lrV)),2);
@@ -105,7 +108,7 @@ lrVHat = reshape(conj(mean(kernlr)*allX'),size(lrV));
 %figure;subplot(211);plot(real(lrV));hold all;plot(imag(lrV));
 %plot(real(temp));plot(imag(temp));
 %[abs(cclr).^2 1-mse]
-inds = randperm(size(rlAvg,3));%1:size(rlAvg,3);%
+inds = 1:size(rlAvg,3);%randperm(size(rlAvg,3));%
 rlV = rlV(:,inds);%rlAvg = rlAvg(:,:,inds);
 allX = rlAvg(:,:).';%allX = [allX conj(allX) abs(allX)];%ones(size(allX,1),1) 
 allX = [ones(size(allX,1),1) real(allX) imag(allX) abs(allX)];
@@ -114,6 +117,11 @@ rlAvg = rlAvg(:,:,inds);
 allX = rlAvg(:,:).';%allX = [allX conj(allX) abs(allX)];%ones(size(allX,1),1) 
 allX = [ones(size(allX,1),1) real(allX) imag(allX) abs(allX)];
 [ccrl,mse,kernrl] = pipeLine(rlV(:).',allX,4,1000);
+(abs(ccrlc).^2)
+figure;imagesc(abs(rlV)');
+size(allX')
+figure;imagesc(reshape(squeeze(allX(:,2)),size(rlV)).');
+return
 %temp = mean(reshape(conj(mean(kernrl)*allX'),size(rlV)),2);
 %temp = temp-mean(temp);temp = temp/std(temp);
 %rlV = mean(rlV,2);

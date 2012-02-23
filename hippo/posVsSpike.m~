@@ -1,6 +1,6 @@
-function [ccs] = posVsSpike(pos,sp,v)
+function [spInterp vInterp] = posVsSpike(pos,sp,v,numNeuro)%,cr,cc1,cc2
 bounds = [.1 .9];accumbins = 50;
-shift = 1;shifts = 1;
+shift = 1;shifts =0;
 if numel(sp) > size(v,1)
     sp = sp(:,1:size(v,1));
 end
@@ -8,113 +8,94 @@ pos(pos == -1) = nan;
 if size(v,1) < size(pos,1)
     pos = pos(1:size(v,1),:);
 end
-nanInds = find(~isnan(pos(:,1)));
-pos(:,1) = interp1(nanInds,pos(nanInds,1),1:size(pos,1));
-pos(:,2) = interp1(nanInds,pos(nanInds,2),1:size(pos,1));
+for i=1:size(pos,2)
+    nanInds = find(~isnan(pos(:,i)));
+    pos(:,i) = interp1(nanInds,pos(nanInds,i),1:size(pos,1));
+end
 nanInds = isnan(pos(:,1));
 pos = pos(~nanInds,:);v = v(~nanInds,:);sp = sp(:,~nanInds);
+vel = angVel(pos);vel = filtLow(vel(:,1),1250/32,4);
 pos = bsxfun(@minus,pos,mean(pos));
-pos = svd(pos(:,1:2),'econ');
+ pos = bsxfun(@minus,pos,mean(pos));%pos = bsxfun(@rdivide,pos,std(pos));
+%[a,~,~] = svd(pos(:,1:2),'econ');pos = a;
+%pos(:,1) = pos(:,1)-min(pos(:,1));pos(:,1) = pos(:,1)/max(pos(:,1));
+[pos,~,~] = svd(pos(:,1:2),'econ');
 pos(:,1) = pos(:,1)-min(pos(:,1));pos(:,1) = pos(:,1)/max(pos(:,1));
-%sp = bsxfun(@rdivide,sp,std(sp,0,2));%sp/std(sp(:));
 v = bsxfun(@rdivide,v,std(v));
-sp = bsxfun(@times,sp,(v(:,1)./abs(v(:,1))).');
-v(:,2) = v(:,1).*conj(v(:,2))./abs(v(:,1));
-v(:,1) = [zeros(shift,1); v((shift+1):end,1).*conj(v(1:end-shift,1))./abs(v(1:end-shift,1))];
-v = filtLow(v.',1250/32,2);
-%sp = filtLow(sp,1250/32,2);
 b = nan*ones(size(pos,1),1);
 b(pos(:,1) < bounds(1)) = -1;b(pos(:,1) > bounds(2)) = 1;
 nanInds = find(~isnan(b));
 b = interp1(nanInds,b(nanInds),1:size(pos,1));
 b = [0 diff(b)];
-[~,inds] = sort(sum(abs(sp(:,b ~= 0)),2),'descend');
-sp = sp(inds,:);
-%if 1
+%[~,inds] = sort(sum(abs(sp(:,b ~= 0)),2),'descend');
+numCross = 4;
+sp = sp;%(inds(1:numNeuro(end)),:);
+sp = bsxfun(@rdivide,sp,std(sp,0,2));%sp/std(sp(:));
+sp = bsxfun(@times,sp,(v(:,1)./abs(v(:,1))).');
+v(:,2) = v(:,1).*conj(v(:,2))./abs(v(:,1));
+v(:,1) = [zeros(shift,1); v((shift+1):end,1).*conj(v(1:end-shift,1))./abs(v(1:end-shift,1))];
+v = filtLow(v.',1250/32,2).';
+%sp = filtLow(sp,1250/32,2);
 runs = bwlabel(b > 0);
-vInterp = zeros(2,2,max(runs),accumbins);
-spInterp = zeros(2,size(sp,1),max(runs),accumbins);
+vInterp = zeros(2,2,accumbins,max(runs));
+spInterp = zeros(2,size(sp,1),accumbins,max(runs));
 bins = (bounds(1))+((1:accumbins)-.5)/accumbins*(diff(bounds));
 numX = ceil(sqrt(size(sp,1)));numY = ceil(size(sp,1)/numX);
-shuffle = randperm(accumbins-2*shifts);cc = 
 for k = 1:2
     runs = bwlabel(b*((-1)^k)>0);
-for i = 1:max(runs)
-    inds = find(runs == i);inds = min(inds):max(inds);
-    inds(vel(inds,1) < .1) = [];
-    for j = 1:2
-        vInterp(k,j,i,:) = csaps(pos(inds,1),v(inds,j),1-1e-7,bins);
+    for i = 1:max(runs)
+        inds = find(runs == i);inds = min(inds):max(inds);
+        %inds(vel(inds,1) < .1) = [];
+        for j = 1:2
+            vInterp(k,j,i,:) = csaps(pos(inds,1),v(inds,j),1-1e-7,bins);
+        end
+        for j = 1:size(sp,1)
+            spInterp(k,j,i,:) = csaps(pos(inds,1),sp(j,inds),1-1e-7,bins);
+        end
     end
-    for j = 1:size(sp,1)
-        spInterp(k,j,i,:) = csaps(pos(inds,1),sp(j,inds),1-1e-7,bins);
+    %figure;
+    %for j = 1:size(sp,1)
+    %    subplot(numX,numY,j);imagesc(complexIm(squeeze(spInterp(k,j,:,:)),0,.25));title(num2str(j));
+    %end
+end
+kernFig = figure;
+drawnow;h = figure;
+shuffle = 1:max(runs);%randperm(max(runs));
+cc1 = zeros(numel(numNeuro),2,numCross);cc2 = cc1;cr = zeros(numel(numNeuro),2,numCross);
+for k = 1:2
+    allX = squeeze(spInterp(k,1:size(sp,1),:,:));
+    size(allX)
+    for i = 1:shifts
+        allX = [allX; circshift(squeeze(spInterp(k,1:size(sp,1),:,:)),[0 0 -i]); circshift(squeeze(spInterp(k,1:size(sp,1),:,:)),[0 0 i])];
     end
-end
-allX = [];
-for i = 1:shifts
-    allX = [allX; circshift(squeeze(spInterp(k,1:size(sp,1),:,:)),[0 0 -i]); circshift(squeeze(spInterp(k,1:size(sp,1),:,:)),[0 0 i])];
-end
-allX = allX(:,:,(shifts+1):(end-shifts));
-Y = squeeze(vInterp(k,2,shuffle,(shifts+1):(end-shifts)));Y = Y(:).';
-for n = 1:4
-    allXC = allX(:,1:numNeuro(n),:);
+    allX = allX(:,:,(shifts+1):(end-shifts));
+    Y = squeeze(vInterp(k,2,shuffle,(shifts+1):(end-shifts)));%Y = Y(:).';
+    Y1 = squeeze(vInterp(mod(k,2)+1,2,shuffle,shifts+1:end-shifts));%Y1 = Y1(:).';
+    for n = 1:numel(numNeuro)
+        allXC = allX;%(1:numNeuro(n),:,:);
+        allXC = allXC(:,:).';
+
+    allXC = [ones(size(allXC,1),1) real(allXC) imag(allXC) abs(allXC)];
+cc1(n,k,:) = pipeLine(Y(:).',allXC,numCross,1000);
+figure;imagesc(abs(Y));
+figure;imagesc(reshape(squeeze(allXC(:,2)),size(Y)));
+abs(squeeze(cc1(n,k,:)).^2)
+return
+        allXC = allX(:,shuffle,:);%(1:numNeuro(n),shuffle,:);
+        allXC = allXC(:,:).';
+        allXC = [ones(size(allXC,1),1) real(allXC) imag(allXC) abs(allXC)];
+        cc2(n,k,:) = pipeLine(Y1(:).',allXC,numCross,1000);
+        [cr(n,k,:),~,kern] = pipeLine(Y(:).',allXC,numCross,1000);
+    end
+    kern = mean(kern);
+    Y = squeeze(vInterp(k,2,:,(shifts+1):(end-shifts)));
+    allXC = allX;%(1:numNeuro(n),:,:);
     allXC = allXC(:,:).';allXC = [ones(size(allXC,1),1) real(allXC) imag(allXC) abs(allXC)];
-    cc(k,n,:) = pipeLine(Y,allXC,4,1000);
-    allXC = allX(:,1:numNeuro(n),shuffle);
-    allXC = allX(:,:).';allXC = [ones(size(allXC,1),1) real(allXC) imag(allXC) abs(allXC)];
-    [cr(k,n,:),~,kern{n}(k,:)] = pipeLine(Y,allXC,4,1000);
+    subplot(2,4,(k-1)*4+3);image(complexIm(reshape(conj(kern*allXC'),size(Y)),0,.25));
+    subplot(2,4,k*4);image(complexIm(Y,0,.25));
+    kern = reshape(kern(2:end),numel(kern(2:end))/3,3);%
+    figure(kernFig);plot(abs(kern));
+    in = squeeze(spInterp(k,input('which neuron? '),:,shifts+1:end-shifts));
+    figure(h);subplot(2,4,(k-1)*4+1);imagesc(abs(in));
+    subplot(2,4,(k-1)*4+2);image(complexIm(in,0,.25));
 end
-figure;
-for j = 1:size(sp,1)
-    subplot(numX,numY,i);imagesc(complexIm(squeeze(spInterp(k,i,:,:)),0,.25));title(num2str(i));
-end
-end
-%figure;subplot(221);imagesc(imag(lrV));
-%subplot(222);imagesc(reshape(-imag(mean(kernlr)*allX'),size(lrV)));
-%temp = mean(reshape(conj(mean(kernlr)*allX'),size(lrV)),2);
-%temp = temp-mean(temp);temp = temp/std(temp);
-%allX = bsxfun(@minus,allX,mean(allX));
-lrVHat = reshape(conj(mean(kernlr)*allX'),size(lrV));
-%cclr
-%figure;subplot(211);imagesc(angle(lrV));colormap hsv;subplot(212);imagesc(angle(lrVHat));colormap hsv
-%return
-%lrV = mean(lrV,2);
-%lrV = lrV-mean(lrV);lrV = lrV/std(lrV);
-%figure;subplot(211);plot(real(lrV));hold all;plot(imag(lrV));
-%plot(real(temp));plot(imag(temp));
-%[abs(cclr).^2 1-mse]
-inds = randperm(size(rlAvg,3));%1:size(rlAvg,3);%
-rlV = rlV(:,inds);%rlAvg = rlAvg(:,:,inds);
-allX = rlAvg(:,:).';%allX = [allX conj(allX) abs(allX)];%ones(size(allX,1),1) 
-allX = [ones(size(allX,1),1) real(allX) imag(allX) abs(allX)];
-[ccrlc,mse,kernrl] = pipeLine(rlV(:).',allX,4,1000);
-rlAvg = rlAvg(:,:,inds);
-allX = rlAvg(:,:).';%allX = [allX conj(allX) abs(allX)];%ones(size(allX,1),1) 
-allX = [ones(size(allX,1),1) real(allX) imag(allX) abs(allX)];
-[ccrl,mse,kernrl] = pipeLine(rlV(:).',allX,4,1000);
-%temp = mean(reshape(conj(mean(kernrl)*allX'),size(rlV)),2);
-%temp = temp-mean(temp);temp = temp/std(temp);
-%rlV = mean(rlV,2);
-%rlV = rlV - mean(rlV);rlV = rlV/std(rlV);
-%subplot(212);plot(real(rlV));hold all;plot(imag(rlV));
-%plot(real(temp));plot(imag(temp));
-%[abs(ccrl).^2 1-mse]
-ccs = [cclrc cclr ccrlc ccrl];ccs = abs(ccs).^2
-%figure;plot(abs(mean(kernlr)));hold all;plot(abs(mean(kernrl)));
-%lrV = lrV-mean(lrV(:));
-rlVa(:,:,1) = (angle(rlV)+pi)/(2*pi);rlVa(:,:,2) = 1;rlVa(:,:,3) = sqrt(abs(rlV)/max(abs(rlV(:))));
-rlVa = hsv2rgb(rlVa);
-lrVa(:,:,1) = (angle(lrV)+pi)/(2*pi);lrVa(:,:,2) = 1;lrVa(:,:,3) = sqrt(abs(lrV)/max(abs(lrV(:))));
-lrVa = hsv2rgb(lrVa);
-figure;subplot(221);image(lrVa);subplot(223);image(rlVa);
-%allX = bsxfun(@minus,allX,mean(allX));
-rlVHat = reshape(conj(mean(kernrl)*allX.'),size(rlV));
-rlVa(:,:,1) = (angle(rlVHat)+pi)/(2*pi);rlVa(:,:,2) = 1;rlVa(:,:,3) = sqrt(abs(rlVHat)/max(abs(rlVHat(:))));
-rlVa = hsv2rgb(rlVa);
-lrVa(:,:,1) = (angle(lrVHat)+pi)/(2*pi);lrVa(:,:,2) = 1;lrVa(:,:,3) = sqrt(abs(lrVHat)/max(abs(lrVHat(:))));
-lrVa = hsv2rgb(lrVa);
-subplot(222);image(lrVa);subplot(224);image(rlVa);
-templr = mean(abs(kernlr));size(templr)
-%templr = reshape(templr(2:end),20,3);
-temprl = mean(abs(kernrl));
-%temprl = reshape(temprl(2:end),20,3);
-figure;plot(templr);hold all;plot(temprl);9

@@ -1,9 +1,6 @@
-function [cc mse kern snr f] = pipeLine(y,x,numCross,ridge,fs,numX,useKern)
+function [cc mse kern snr f] = pipeLine1(y,x,numCross,ridge,fs,numX,useKern)
 figsOn = 0;
 samples = size(x,1);
-scramble = randperm(numel(y));
-x = x(scramble,:);y = y(scramble);
-%[size(x) size(y)]
 %x = bsxfun(@minus,x,mean(x));
 %x = bsxfun(@rdivide,x,std(x));
 %for testing
@@ -73,6 +70,5 @@ plot(f,sqrt(sigSpec));hold all;plot(f,sqrt(snr/20));
 % plot(mean(S,2));
 %figure;scatter(yTest,yEst');
 end
-%cc = squeeze(mean(cc,1));
-%mse = squeeze(mean(mse,1));
-%[cc mse sum(snr)/1000]
+cc = squeeze(mean(cc,1));
+mse = squeeze(mean(mse,1));

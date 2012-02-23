@@ -1,4 +1,4 @@
-function [ccs] = posVsSpike(pos,sp,v,bounds,gauss)% lrVa rlVa
+function [ccs] = posVsSpike1(pos,sp,v,bounds,gauss)% lrVa rlVa
 accumbins = gauss(1);shift = 1;shifts = 0;
 % if numel(gauss) == 1
 %     gaussWeights = ones(gauss(1),1);
@@ -37,6 +37,7 @@ b(pos(:,1) < bounds(1)) = -1;b(pos(:,1) > bounds(2)) = 1;
 nanInds = find(~isnan(b));
 b = interp1(nanInds,b(nanInds),1:size(pos,1));
 b = [0 diff(b)];
+sPlot(sp
 if 1
     lrRuns = bwlabel(b>0);rlRuns = bwlabel(b<0);
     lrAvg = zeros(size(sp,1),accumbins,max(lrRuns));lrV = zeros(accumbins,max(lrRuns));
@@ -82,14 +83,19 @@ end
 lrAvg = lrAvg(:,(shifts+1):(end-shifts),:);
 rlAvg = rlAvg(:,(shifts+1):(end-shifts),:);
 lrV = lrV((shifts+1):(end-shifts),:);rlV = rlV((shifts+1):(end-shifts),:);
-inds = randperm(size(lrAvg,3));%1:size(lrAvg,3);%
+%%%
+inds = 1:size(lrAvg,3);%randperm(size(lrAvg,3));%
 lrV = lrV(:,inds);%lrAvg = lrAvg(:,:,inds);
 allX = lrAvg(:,:).';%allX = [allX conj(allX) abs(allX)];%ones(size(allX,1),1) 
 allX = [ones(size(allX,1),1) real(allX) imag(allX) abs(allX)];
 [cclrc,mse,kernlr] = pipeLine(lrV(:).',allX,4,1000);
 lrAvg = lrAvg(:,:,inds);
 allX = lrAvg(:,:).';%allX = [allX conj(allX) abs(allX)];%ones(size(allX,1),1) 
+figure;hist(abs(allX(:,1)));return
 allX = [ones(size(allX,1),1) real(allX) imag(allX) abs(allX)];
+%%%% NEW
+figure;imagesc(complexIm(rlV,0,.25));
+figure;hist(allX(:,2));
 [cclr,mse,kernlr] = pipeLine(lrV(:).',allX,4,1000);
 %figure;subplot(221);imagesc(imag(lrV));
 %subplot(222);imagesc(reshape(-imag(mean(kernlr)*allX'),size(lrV)));
@@ -113,6 +119,9 @@ allX = [ones(size(allX,1),1) real(allX) imag(allX) abs(allX)];
 rlAvg = rlAvg(:,:,inds);
 allX = rlAvg(:,:).';%allX = [allX conj(allX) abs(allX)];%ones(size(allX,1),1) 
 allX = [ones(size(allX,1),1) real(allX) imag(allX) abs(allX)];
+figure;imagesc(complexIm(rlV,0,.25));
+figure;hist(allX(:,2));
+return
 [ccrl,mse,kernrl] = pipeLine(rlV(:).',allX,4,1000);
 %temp = mean(reshape(conj(mean(kernrl)*allX'),size(rlV)),2);
 %temp = temp-mean(temp);temp = temp/std(temp);
