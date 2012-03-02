@@ -1,4 +1,4 @@
-function [cr,cc1,cc2,kerns] = posVsSpike(pos,sp,v,numNeuro)%,
+function vInterp = posVsSpike(pos,sp,v,numNeuro)%,[cr,cc1,cc2,kerns]
 bounds = [.1 .9];accumbins = 50;
 shift = 1;shifts = 0;
 if numel(sp) > size(v,1)
@@ -74,12 +74,12 @@ for k = 1:2
         allXC = allX(1:numNeuro(n),:,:);
         allXC = allXC(:,:).';
         allXC = [ones(size(allXC,1),1) real(allXC) imag(allXC) abs(allXC)];
-        cc1(n,k,:) = pipeLine(Y(:).',allXC,numCross,1000);
+        [cc1(n,k,:),~] = pipeLine(Y(:).',allXC,numCross,1000);
         allXC = allX(1:numNeuro(n),shuffle,:);
         allXC = allXC(:,:).';
         allXC = [ones(size(allXC,1),1) real(allXC) imag(allXC) abs(allXC)];
-        cc2(n,k,:) = pipeLine(Y1(:).',allXC,numCross,1000);
-        [cr(n,k,:),~,kern] = pipeLine(Y(:).',allXC,numCross,1000);
+        [cc2(n,k,:),~,kern] = pipeLine(Y1(:).',allXC,numCross,1000);
+        [cr(n,k,:),~,~] = pipeLine(Y(:).',allXC,numCross,1000);
     end
     size(kern)
     kern =  mean(kern);kerns(k,:) = squeeze(kern);
