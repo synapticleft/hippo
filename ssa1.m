@@ -30,7 +30,7 @@ function outSer= ssa1(x1,L,sv)%[y,r,vr]=U1 [U V u]
 % using a window length L. You must choose the components be used to reconstruct 
 %the series in the form [i1,i2:ik,...,iL], based on the Singular Spectrum appearance.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-pca = 0;
+pca = 1;
 [u s v] = svds(x1,sv);
 %figure;plot(log(diag(s)));
 v = s*v';
@@ -48,7 +48,7 @@ v = s*v';
     
 % Step 2: SVD
 if pca
-   S=X*X'; 
+   S=X*X'; size(S)
 	[U,d]=eigs(S,min(size(S,1),100));
     d=diag(d);
 	%[d,i]=sort(-diag(autoval));  
@@ -66,6 +66,9 @@ if pca
    if numel(I) == 1 I = 1:I; end
    %Vt=V';
    rca=U(:,I)*V(:,I)';%Vt(I,:);
+       params.Fs = 1250/32;
+    [S,f] = mtspectrumc(V,params);
+    sPlot(sqrt(S)',f);
 else
     [a,b,c,~,e,~,g] = runica(X);%,'extended',-2
     e

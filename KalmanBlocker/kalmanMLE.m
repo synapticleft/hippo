@@ -20,7 +20,7 @@
 function [A, W, F, S, a, B, x0, V0, loglik, xsmooth] = kalmanMLE( Z, A0, W0, F0, S0, x0, V0, diagS, diagW, a0, B0, U)
 
 converged = 0;
-maxIter = 2;
+maxIter = 5;
 thresh = 1e-5;
 iter = 0;
 
@@ -108,7 +108,7 @@ while (iter < maxIter & converged == 0)
         
         % Check for reversal
 		if ( (loglik(iter-1) - loglik(iter)) > 1e-3 )
-			error('EM algorithm reversed - terminating.\n');
+			converged = 1;%error('EM algorithm reversed - terminating.\n');
 		end
     end
 end

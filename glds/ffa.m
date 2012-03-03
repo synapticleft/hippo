@@ -52,7 +52,7 @@ for i=1:cyc;
   
   oldlik=lik;
   lik=real(N*const+N*log(dM)-0.5*N*sum(diag(MM*XX)));
-  fprintf('cycle %i lik %g \n',i,lik);
+  %fprintf('cycle %i lik %g \n',i,lik);
   LL=[LL lik];
   
   %%%% M Step %%%%
