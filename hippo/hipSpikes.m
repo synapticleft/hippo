@@ -1,15 +1,19 @@
-function [spikeMat c] = hipSpikes(file,bin,subSet)
+function [spikeMat a b] = hipSpikes(file,bin,someShanks,subSet)
 %% extract all spikes into matrix downsampled to match lfp and position files.
 %bin usually 32/1.25
-d = ['/media/work/hippocampus/' file '/'];%'/media/Expansion Drive/KenjiMizuseki/';%
-[a,b,c,d] = LoadCluRes([d file],[1:4 7:10]);
+d = ['/media/Expansion Drive/KenjiMizuseki/'];%;%'/media/work/hippocampus/' file '/'
+if exist('someShanks','var')
+    [a,b,~,d] = LoadCluRes([d file],someShanks);
+else
+    [a,b,~,d] = LoadCluRes([d file]);
+end
 a = ceil(a/d.SampleRate*1000/bin);
 if ~exist('subSet','var')
     subSet = max(a);
 else
     subSet = subSet*1000/bin;
 end
-subSet
+%subSet
 b(a > subSet) = [];a(a > subSet) = [];
 spikeMat = zeros(max(b),max(a));
 for i = 1:max(b)
