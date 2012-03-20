@@ -43,7 +43,7 @@ b(pos(:,1) < bounds(1)) = -1;b(pos(:,1) > bounds(2)) = 1;
 nanInds = find(~isnan(b));
 b = interp1(nanInds,b(nanInds),1:size(pos,1));
 b = [0 diff(b)];
-vDemod(:,1) = [0 v(2:end,1).*exp(1i*-angle(v(1:end-1,1)))];
+vDemod(:,1) = [0; v(2:end,1).*exp(1i*-angle(v(1:end-1,1)))];
 vDemod(:,2) = v(:,2).*exp(1i*-angle(v(:,1)));
 bins{1} = linspace(-pi,pi,30);bins{2} = bins{1};%
 binsp{1} = bins{1};binsp{2} = linspace(bounds(1),bounds(2),50);%
@@ -53,10 +53,10 @@ for k = 1:2
     [~,spSort] = sort(hist(temp,1:max(spId)),'descend');
     posHist = hist(pos(runs > 0,1),binsp{2});
     v2Hist = hist(angle(vDemod(runs > 0,2)),bins{2});
-    h0 = hist3([angle(vDemod(runs>0,2)) pos(runs>0,1)],binsp);
-    h0 = bsxfun(@rdivide,h0,posHist);
-    h1 = hist3(angle(vDemod(runs>0,:)),bins);
-    h1 = bsxfun(@rdivide,h1,v2Hist);
+    %h0 = hist3([angle(vDemod(runs>0,2)) pos(runs>0,1)],binsp);
+    %h0 = bsxfun(@rdivide,h0,posHist);
+    %h1 = hist3(angle(vDemod(runs>0,:)),bins);
+    %h1 = bsxfun(@rdivide,h1,v2Hist);
 for j = 1:max(spId)
 %for i = 1:max(runs)
 %    inds = find(runs == i);inds = min(inds):max(inds);
@@ -66,7 +66,7 @@ for j = 1:max(spId)
        hp = bsxfun(@rdivide,hp,posHist);
        hp2 = hist3([angle(weighted(tempTimes,(spf(spSort(j),:).*exp(1i*angle(vDemod(:,2).'))).')) weighted(tempTimes,pos(:,1))],binsp);
        hp2 = bsxfun(@rdivide,hp2,posHist);
-       hv2p = hist3([angle(weighted(tempTimes,vDemod(:,2))) weighted(tempTimes,pos(:,1))],binsp);
+       hv2p = hist3([angle(weighted(tempTimes,v(:,2))) weighted(tempTimes,pos(:,1))],binsp);
        hv2p = bsxfun(@rdivide,hv2p,posHist);
        h = hist3([angle(weighted(tempTimes,v(:,1))) angle(weighted(tempTimes,vDemod(:,2)))],bins);
         figure(2);subplot(221);imagesc(sqrt(hp));subplot(222);imagesc(sqrt(hp2));
