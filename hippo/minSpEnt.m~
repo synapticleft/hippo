@@ -1,4 +1,4 @@
-function [vals sorted] = minSpEnt(pos,u,s,v,spT,spId,spf)
+function [vals sorted] = minSpEnt(pos,u,s,v,spT,spId,spf,vals,sh)
 %% find static superposition of 1st 2 activations that reduces the variance of the demodulated activation
 v = v*s;
 bounds = [.1 .9];
@@ -24,9 +24,11 @@ nanInds = find(~isnan(b));
 b = interp1(nanInds,b(nanInds),1:size(pos,1));
 b = [0 diff(b)];
 %v(:,2) = v(:,2).*exp(1i*-angle(v(:,1)));
+binsp{1} = linspace(-pi+pi/60,pi-pi/60,30); binsp{2} = linspace(bounds(1),bounds(2),50);%
+if exist('vars','var')
+figure;
 vals = zeros(2,15,10,10);
 range = linspace(-3,3,size(vals,3));
-binsp{1} = linspace(-pi,pi,30); binsp{2} = linspace(bounds(1),bounds(2),50);%
 sorted = zeros(2,size(vals,2));
 for i = 1:size(vals,3)%range
     for j = 1:size(vals,4)
@@ -45,9 +47,53 @@ for i = 1:size(vals,3)%range
                 hp = hist3([angle(weighted(tempTimes,temp(spSort(l),:).')) weighted(tempTimes,pos(:,1))],binsp);
                 hp = bsxfun(@rdivide,hp,posHist);
                 vals(k,l,i,j) = ent(hp);
-                %subplot(211);imagesc(hp);title(num2str(vals(k,l,i,j)));drawnow;
+                %subplot(2,2,(k-1)*2+l);imagesc(hp);title(num2str(vals(k,l,i,j)));drawnow;
             end
          end
+    end
+end
+else
+   % vals = vals(:,1:10,:,:);
+    numDisp = 6;
+    range = linspace(-3,3,size(vals,3));
+    bins{1} = linspace(-pi,pi,30);bins{2} = bins{1};%
+    for k = 1:2
+        figure;
+            runs = bwlabel(b*((-1)^k)>0);
+            posHist = hist(pos(runs > 0,1),binsp{2});
+            mem = ismember(floor(spT),find(runs>0)) | ismember(ceil(spT),find(runs>0));
+            subTimes = spT(mem);subId = spId(mem);
+             [~,spSort] = sort(sum(abs(spf(:,runs > 0)),2),'descend');
+             vDemod = v(:,2).*exp(1i*-angle(v(:,1)));
+            v2Hist = hist(angle(vDemod(runs > 0)),bins{2});
+        for i = 1:size(vals,2)
+            subplot(size(vals,2),numDisp,numDisp*(i-1)+1);imagesc(squeeze(vals(k,i,:,:)));axis off;ylabel(num2str(spSort(i)));
+            smooth = imfilter(squeeze(vals(k,i,:,:)),fspecial('gaussian',3,1),'replicate');
+            subplot(size(vals,2),numDisp,numDisp*(i-1)+2);imagesc(smooth);axis off;
+            [x y] = find(smooth == min(smooth(:)));
+            alpha = range(x) + 1i*range(y);%title(num2str(alpha));
+            tempTimes = subTimes(subId == spSort(i));%tempTimes = tempTimes(ismember(floor(tempTimes),find(runs>0)) | ismember(ceil(tempTimes),find(runs>0)));
+            temp = spf(spSort(i),:).*exp(1i*angle(v(:,1).'));
+            hp = hist3([angle(weighted(tempTimes,temp.')) weighted(tempTimes,pos(:,1))],binsp);
+            hp = bsxfun(@rdivide,hp,posHist);minMax = [min(hp(:)) max(hp(:))];
+            subplot(size(vals,2),numDisp,numDisp*(i-1)+3);imagesc(sqrt(hp));axis off;%title(num2str(ent(hp)));
+            temp = spf(spSort(i),:).*exp(1i*angle(v(:,1)+alpha*v(:,2)).');
+            hp = hist3([angle(weighted(tempTimes,temp.')) weighted(tempTimes,pos(:,1))],binsp);
+            hp = bsxfun(@rdivide,hp,posHist);
+            subplot(size(vals,2),numDisp,numDisp*(i-1)+4);imagesc(sqrt(hp),sqrt(minMax));axis off;%title(num2str(ent(hp)));
+            h = hist3([angle(weighted(tempTimes,v(:,1))) angle(weighted(tempTimes,vDemod))],bins);
+            h = bsxfun(@rdivide,h,v2Hist);
+            subplot(size(vals,2),numDisp,numDisp*(i-1)+5);imagesc(sqrt(h));axis off;
+%             vTemp = ([1 alpha;-conj(alpha) 1]*v.').';
+%             vTemp(:,2) = vTemp(:,2).*exp(1i*-angle(vTemp(:,1)));
+%             v2TempHist = hist(angle(vTemp(runs > 0,2)),bins{2});%figure;plot(v2TempHist);hold all;plot(v2Hist);return
+%             h = hist3([angle(weighted(tempTimes,vTemp(:,1))) angle(weighted(tempTimes,vTemp(:,2)))],bins);
+%            % h = bsxfun(@rdivide,h,v2TempHist);
+            temp = abs(u(:,2)./u(:,1) - alpha);
+            subplot(size(vals,2),numDisp,numDisp*(i-1)+6);imagesc(reshape(temp,[8 8]),[0 max(temp)]);axis off;
+            if exist('sh','var')
+                plot(sh(
+        end
     end
 end
 
