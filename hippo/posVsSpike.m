@@ -1,4 +1,4 @@
-function vInterp = posVsSpike(pos,sp,v,numNeuro)%,[cr,cc1,cc2,kerns]
+function [cr,cc1,cc2,kerns]= posVsSpike(pos,sp,v,numNeuro)%,vInterp 
 bounds = [.1 .9];accumbins = 50;
 shift = 1;shifts = 0;
 if numel(sp) > size(v,1)
@@ -15,8 +15,7 @@ end
 nanInds = isnan(pos(:,1));
 pos = pos(~nanInds,:);v = v(~nanInds,:);sp = sp(:,~nanInds);
 vel = angVel(pos);vel = filtLow(vel(:,1),1250/32,4);
-pos = bsxfun(@minus,pos,mean(pos));
- pos = bsxfun(@minus,pos,mean(pos));%pos = bsxfun(@rdivide,pos,std(pos));
+pos = bsxfun(@minus,pos,mean(pos));%pos = bsxfun(@rdivide,pos,std(pos));
 %[a,~,~] = svd(pos(:,1:2),'econ');pos = a;
 %pos(:,1) = pos(:,1)-min(pos(:,1));pos(:,1) = pos(:,1)/max(pos(:,1));
 [pos,~,~] = svd(pos(:,1:2),'econ');
@@ -28,7 +27,7 @@ nanInds = find(~isnan(b));
 b = interp1(nanInds,b(nanInds),1:size(pos,1));
 b = [0 diff(b)];
 [~,inds] = sort(sum(abs(sp(:,b ~= 0)),2),'descend');
-numCross = 4;
+numCross = 3;
 sp = sp(inds(1:numNeuro(end)),:);
 sp = bsxfun(@rdivide,sp,std(sp,0,2));%sp/std(sp(:));
 sp = bsxfun(@times,sp,(v(:,1)./abs(v(:,1))).');

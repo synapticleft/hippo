@@ -5,7 +5,7 @@ scramble = randperm(numel(y));
 x = x(scramble,:);y = y(scramble);
 %[size(x) size(y)]
 %x = bsxfun(@minus,x,mean(x));
-%x = bsxfun(@rdivide,x,std(x));
+%x(:,2:end) = bsxfun(@rdivide,x(:,2:end),std(x(:,2:end)));
 %for testing
 %tk = sin(linspace(0,pi,size(x,2)));
 %y = (x*tk')'; y = y + randn(size(y))*std(y(:))/2;
@@ -37,7 +37,7 @@ for i = 1:numCross
 %    gammasq = gamma.*conj(gamma);
 %    snr(i,:,:) = gammasq./(1-gammasq);
     cc(i,:) = diag(corr(yTest.',yEst));
-    mse(i,:) = mean(abs(yTest.'-yEst).^2)/mean(abs(yTest.').^2);
+    mse(i,:) = mean(abs(yTest.'-yEst).^2)/var(yTest(:));%mean(abs(yTest.').^2);
 %     try
 %     sigSpec(i,1,:) = mtspectrumc(yTest,params);
 %     sigSpec(i,2,:) = mtspectrumc(yEst',params);

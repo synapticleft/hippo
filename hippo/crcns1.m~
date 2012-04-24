@@ -15,45 +15,41 @@ HT = angle(traceT);%hilbert(traceT'))';
 traceT = real(traceT);
 center = dims([2 1])/2;
 scale = 20;
-numPast = 20;
-scaleTG = 5;
-histT = zeros(numPast,2);
-histG = zeros(numPast,2);
+numPast = 500;
+histT = nan*ones(numPast,2);
 step = 1;
-h = uicontrol('Style','slider','Position', [20 20 100 20],'Value',2,'Min',1,'Max',20, 'Callback',@fixStep);
+%h = uicontrol('Style','slider','Position', [20 20 100 20],'Value',2,'Min',1,'Max',20, 'Callback',@fixStep);
 %tRange = [min(traceT(:)) max(traceT(:))]; gRange = [min(traceG(:)) max(traceG(:))];
-tRange = [-1 1]*sqrt(mean(var(traceT(:))))*3; orRange = [-1 1]*sqrt(mean(var(trace(:))))*3;
-colormap gray;
-for j = 1:inf
-for i = 1:size(trace,2)
+%tRange = [-1 1]*sqrt(mean(var(traceT(:))))*2; orRange = [-1 1]*sqrt(mean(var(trace(:))))*2;
+trange = std(traceT(:))*[-2 2];
+%colormap gray;
+for i = 1:2size(trace,2)
     [xt yt] = myGradient(reshape(HT(:,i),dims));
-    xt = -xt;yt = -yt;tm = [mean(xt(:)) mean(yt(:))];
+    xt = -xt;yt = flipud(yt);tm = [mean(xt(:)) mean(yt(:))];
     if mod(i,step) == 0
-        histG = circshift(histG,[-1 0]);
-        if mod(i,step*scaleTG) == 0 
-            histT = circshift(histT,[-1 0]);
-            histT(numPast,:) = center([2 1]).*ratio+tm*scale;
-        end
-        histG(numPast,:) = center([2 1]).*ratio+gm*scale;
-        %subplot('Position',[0 .8 1 .2]);hold on;
-        
-        %plot(mod([i-1+tml(1),i+tm(1)],500),[tml(2) tm(2)],'k','LineWidth',2);
-        subplot('Position',[0 0 .48 1]);%1,2,1);
-        imagesc((1:dims(1))*ratio(1),(1:dims(2))*ratio(2),reshape(traceT(:,i),dims),tRange*.8);hold on;axis image off;
-        plot(histT(:,1),histT(:,2),'w','LineWidth',2);
-        quiver(xt,yt,'w');
-        quiver(center(2)*ratio(1),center(1)*ratio(2),tm(1)*scale,tm(2)*scale,'w','LineWidth',5);
-        hold off;
-        subplot('Position',[.52 0 .48 1]);%s1);%1,2,2);
-        imagesc((1:dims(1))*ratio(1),(1:dims(2))*ratio(2),reshape(traceG(:,i),dims),gRange*.8);hold on;axis image off;
-        plot(histG(:,1),histG(:,2),'w','LineWidth',2);
-        quiver(xg,yg,'w');
-        quiver(center(2)*ratio(1),center(1)*ratio(2),gm(1)*scale,gm(2)*scale,'w','LineWidth',5);
-        hold off;
+        histT = circshift(histT,[-1 0]);
+        histT(numPast,:) = center([2 1]).*ratio+tm*scale;
+        %subplot('Position',[0 0 1 .48]);
+        %imagesc((1:dims(1))*ratio(1),(1:dims(2))*ratio(2),flipud(reshape(traceT(:,i),dims)),tRange*.8);hold on;axis off;
+        %plot(histT(:,1),histT(:,2),'w','LineWidth',1.5);
+        %plot(histT(:,1),histT(:,2),'k','LineWidth',1.5);
+        %quiver(xt,yt,'k');
+        %quiver(center(2)*ratio(1),center(1)*ratio(2),tm(1)*scale,tm(2)*scale,'w','LineWidth',5);
+        %quiver(center(2)*ratio(1),center(1)*ratio(2),tm(1)*scale,tm(2)*scale,'k--','LineWidth',5);
+        %hold off;
+        %subplot('Position',[0 .52 1 .48]);%s1);%1,2,2);
+        surf((1:dims(1))*ratio(1),(1:dims(2))*ratio(2),flipud(reshape(traceT(:,i),dims)));set(gca,'zlim',trange);hold on;
+        quiver3(center(2)*ratio(1),center(1)*ratio(2),trange(1),tm(1)*scale,tm(2)*scale,0,'k--','LineWidth',5);
+        plot3(histT(:,1),histT(:,2),trange(1)*ones(size(histT,1),1),'k','LineWidth',1.5);hold off;
+        set(gca,'xticklabel',[],'yticklabel',[],'zticklabel',[]);
+%        imagesc((1:dims(1))*ratio(1),(1:dims(2))*ratio(2),flipud(reshape(trace(:,i),dims)),orRange*.8);axis off;
         drawnow;
     end
+    if i > startInd
+    m(i-startInd) = getframe(gcf);
+    end
 end
-end
+movie2avi(m,'crcnsSurf.avi');
 
 function fixStep(a,b)
 global step
