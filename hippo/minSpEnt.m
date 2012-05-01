@@ -53,7 +53,7 @@ for i = 1:size(vals,3)%range
     end
 end
 else
-    vals = vals(:,1:10,:,:);
+    %vals = vals(:,1:10,:,:);
     numDisp = 5;
     range = linspace(-3,3,size(vals,3));
     bins{1} = linspace(-pi,pi,30);bins{2} = bins{1};%
@@ -70,10 +70,12 @@ else
             subplot(size(vals,2),numDisp,numDisp*(i-1)+1);imagesc(squeeze(vals(k,i,:,:)));ylabel(num2str(spSort(i)));set(gca,'ytick',[],'xtick',[]);
             smooth = imfilter(squeeze(vals(k,i,:,:)),fspecial('gaussian',3,1),'replicate');
             subplot(size(vals,2),numDisp,numDisp*(i-1)+2);imagesc(smooth);axis off;
-            [x y] = find(smooth == min(smooth(:)));
+            [x y] = find(smooth == max(smooth(:)));
             alpha = (range(x) + 1i*range(y));%title(num2str(alpha));
+            [x y] = find(smooth == min(smooth(:)));
+            beta = (range(x) + 1i*range(y));%title(num2str(alpha));
             tempTimes = subTimes(subId == spSort(i));%tempTimes = tempTimes(ismember(floor(tempTimes),find(runs>0)) | ismember(ceil(tempTimes),find(runs>0)));
-            temp = spf(spSort(i),:).*exp(1i*angle(v(:,1).'));
+            temp = spf(spSort(i),:).*exp(1i*angle(v(:,1).'));%+beta*v(:,2))
             hp = hist3([angle(weighted(tempTimes,temp.')) weighted(tempTimes,pos(:,1))],binsp);
             hp = bsxfun(@rdivide,hp,posHist);minMax = [min(hp(:)) max(hp(:))];
             subplot(size(vals,2),numDisp,numDisp*(i-1)+3);imagesc(sqrt(hp));axis off;%title(num2str(ent(hp)));
@@ -107,7 +109,15 @@ end
 % subplot(312);imagesc(reshape(std(Xf1(:,b>0),0,2)./std(Xf(:,b>0),0,2),[8 8]));
 % subplot(313);imagesc(reshape(abs(u(:,2)./u(:,1) - val),[8 8]));
 
-function v = ent(in)
+function [v in] = ent(in)
+dim = min(size(in,1));
+%[x y] = meshgrid(dim);x = x - ceil(dim/2);y = y-ceil(dim/2);x = x/max(x(:)); y = y/max(y(:));
+%f = 1./(x.^2+y.^2);f = f/max(f(:));%
+f = fspecial('gaussian',ceil(dim/5),ceil(dim/10));
+in = in.*imfilter(in,f,'circular');
+v = mean(in(:));
+
+function v = entOld(in)
 in = in(:)/sum(in(:));
 v = -nansum(in.*log2(in));
 %v(isnan(v)) = 0;

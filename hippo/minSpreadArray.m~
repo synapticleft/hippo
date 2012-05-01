@@ -1,4 +1,4 @@
-function vals = minSpEntArray(pos,u,s,v,spT,spId,spf,Xf,vals)
+function vals = minSpreadArray(pos,u,s,v,spT,spId,spf,Xf,vals)
 %% find electrode site that reduces the variance of the phase-position spike plots
 if ~exist('Xf','var')
     Xf = u*s*v';
@@ -27,7 +27,7 @@ b = interp1(nanInds,b(nanInds),1:size(pos,1));
 b = [0 diff(b)];
 %v(:,2) = v(:,2).*exp(1i*-angle(v(:,1)));
 %binsp{1} = linspace(-pi+pi/60,pi-pi/60,30); binsp{2} = linspace(bounds(1),bounds(2),50);%
-angBins = 30;posBins = 50;
+angBins = 100;posBins = 100;
 bins{1} = linspace(-pi+pi/angBins,pi-pi/angBins,angBins);bins{2} = bins{1};%
 binsp{1} = bins{1};binsp{2} = linspace(bounds(1)+1/posBins/2,bounds(2)-1/posBins/2,posBins);%
 if ~exist('vals','var')
@@ -48,8 +48,8 @@ if ~exist('vals','var')
                 %hp = hist3([angle(weighted(tempTimes,temp(spSort(l),:).')) weighted(tempTimes,pos(:,1))],binsp);
                 hp = hist3([angle(weighted(tempTimes,Xf(i,:).')) weighted(tempTimes,pos(:,1))],binsp);
                 hp = bsxfun(@rdivide,hp,posHist);
-                vals(k,l,i) = ent(hp);
-                subplot(size(vals,2),2,(k-1)*size(vals,2)+l);imagesc(hp);axis off;%title(num2str(vals(k,l,i)));
+                [vals(k,l,i) hp] = ent(hp);
+                subplot(size(vals,2),2,(k-1)*size(vals,2)+l);imagesc(hp);axis off;title(num2str(vals(k,l,i)));
             end
             figure(k+2);
             subplot(8,8,i);imagesc(sqrt(hp/sum(hp(:))),[0 .1]);axis off;title(num2str(vals(k,l,i)));drawnow;
@@ -112,10 +112,12 @@ end
 % subplot(312);imagesc(reshape(std(Xf1(:,b>0),0,2)./std(Xf(:,b>0),0,2),[8 8]));
 % subplot(313);imagesc(reshape(abs(u(:,2)./u(:,1) - val),[8 8]));
 
-function v = ent(in)
-in = in(:)/sum(in(:));
-in(in == 0) = 1;
-v = -sum(in.*log2(in));
+function [v in] = ent(in)
+dim = ceil(min(size(in,1))/5;
+[x y] = meshgrid(dim);x = x - ceil(dim/2);y = y-ceil(dim/2);
+f = 
+in = in.*imfilter(in,fspecial('gaussian',ceil(dims/5),ceil(dims/10)),'circular');
+v = mean(in(:));
 %v(isnan(v)) = 0;
 
 function out = weighted(inds,vals)

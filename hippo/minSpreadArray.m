@@ -1,4 +1,4 @@
-function vals = minSpEntArray(pos,u,s,v,spT,spId,spf,Xf,vals)
+function vals = minSpreadArray(pos,u,s,v,spT,spId,spf,spSh,Xf,vals)
 %% find electrode site that reduces the variance of the phase-position spike plots
 if ~exist('Xf','var')
     Xf = u*s*v';
@@ -27,7 +27,7 @@ b = interp1(nanInds,b(nanInds),1:size(pos,1));
 b = [0 diff(b)];
 %v(:,2) = v(:,2).*exp(1i*-angle(v(:,1)));
 %binsp{1} = linspace(-pi+pi/60,pi-pi/60,30); binsp{2} = linspace(bounds(1),bounds(2),50);%
-angBins = 30;posBins = 50;
+angBins = 100;posBins = 100;
 bins{1} = linspace(-pi+pi/angBins,pi-pi/angBins,angBins);bins{2} = bins{1};%
 binsp{1} = bins{1};binsp{2} = linspace(bounds(1)+1/posBins/2,bounds(2)-1/posBins/2,posBins);%
 if ~exist('vals','var')
@@ -45,14 +45,14 @@ if ~exist('vals','var')
             posHist = hist(pos(runs > 0,1),binsp{2});
             for l = 1:size(vals,2)%size(spf,1)
                 tempTimes = subTimes(subId == spSort(l));%tempTimes = tempTimes(ismember(floor(tempTimes),find(runs>0)) | ismember(ceil(tempTimes),find(runs>0)));
-                %hp = hist3([angle(weighted(tempTimes,temp(spSort(l),:).')) weighted(tempTimes,pos(:,1))],binsp);
-                hp = hist3([angle(weighted(tempTimes,Xf(i,:).')) weighted(tempTimes,pos(:,1))],binsp);
+                hp = hist3([angle(weighted(tempTimes,temp(spSort(l),:).')) weighted(tempTimes,pos(:,1))],binsp);
+                %hp = hist3([angle(weighted(tempTimes,Xf(i,:).')) weighted(tempTimes,pos(:,1))],binsp);
                 hp = bsxfun(@rdivide,hp,posHist);
-                vals(k,l,i) = ent(hp);
-                subplot(size(vals,2),2,(k-1)*size(vals,2)+l);imagesc(hp);axis off;%title(num2str(vals(k,l,i)));
+                [vals(k,l,i) hp] = ent(hp);
+                subplot(size(vals,2),2,(k-1)*size(vals,2)+l);imagesc(hp);axis off;title(num2str(vals(k,l,i)));
             end
-            figure(k+2);
-            subplot(8,8,i);imagesc(sqrt(hp/sum(hp(:))),[0 .1]);axis off;title(num2str(vals(k,l,i)));drawnow;
+            %figure(k+2);
+            %subplot(8,8,i);imagesc(sqrt(hp/sum(hp(:))),[0 .1]);axis off;title(num2str(vals(k,l,i)));drawnow;
         end
         drawnow;
     end
@@ -70,7 +70,8 @@ else
             % vDemod = v(:,2).*exp(1i*-angle(v(:,1)));
             %v2Hist = hist(angle(vDemod(runs > 0)),bins{2});
         for i = 1:size(vals,2)
-            subplot(size(vals,2),numDisp,numDisp*(i-1)+1);imagesc(reshape(squeeze(vals(k,i,:)),[8 8]));ylabel(num2str(spSort(i)));set(gca,'ytick',[],'xtick',[]);
+            subplot(size(vals,2),numDisp,numDisp*(i-1)+1);imagesc(reshape(squeeze(vals(k,i,:)),[8 8]));%ylabel(num2str(spSort(i)));
+            ylabel([num2str(spSort(i)) ',' num2str(spSh(spSort(i),2))]);set(gca,'ytick',[],'xtick',[]);
             %smooth = imfilter(squeeze(vals(k,i,:,:)),fspecial('gaussian',3,1),'replicate');
             %subplot(size(vals,2),numDisp,numDisp*(i-1)+2);imagesc(smooth);axis off;
             [~,minInd] = min(squeeze(vals(k,i,:)));
@@ -79,13 +80,13 @@ else
             tempTimes = subTimes(subId == spSort(i));%tempTimes = tempTimes(ismember(floor(tempTimes),find(runs>0)) | ismember(ceil(tempTimes),find(runs>0)));
             temp = spf(spSort(i),:).*exp(1i*-angle(Xf(minInd,:)));%v(:,1).'));
             hp = hist3([angle(weighted(tempTimes,temp.')) weighted(tempTimes,pos(:,1))],binsp);
-            hp = bsxfun(@rdivide,hp,posHist);minMax = [min(hp(:)) max(hp(:))];
-            subplot(size(vals,2),numDisp,numDisp*(i-1)+2);imagesc(log(hp));axis off;%title(num2str(ent(hp)));
+            hp = bsxfun(@rdivide,hp,posHist);[~,hp] = ent(hp);minMax = [min(hp(:)) max(hp(:))];
+            subplot(size(vals,2),numDisp,numDisp*(i-1)+2);imagesc(hp);axis off;%title(num2str(ent(hp)));
             [~,maxInd] = max(squeeze(vals(k,i,:)));
             temp = spf(spSort(i),:).*exp(1i*-angle(Xf(maxInd,:)));%v(:,1)+alpha*v(:,2)).');
             hp = hist3([angle(weighted(tempTimes,temp.')) weighted(tempTimes,pos(:,1))],binsp);
-            hp = bsxfun(@rdivide,hp,posHist);
-            subplot(size(vals,2),numDisp,numDisp*(i-1)+3);imagesc(log(hp),log(minMax));axis off;%title(num2str(ent(hp)));
+            hp = bsxfun(@rdivide,hp,posHist);[~,hp] = ent(hp);
+            subplot(size(vals,2),numDisp,numDisp*(i-1)+3);imagesc(hp,minMax);axis off;%title(num2str(ent(hp)));
             %h = hist3([angle(weighted(tempTimes,v(:,1))) angle(weighted(tempTimes,vDemod))],bins);
             %h = bsxfun(@rdivide,h,v2Hist);
             %subplot(size(vals,2),numDisp,numDisp*(i-1)+5);imagesc(sqrt(h));axis off;
@@ -112,10 +113,13 @@ end
 % subplot(312);imagesc(reshape(std(Xf1(:,b>0),0,2)./std(Xf(:,b>0),0,2),[8 8]));
 % subplot(313);imagesc(reshape(abs(u(:,2)./u(:,1) - val),[8 8]));
 
-function v = ent(in)
-in = in(:)/sum(in(:));
-in(in == 0) = 1;
-v = -sum(in.*log2(in));
+function [v in] = ent(in)
+dim = min(size(in,1));
+%[x y] = meshgrid(dim);x = x - ceil(dim/2);y = y-ceil(dim/2);x = x/max(x(:)); y = y/max(y(:));
+%f = 1./(x.^2+y.^2);f = f/max(f(:));%
+f = fspecial('gaussian',ceil(dim/5),ceil(dim/10));
+in = in.*imfilter(in,f,'circular');
+v = mean(in(:));
 %v(isnan(v)) = 0;
 
 function out = weighted(inds,vals)
