@@ -81,5 +81,5 @@ for i=1:T
 	Vmfilt(:,:,i) = Vm;
 	
 	% Update log likelihood
-	loglik = loglik - (n/2)*log(2*pi) - .5 * log( abs(det(H)) ) -.5*(( Z(i,:)' - a - A*xhatm )' / H)*( Z(i,:)' - a - A*xhatm );
+%	loglik = loglik - (n/2)*log(2*pi) - .5 * log( abs(det(H)) ) -.5*(( Z(i,:)' - a - A*xhatm )' / H)*( Z(i,:)' - a - A*xhatm );
 end

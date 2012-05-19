@@ -69,14 +69,14 @@ if nargin<2 Mode=0; end;
 if prod(size(Mode))==2
         aMode=Mode(1);
         vMode=Mode(2);
-end;
 if any(aMode==(0:14)) && any(vMode==(0:7)), 
         fprintf(1,['a' int2str(aMode) 'e' int2str(vMode) ' ']);
 else
         fprintf(2,'Error AAR.M: invalid Mode argument\n');
         return;
 end;
-
+else aMode = Mode(1);
+end;
 % check model order (argument3)
 if nargin<3 MOP=[10,0]; else MOP= arg3; end;
 if length(MOP)==0 p=10; q=0; MOP=p;
@@ -132,7 +132,7 @@ end;
 % if nargin<7 TH=3; else TH = arg7;  end;
 %       TH=TH*var(y);
 %       TH=TH*mean(detrend(y,0).^2);
-MSY=mean(detrend(y,0).^2);
+MSY=mean(abs(y).^2);%mean(detrend(y,0).^2);
 
 e=zeros(nc,1);
 Q=zeros(nc,1);

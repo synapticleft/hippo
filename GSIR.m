@@ -28,6 +28,7 @@ Hn = round(n/H);
 cX = bsxfun(@minus,X,mean(X,2));
 Sigma = zeros(size(X,1));
 st = std(cX(:))*20;
+c = colormap;
 for i = 1:H
     if i<H
         ind = YI((i-1)*Hn+1:i*Hn);
@@ -35,29 +36,35 @@ for i = 1:H
         ind =YI((H-1)*Hn+1:n);
     end
     Xi = cX(:,ind);
-    [~,s,v] = svds(bsxfun(@minus,Xi,mean(Xi,2)),1);
+    [u,s,v] = svds(bsxfun(@minus,Xi,mean(Xi,2)),1);
+    subplot(211);plot(ind,Xi,'.');subplot(212);%plot(ind,v,'.');pause(.1);
+    %plot(abs(u),'color',c(i*6,:));hold all;pause(.1);
     [h,xout] = hist(v',linspace(-3*std(v),3*std(v),100));%linspace(-st,st,100));%
     [~,mins] = peakdet(filtfilt(gausswin(20),1,h),1);
-    hs(i,:) = filtfilt(gausswin(20),1,h);
-   % if isempty(mins)
+    hs(i,:) = filtfilt(gausswin(30),1,h);
+   if isempty(mins)
         mins = [1 numel(h)];
-  %  else
-   %     mins = [1 mins(:,1).' numel(h)];
-    %end
-    xout(1) = min(v);xout(end) = max(v);
+    else
+        mins = [1 mins(:,1).' numel(h)];
+    end
+    xout(1) = min(v);xout(end) = max(v);%v = v(randperm(numel(v)));
     for j = 2:numel(mins)
-        ind = v > xout(mins(j-1)) & v < xout(mins(j));
+        inda = v > xout(mins(j-1)) & v < xout(mins(j));
+        subplot(212);plot(ind(inda),v(inda),'.');hold all;
         if sum(ind)
-            Xm = mean(Xi(:,ind),2);
-            Sigma = Sigma + Xm*Xm'*sum(ind);
+            Xm = mean(Xi(:,inda),2);
+            %plot(Xm,'color',c(i*6,:));hold all;pause(.1);
+            Sigma = Sigma + Xm*Xm'*sum(inda);
         end
     end
+    pause(1);hold off;
     %for j=1:ni
     %    dist2j = sum((Xi-repmat(Xi(:,j),1,ni)).^2);
     %    [~, dI] = sort(dist2j);
     %    J(ind(dI(1:numNNi)),ind(j)) = 1/numNNi;
     %end
 end
+figure;imagesc(hs);return
 %figure;subplot(211);imagesc(Sigma);
 % % figure;imagesc(h1);
 % % for i = 1:size(h1,1)

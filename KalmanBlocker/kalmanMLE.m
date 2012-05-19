@@ -81,6 +81,8 @@ while (iter < maxIter & converged == 0)
         case 0
             [xsmooth, Vsmooth, VVsmooth, loglik(i)] = kalmanSmooth(Z, A, W, F, S, x0, V0);
 			[A, W, F, S, x0, V0] = kalmanMStep0(Z, xsmooth, Vsmooth, VVsmooth, diagS, diagW);
+%             F(1,1) = (F(1,1)+F(2,2))/2;F(2,2) = F(1,1);
+%             F(1,2) = (F(1,2)-F(2,1))/2;F(2,1) = -F(1,2);
         case 1
             [xsmooth, Vsmooth, VVsmooth, loglik(i)] = kalmanSmooth(Z, A, W, F, S, x0, V0, a);
 			[A, W, F, S, x0, V0, a] = kalmanMStep1(Z, xsmooth, Vsmooth, VVsmooth, diagS, diagW);
@@ -98,17 +100,17 @@ while (iter < maxIter & converged == 0)
 	% Print status
 	fprintf(1, 'iteration %d, loglik = %f\n', iter, loglik(i) );
 	
-    if iter > 1
-        % Check for convergence - relative change criterion
-        convtest = abs(loglik(iter) - loglik(iter-1)) / ...
-            ( (abs(loglik(iter)) + abs(loglik(iter-1)) + eps)/2 );
-        if ( (convtest < thresh) & (iter > ceil(maxIter*.01) ) )
-            converged = 1;
-        end
-        
-        % Check for reversal
-		if ( (loglik(iter-1) - loglik(iter)) > 1e-3 )
-			converged = 1;%error('EM algorithm reversed - terminating.\n');
-		end
-    end
+%     if iter > 1
+%         % Check for convergence - relative change criterion
+%         convtest = abs(loglik(iter) - loglik(iter-1)) / ...
+%             ( (abs(loglik(iter)) + abs(loglik(iter-1)) + eps)/2 );
+%         if ( (convtest < thresh) & (iter > ceil(maxIter*.01) ) )
+%             converged = 1;
+%         end
+%         
+%         % Check for reversal
+% 		if ( (loglik(iter-1) - loglik(iter)) > 1e-3 )
+% 			converged = 1;%error('EM algorithm reversed - terminating.\n');
+% 		end
+%     end
 end

@@ -3,7 +3,7 @@ shift = 1;
 accumbins = gauss(1);pad = 0;
 %[gx gy] = meshgrid(1:gauss(1));% = (1:accumbins)*(1:accumbins)';
 %gaussWeights = exp(-((gx-gauss(2)).^2+(gy-gauss(2)).^2)/gauss(3).^2);
-gaussWeights = exp(-((1:gauss(1))-gauss(2)).^2/gauss(3).^2);
+%gaussWeights = exp(-((1:gauss(1))-gauss(2)).^2/gauss(3).^2);
 if size(v,2) > size(v,1)
     v = v.';
 end
@@ -22,7 +22,7 @@ pos(:,1) = pos(:,1)-min(pos(:,1));pos(:,1) = pos(:,1)/max(pos(:,1));
 v = bsxfun(@rdivide,v,std(v));
 vp11 = v((shift+1):end,1).*conj(v(1:end-shift,1))./abs(v(1:end-shift,1));
 vp11 = [zeros(shift,1); vp11];
-vp12 = v(:,1).*conj(v(:,2))./abs(v(:,1));
+vp12 = v(:,1).*conj(v(:,2))./abs(v(:,1));vp12 = vp12 - mean(vp12);vp12 = complex(real(vp12)/std(real(vp12)),imag(vp12)/std(imag(vp12)));
 %vp12 = vp11;
 b = nan*ones(size(pos,1),1);
 b(pos(:,1) < bounds(1)) = -1;b(pos(:,1) > bounds(2)) = 1;

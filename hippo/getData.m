@@ -1,6 +1,6 @@
-function [X whiteningMatrix dewhiteningMatrix] = getData(fname,sz,rind,dec,rdim)
+function [X whiteningMatrix dewhiteningMatrix] = getData(fname,sz,rind,dec,rdim,elecs)
 
-data_root = '/media/Expansion Drive/redwood/';%'/media/work/hippocampus/';%
+data_root = '/media/work/hippocampus/';%'/media/Expansion Drive/redwood/';%
 %fname = 'hippo.h5';%'96elec.h5';%
 padding = 0;%20000;
 info = hdf5info([data_root fname]);
@@ -16,6 +16,9 @@ end
 %elseif exist('dec','var')
 %    sz = sz*dec;
 %end
+if  ~exist('elecs','var') || isempty(elecs)
+    elecs = 1:nSamples(1);
+end
    
 if ~exist('rind','var') || isempty(rind)
     rind = 0;
@@ -27,15 +30,15 @@ end
 %X = double(h5varget([data_root fname],'/hReal',[0 rind],[nSamples(1) sz]));%-1
 
 if dec > 1
-    X1 = zeros(nSamples(1),sz/dec);
-    for i = 1:nSamples(1)
+    X1 = zeros(nSamples(1),round(sz/dec));
+    for i = elecs
         tic;
         temp = double(h5varget([data_root fname],'/hReal',[i-1 rind],[1 sz]));%nSamples(1)
         toc
         tic;
-        X1(i,:) = decimate(temp,dec);%X(i,:),dec);
+        X1(i-min(elecs)+1,:) = decimate(temp,dec);%X(i,:),dec);
         toc
-        fprintf([num2str(i) ' ']);
+        fprintf([num2str(i-min(elecs)+1) ' ']);
     end
     X = X1;clear X1;
 else

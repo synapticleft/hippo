@@ -1,4 +1,4 @@
-function outSer= ssa1(x1,L,sv)%[y,r,vr]=U1 [U V u] 
+function [outSer U V]= ssa1(x1,L,sv)%[y,r,vr]=U1 [U V u] 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % -----------------------------------------------------------------                           
@@ -34,6 +34,7 @@ pca = 1;
 [u s v] = svds(x1,sv);
 %figure;plot(log(diag(s)));
 v = s*v';
+v = x1;
 % Step1 : Build trayectory matrix
    N=size(v,2);%length(x1); 
    if L>N/2;L=N-L;end
@@ -48,8 +49,8 @@ v = s*v';
     
 % Step 2: SVD
 if pca
-   S=X*X'; size(S)
-	[U,d]=eigs(S,min(size(S,1),100));
+   S=X*X';
+	[U,d]=eigs(S,min(size(S,1)-1,100));
     d=diag(d);
 	%[d,i]=sort(-diag(autoval));  
    %d=-d;
@@ -57,7 +58,7 @@ if pca
    sev=sum(d); 
 	figure;plot(log10(d/sev)),hold on,plot(log10(d/sev),'rx');
 	title('Singular Spectrum');xlabel('Eigenvalue Number');ylabel('Eigenvalue (% Norm of trajectory matrix retained)')
-   V=(X')*U; 
+   V=(X')*U;
    %rc=U*V';
 
 % Step 3: Grouping

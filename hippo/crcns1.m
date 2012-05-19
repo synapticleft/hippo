@@ -24,7 +24,7 @@ step = 1;
 trange = std(traceT(:))*[-2 2];
 startInd = 1000;
 %colormap gray;
-for i = startInd:startInd + 500%size(trace,2)
+for i = startInd:size(trace,2)%startInd + 500%
     [xt yt] = myGradient(reshape(HT(:,i),dims));
     xt = -xt;yt = flipud(yt);tm = [mean(xt(:)) mean(yt(:))];
     if mod(i,step) == 0
@@ -39,7 +39,7 @@ for i = startInd:startInd + 500%size(trace,2)
         %quiver(center(2)*ratio(1),center(1)*ratio(2),tm(1)*scale,tm(2)*scale,'k--','LineWidth',5);
         %hold off;
         %subplot('Position',[0 .52 1 .48]);%s1);%1,2,2);
-        surf((1:dims(1))*ratio(1),(1:dims(2))*ratio(2),flipud(reshape(traceT(:,i),dims)));set(gca,'zlim',trange);hold on;
+        imagesc((1:dims(2))*ratio(1),(1:dims(1))*ratio(2),flipud(reshape(traceT(:,i),dims)));set(gca,'zlim',trange);hold on;
         quiver3(center(2)*ratio(1),center(1)*ratio(2),trange(1),tm(1)*scale,tm(2)*scale,0,'k--','LineWidth',5);
         plot3(histT(:,1),histT(:,2),trange(1)*ones(size(histT,1),1),'k','LineWidth',1.5);hold off;
         set(gca,'xticklabel',[],'yticklabel',[],'zticklabel',[]);
@@ -47,10 +47,10 @@ for i = startInd:startInd + 500%size(trace,2)
         drawnow;
     end
     if i > startInd
-    m(i-startInd) = getframe(gcf);
+%    m(i-startInd) = getframe(gcf);
     end
 end
-movie2avi(m,'crcnsSurf.avi');
+%movie2avi(m,'crcnsSurf.avi');
 
 function fixStep(a,b)
 global step

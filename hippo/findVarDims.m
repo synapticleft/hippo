@@ -22,7 +22,7 @@ v(:,2) = v(:,2).*exp(1i*-angle(v(:,1)));
 v(:,1) = [0; v(2:end,1).*exp(1i*-angle(v(1:end-1,1)))];
 v = filtLow(v.',1250/32,2).';
 %figure;plot(pos(:,1)/200);hold all;plot(imag(v(:,1)));hold all;plot(real(v(:,2)));hold all;plot(imag(v(:,2)));return
-v = abs(v(:,1));
+v = imag(v(:,1));
 %pos = filtLow(pos',1250/32,4)';
 figure;
 for k = 1:2
@@ -35,11 +35,12 @@ for k = 1:2
          X(i+numPast,:) = pos(i+runs,1);
      end
      tic
+     w(k,:) = SCA(X,v(runs).',1);
+     wx = (w(k,:)*X)';
      %w1(k,:) = glmfit(X',v(runs),'normal');
-     %X = randn(10,5000);v = (randn(1,10)*X)'.^2;v = v + randn(size(v))*10;
-     a = GSIR(X,v(runs), 1, 0);w(k,:) = a.edrs;wx = a.Xv';
-     %[wx,w(k,:)] = ldr(v(runs),X','IPFC','cont','lrt','nslices',20);
-     %[wx,w(k,:)] = DR(v(runs),X','cont',1,'nslices',20);
+     %a = GSIR(X,v(runs), 1, 0);w(k,:) = a.edrs;wx = a.Xv';
+     %[wx,w(k,:)] = ldr(v(runs),X','IPFC','cont','bic','nslices',20);
+     %[wx,w(k,:)] = SAVE(v(runs),X','cont',1,'nslices',20);
      toc;
      [h,dims] = hist3([v(runs) wx],[100 100]);
      [corr(v(runs),wx)]% corr(v(runs),glmval(w1(k,:)',X','identity'))]
