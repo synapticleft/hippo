@@ -1,0 +1,362 @@
+function [A, noise, R, x, V] = fitDists1(fileNum,modelSize,figsOn,numInds)
+
+load_data;
+spikes = spktrain;
+v = signals;
+if ~exist('numInds','var');
+    numInds = size(v,2);
+end
+sum(spikes(:))
+spikes = [spikes; zeros(size(v,1)-size(spikes,1),size(spikes,2))];
+spikes = logical(spikes(:,1:numInds));
+v = hipFilter(v',.01,200,10000)';
+cMor = getMor(fm,sf,1000,5);%d = fm*2*pi/1000;
+for i= 1:numInds
+    z(:,i) = conv(v(:,i),cMor,'same');
+    [coeffs(i,:) noise(i)] = arburg(z(:,i),modelSize);
+    zPhase = getDiffs(z(:,i),1);%angle(z(:,i));
+    d(i) = circ_mean(zPhase);
+    [cPhase(i,:) nPhase(i)] = arburg(circ_dist(zPhase,d(i)),modelSize);%
+%    [cPhase(i,:) nPhase(i)] = arburg(cumsum(zPhase)- d(i)*(1:numel(zPhase))',modelSize);%
+%    [cPhase nPhase] = arburg(cos(angle(z(:,i)))+1i*sin(angle(z(:,i))),modelSize);
+%    [cReal nReal] = arburg(conv(v(:,i),real(cMor),'same'),modelSize);
+end
+x1 = xcorr(z(:,i),500,'coeff');
+coeffs(end+1,:) = mean(coeffs);noise(end+1) = mean(noise);
+cPhase(end+1,:) = mean(cPhase);nPhase(end+1) = mean(nPhase);
+%%%%%%%%FIG 1
+xs = -.1:.02:(pi/4+.1);
+sim(1,:,:) = z.';
+sim(2,:,:) = arData(makeComplex(size(z.'),sqrt(noise(end))),coeffs(end,:));
+d = mean(d);d = d*repmat((1:size(z,1))',[1 numInds]);
+%sim(2,:,:) = arData(makeComplex(size(z.'),sqrt(nPhase(end))),cPhase(end,:));
+sim(3,:,:) = exp(1i*(d.'+cumsum(arData(sqrt(nPhase(end))*randn(size(z.')),cPhase(end,:)),2)));
+%sim(2,:,:) = exp(1i*(d.'+arData(sqrt(nPhase(end))*randn(size(z.')),cPhase(end,:))));
+figure;hold all;
+%    sAng = getDiffs(squeeze(sim(1,:,:)),1);%d.'-unwrap(angle(squeeze(sim(i,:,:))));%
+%hist(sAng(:),xs);
+for i = 1:3
+    sAng = getDiffs(squeeze(sim(i,:,:)),1);%d.'-unwrap(angle(squeeze(sim(i,:,:))));%
+    temp = mean(hist(sAng',xs)');
+    plot(xs,max(temp,1/numInds),'Linewidth',2);
+end
+set(gca,'Fontsize',16,'yscale','log');axis tight;
+legend({'signal','z-AR(3)','phase-AR(3)'});legend boxoff
+xlabel 'dPhase (rad)'; ylabel 'count'
+figure;hold all;
+lag = 300;
+for i = 1%:2%1:size(sim,1)
+    temp = zeros(2*lag+1,1);
+    for j = 1:size(sim,2)
+        temp = temp + xcorr(squeeze(sim(i,j,:)),lag,'coeff');
+    end
+    temp = temp / j;
+    plot((-lag:lag)/1000,abs(temp),'Linewidth',2);
+end
+r = rlevinson(coeffs(end,:),noise(end));
+%temp = corrmtx(z(:,5),3);temp'*temp %first column same as r
+temp = arData([r(1:modelSize).'/r(1) zeros(1,lag-modelSize+1)],coeffs(end,:));
+plot((-lag:lag)/1000,abs([temp(end:-1:2) temp]),'Linewidth',2);
+set(gca,'Fontsize',16);axis tight;
+legend({'signal','z-AR(3)'});legend boxoff%,'phase-AR(3)'
+xlabel 'lag (s)'; ylabel 'correlation'
+xs = -pi:.05:pi;
+[im,spread] = phaseDecay(spikes',z.',300,10,xs);
+figure;
+subplot(3,1,[1 2]);colormap gray;imagesc(0:10:290,xs,im);set(gca,'Fontsize',16);ylabel phase;
+subplot(3,1,3);plot(0:10:290,spread,'k','Linewidth',2);set(gca,'Fontsize',16,'ylim',[0 1.02],'ytick',[0 1]);ylabel kappa;xlabel time;
+%%%%%%%%%%FIG 3
+A = [-coeffs(end,2:end);eye(modelSize)];A(end,:) = [];
+E = zeros(modelSize); E(1,1) = noise(end);vecP = (eye(modelSize^2) - kron(conj(A),A))\E(:);
+z_spike = z(spikes);
+range = 2*std(z(:));
+bounds{1} = linspace(-range,range,60);bounds{2} = bounds{1};
+pZ_Data = hist3([real(z(:)) imag(z(:))],bounds);
+pZ_Data = pZ_Data/sum(pZ_Data(:));
+z_fit = gmdistribution(0,vecP(1),1);%.mu = 0;z_fit.Sigma = vecP(1);
+pZ_spike_Data = hist3([real(z_spike) imag(z_spike)],bounds);
+pZ_spike_Data = pZ_spike_Data/sum(pZ_spike_Data(:));
+z_spike_fit = gmdistribution(mean(z_spike),var(z_spike),1);%.mu = mean(z_spike);
+%z_spike_fit.Sigma = var(z_spike);%gmdistribution.fit([real(z_spike) imag(z_spike)],1);
+[x y] = meshgrid(bounds{1});
+x = y + 1i*x;
+%pZ_spike_Fit = reshape(pdf(z_spike_fit,x(:)),[numel(bounds{1}) numel(bounds{1})])
+%pZ_Fit = reshape(pdf(z_fit,x(:)),[numel(bounds{1}) numel(bounds{1})]);
+pZ_spike_Fit = makeGauss(x,mean(z_spike),var(z_spike));
+pZ_Fit = makeGauss(x,0,vecP(1));
+
+r = rand(1,numel(z)) < 1000/numel(z);
+figure;subplot(1,2,1);scatter(real(z(r)),imag(z(r)),'k','filled');hold on;
+r = rand(1,numel(z_spike)) < 1000/numel(z_spike);
+scatter(real(z_spike(r)),imag(z_spike(r)),'filled','CData',[.66 .66 .66]);axis image;
+ylim([min(bounds{1}) max(bounds{1})]);xlim([min(bounds{1}) max(bounds{1})]);
+set(gca,'fontsize',16);
+temp = makeComplex(1000,sqrt(vecP(1)));
+subplot(1,2,2);scatter(real(temp),imag(temp),'k','filled');hold on;
+temp = mean(z_spike) + makeComplex(1000,std(z_spike));
+scatter(real(temp),imag(temp),'filled','CData',[.66 .66 .66]);axis image;
+ylim([min(bounds{1}) max(bounds{1})]);xlim([min(bounds{1}) max(bounds{1})]);
+set(gca,'fontsize',16);
+% emp(:,:,1) = pZ_Data;emp(:,:,2) = pZ_spike_Data;emp(:,:,3) = 0;
+% ana(:,:,1) = pZ_Fit;ana(:,:,2) = pZ_spike_Fit;ana(:,:,3) = 0;
+% figure;subplot(1,2,1);image(bounds{1},bounds{1},logIm(emp,-10));axis image;
+% set(gca,'fontsize',16,'YDir','normal');
+% subplot(1,2,2);image(bounds{1},bounds{1},logIm(ana,-10));axis image;
+% set(gca,'fontsize',16,'YDir','normal');
+%%%%%%%%%%%%
+log(var(z(:)))
+temp = zeros(modelSize,sum(spikes(:)));
+for i = 1:modelSize
+    temp(i,:) = z(find(spikes)-i+1);
+end
+spikeFit.Sigma = cov(temp');
+spikeFit.mu = mean(temp,2);
+xs = -pi:.05:pi;%circ_dist([-pi:.05:pi],angle(spikeFit.mu(1)));
+[t k] = circ_vmpar(angle(temp(1,:)));
+figure;plot(xs,hist(angle(temp(1,:)),xs),'Linewidth',2);hold all;%mean(z_spike) + makeComplex(sum(spikes(:)),std(z_spike))
+plot(xs,circ_vmpdf1(xs,t,k)*sum(spikes(:)),'Linewidth',2);
+plot(xs,phaseFit(spikeFit.mu,spikeFit.Sigma/2,sum(spikes(:)),xs),'Linewidth',2);
+set(gca,'fontsize',16,'yscale','log');
+ylabel 'count';xlabel 'phase';
+axis tight;legend({'signal','von Mises','z marginal'});legend boxoff;
+spikeTimes = getTimes1(spikes)'+1;
+z = z.'; z = z(1:size(spikeTimes,1),:);
+angDiff = zeros(size(spikeTimes));absDiff = angDiff;zDiff = angDiff;Vs = angDiff;
+for i = 1:size(spikeTimes,1)
+    [x, V, A,R] = complexKalman(spikes.',spikeFit,coeffs(end,:),noise(end),i,z);
+    angDiff(i,:) = circ_dist(angle(z(i,:)),angle(x(1,:)));
+    zDiff(i,:) = z(i,:) - x(1,:);
+    xAll(i,:) = x(1,:);
+    Vs(i,:) = squeeze(V(1,1,:));
+end
+R = spikeFit.Sigma;
+%figure;plot(real(z(size(spikeTimes,1),:)));hold on;plot(real(x(1,:)),'r');hold on;
+%scatter(find(spikes(:,size(spikeTimes,1))),zeros(1,sum(spikes(:,size(spikeTimes,1)))),'k');
+inds = 25960:26140;xs = (0:(numel(inds)-1));
+figure;subplot(3,1,1);plot(xs,real(z(2,inds)),'Linewidth',2);hold all;
+plot(xs,real(xAll(2,inds)),'r','Linewidth',2);
+plot(ones(2,1)*find(spikes(inds,2))'-1.5,.2*[-1 1]'*...
+    (ones(1,sum(spikes(inds,2)))),'k','LineWidth',7);axis tight;
+set(gca,'fontsize',16);xlabel 'Time (ms)'; ylabel 'Real(z)';
+%subplot(2,1,2);imagesc(xs,-pi:.05:pi,phaseDecay(spikes',z,numel(inds),10,-pi:.05:pi,27));colormap gray;hold on;
+%plot(xs,circ_dist(angle(z(end,inds)),angle(x(1,inds))),'k--','Linewidth',2);
+
+%figure;imagesc(imHist(spikeTimes,angDiff,(-pi:.01:pi)));
+%figure;scatter(real(z(i,:)),real(x(1,:)));
+%figure;plot(accumarray(spikeTimes(:),(angDiff(:)),[],@mean));
+%figure;plot(accumarray(spikeTimes(:),log(abs(zDiff(:))),[],@mean));
+
+%figure;hold all;
+for i = 100:-1:1
+    f = find(spikeTimes == i);
+    ff(i) = numel(f);
+%    scatter(real(zDiff(f)),imag(zDiff(f)));
+    zDm(i) = mean(zDiff(f));zs(i) = var(z(f));%.*conj(zDiff(f))
+    zm(i) = mean(z(f));xm(i) = mean(xAll(f));
+end
+%plot(zDm,'k','LineWidth',2);
+
+%%%%FIG 3
+[vT vSS] = simVar(A,noise(end),modelSize,R);
+[h xs isiAll msIsi] = histISI(spikes,z);
+
+%isiAll = min(isiAll,300);
+h = cumsum(h);h = h/max(h);
+f = find(h >.95, 1 );
+hIm(:,:,1) = ones(2,numel(h));
+hIm(:,:,2) = ones(2,1)*h;
+hIm(:,:,3) = hIm(:,:,2);
+hIm = circshift(hIm,[0 0 1]);
+ys = [0 .6];%1.1*.5*log(2*pi*(max(vT)-min(vT)))];
+subplot(3,1,[2 3]);hold all;imagesc(xs,ys,hIm);
+%plot(log(covAllZ(spikeTimes,z,400)),'Linewidth',3);
+temp = .5*log2(2*pi*covAllZ(spikeTimes,z,400));temp = temp-temp(1);
+plot(temp,'LineWidth',3);
+temp = .5*real(log2(2*pi*vT));temp = temp-temp(1);
+plot(temp,'r','LineWidth',3); 
+scatter(median(isiAll),temp(round(median(isiAll))),100,'k','filled');
+%plot([f f],ys,'k--','Linewidth',2);
+plot([0 300],[.14 .14],'k--','Linewidth',2);
+axis tight;
+legend({'Actual','AR3'},'Location','Southeast');legend boxoff;
+set(gca,'fontsize',16);
+ylabel('Differential entropy (bits)');
+xlabel('Time after spike (ms)');
+set(gca,'xlim',[1 400],'ylim',[-.05 .9]);
+% figure;plot(real(z(size(spikeTimes,1),:)));hold on;plot(real(x(1,:)),'r');hold on;
+% scatter(find(spikes(:,size(spikeTimes,1))),zeros(1,sum(spikes(:,size(spikeTimes,1)))),'k');
+ms = simMean(A,spikeFit.mu);
+figure;
+bounds{2} = 0:2:400;bounds{1} = linspace(0,7,1 00);
+vsIsi = vT(isiAll);
+klIsi = klDiv(msIsi,vsIsi,spikeFit.mu,spikeFit.Sigma);
+imagesc(bounds{2},bounds{1},hist3([klIsi isiAll'],bounds));colormap gray;hold all;
+set(gca,'YDir','normal')
+plot(klDiv(ms,vT,spikeFit.mu,spikeFit.Sigma,600),'Linewidth',2);
+plot(temp,'Linewidth',2)
+%msIsi = ms(isiAll);
+
+plot(temp,'Linewidth',2);
+%%scatter(isiAll,klIsi);
+set(gca,'fontsize',16);
+ylabel('information (bits)');xlabel('time after spike (ms)');
+
+function d = klDiv(m0,s0,m1,s1,ts)
+if ~exist('ts','var')
+    ts = numel(m0);
+end
+m1 = m1(1);s1 = s1(1);d = zeros(1,ts);
+%d = .5*(trace(s1\s0) + (m1-m0)'\inv(s1)*(m1-m0) - log(det(s0)/det(s1)) - 1);
+d = .5*(s0/s1 + conj(m1-m0).*(m1-m0)/s1 - log(s0/s1) - 1)/log(2); %%WAY 1
+%d = d(1:ts);
+% m1 = [real(m1) imag(m1)]';
+% s1 = [s1 0; 0 s1];
+% for i = 1:ts
+% S0 = [s0(i) 0; 0 s0(i)];M0 = [real(m0(i)) imag(m0(i))]';
+% d(i) = 2/pi*(trace(inv(S0)*s1) + (m1-M0)'*inv(s1)*(m1-M0) + log(det(S0)/det(s1)) - 2);%COMP
+% %%d(i) = 2/pi*(trace(inv(s1)*S0) + (m1-M0)'*inv(s1)*(m1-M0) - log(det(S0)/det(s1)) - 2); %% WIKI
+% %d(i) = 2/pi*(trace(s1\S0) + (m1-M0)'/s1*(m1-M0) - log(det(S0)/det(s1)) - 2); %%WIKI
+% end
+
+function p = phaseFit(mu,sig,num,xs)
+xs = xs - angle(mu(1));
+mu = abs(mu(1));sig = sig(1);
+p = 1 + sqrt(pi)*mu*cos(xs)/sqrt(2*sig).*exp(mu^2*cos(xs).^2/(2*sig)).*(1+erf(mu*cos(xs)/sqrt(2*sig)));
+%p = exp(mu^2*cos(xs).^2/sig).*(1+erf(mu*cos(xs)/sqrt(sig)));
+p = p/sum(p)*num;
+
+function im = logIm(im,thresh)
+im = log(im);
+im = max(0,im - thresh);
+im = im/max(im(:));
+
+function im = makeGauss(xs,mu,sig)
+im = real(exp(-(xs-mu).*conj(xs-mu)/sig));
+im = im./sum(im(:));
+
+function [h xs fAll muAll] = histISI(spikes,z)
+xs = 0:1:700;
+h = zeros(size(xs));
+fAll = [];muAll = [];
+for i = 1:size(spikes,2)
+    f = find(spikes(:,i));
+    muAll = [muAll z(i,f(2:end))];
+    f = diff(f);
+    fAll = [fAll f'];
+    h = hist(f,xs) + h;
+end
+muAll = muAll.';
+
+function v = simVar1(A,noise,p,R)
+E = zeros(p);E(1,1) = noise;
+numIt = 2000;
+v = zeros(numIt,2);
+ESum = E;
+for i = 1:numIt
+    temp = (A^i)*R*(A'^i) + ESum;
+    v(i,1) = temp(1,1);
+    temp = (A^i)*R*(A'^i);
+    v(i,2) = temp(1,1);
+    ESum = (A^i)*E*(A'^i) + ESum;
+end
+
+function mu = simMean(A,M)
+numIt = 2000;
+mu = zeros(numIt,1);
+for i = 1:numIt
+    mu(i) = M(1);
+    M = A*M;
+end
+
+function [v P] = simVar(A,noise,p,R)
+E = zeros(p); E(1,1) = noise;
+P = R;
+numIt = 2000;
+v = zeros(numIt,1);
+for i = 1:numIt
+    v(i) = P(1,1);
+    P = A*P*A' + E;
+    %P(1,1) = real(P(1,1));
+end
+v = real(v);
+vecP = (eye(p^2,p^2) - kron(conj(A),A))\E(:);
+P = reshape(vecP,p,p);
+
+[P(1,1) log(max(v)) log(real(P(1,1)))]
+
+function [p spread] = phaseDecay(spikes,zs,forw,chunk,xs,lag)
+if exist('lag','var')
+    spikes = circshift(spikes,[0 -lag]);
+end
+[r c] = find(spikes == 1);
+zs = angle(zs);
+r((c+forw-1) > size(spikes,2)) = [];
+c((c+forw-1) > size(spikes,2)) = [];
+z = zeros(numel(r),forw);
+for i = 1:numel(r)
+    z(i,:) = zs(r(i),c(i)+(1:forw)-1);
+end
+p = zeros(numel(xs),floor(forw/chunk));
+spread = zeros(1,size(p,2));
+for j = 1:size(p,2)
+    temp = z(:,(1:chunk)+chunk*(j-1));
+    p(:,j) = hist(circ_dist(temp(:),circ_mean(temp(:))),xs);
+    [~,spread(j)] = circ_vmpar(temp(:));
+end
+
+function z = covAllZ(spikes,zs,forw)
+[r c] = find(spikes == 1);
+r((c+forw-1) > size(spikes,2)) = [];
+c((c+forw-1) > size(spikes,2)) = [];
+z = zeros(numel(r),forw);
+for i = 1:numel(r)
+    z(i,:) = zs(r(i),c(i)+(1:forw)-1);
+end
+z = var(z);
+
+function z = covSomeZ(spikes,zs,back)
+[r c] = find(spikes == back);
+c = c - back;
+r(c < 0) = []; c(c < 0) = [];
+z = zeros(numel(r),back);
+for i = 1:numel(r)
+    z(i,:) = zs(r(i),c(i)+(1:back));
+end
+z = var(z);
+
+function im = imHist(spikeTimes,data,bins)
+spikeTimes = spikeTimes(:);data = data(:);
+spikeTimes = min(50,ceil(spikeTimes/2));
+range = max(spikeTimes);
+im = zeros(range,numel(bins));
+for i = 1:range
+    im(i,:) = hist(data(spikeTimes == i),bins);
+    im(i,:) = im(i,:)/sum(im(i,:));
+end
+im = log(max(.00001,im));
+
+function t = getTimes1(spikes)
+spikes = spikes';
+s = size(spikes);
+t = zeros(size(spikes));
+for i = 1:s(1)
+    counter = 1001;
+    for j= 1:s(2)
+        if spikes(i,j)
+            counter = 0;
+        else
+            counter = counter + 1;
+        end
+        t(i,j) = counter;
+    end
+end
+t(t > 1000) = 500;
+t = t';
+
+function dPhase = getDiffs(sig,gap)
+angleA = angle(sig);
+if min(size(sig)) == 1
+    dPhase = circ_dist(angleA((gap+1):end),angleA(1:(end-gap)));
+else
+    dPhase = circ_dist(angleA(:,(gap+1):end),angleA(:,1:(end-gap)));
+end
