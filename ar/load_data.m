@@ -1,7 +1,7 @@
 %% get some information
-data_dir = '/media/work/lgn/';
+data_dir = '/media/DA74-E37F/lgn/';%'/media/work/lgn/';
 allFiles = dir(data_dir);
-data_file = allFiles(fileNum+2).name;
+data_file = allFiles(fileNum+2).name
 %data_file = '040218E_combined.3.h5';
 %data_file = '050204M_mbmonkcc000.3.h5';
 %data_file = '050921J_jecatcc000.3.h5';

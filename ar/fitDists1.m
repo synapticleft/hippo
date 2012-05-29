@@ -9,7 +9,7 @@ end
 sum(spikes(:))
 spikes = [spikes; zeros(size(v,1)-size(spikes,1),size(spikes,2))];
 spikes = logical(spikes(:,1:numInds));
-v = hipFilter(v',.01,200,10000)';
+%v = hipFilter(v',.01,200,1000)';
 cMor = getMor(fm,sf,1000,5);%d = fm*2*pi/1000;
 for i= 1:numInds
     z(:,i) = conv(v(:,i),cMor,'same');
@@ -114,7 +114,8 @@ spikeFit.mu = mean(temp,2);
 xs = -pi:.05:pi;%circ_dist([-pi:.05:pi],angle(spikeFit.mu(1)));
 [t k] = circ_vmpar(angle(temp(1,:)));
 figure;plot(xs,hist(angle(temp(1,:)),xs),'Linewidth',2);hold all;%mean(z_spike) + makeComplex(sum(spikes(:)),std(z_spike))
-plot(xs,circ_vmpdf1(xs,t,k)*sum(spikes(:)),'Linewidth',2);
+temp = circ_vmpdf(xs,t,k);
+plot(xs,temp/sum(temp)*sum(spikes(:)),'Linewidth',2);
 plot(xs,phaseFit(spikeFit.mu,spikeFit.Sigma/2,sum(spikes(:)),xs),'Linewidth',2);
 set(gca,'fontsize',16,'yscale','log');
 ylabel 'count';xlabel 'phase';
@@ -129,6 +130,7 @@ for i = 1:size(spikeTimes,1)
     xAll(i,:) = x(1,:);
     Vs(i,:) = squeeze(V(1,1,:));
 end
+A = [-coeffs(2:end);eye(numel(coeffs)-1)];A(end,:) = [];
 R = spikeFit.Sigma;
 %figure;plot(real(z(size(spikeTimes,1),:)));hold on;plot(real(x(1,:)),'r');hold on;
 %scatter(find(spikes(:,size(spikeTimes,1))),zeros(1,sum(spikes(:,size(spikeTimes,1)))),'k');
@@ -187,15 +189,18 @@ set(gca,'xlim',[1 400],'ylim',[-.05 .9]);
 % scatter(find(spikes(:,size(spikeTimes,1))),zeros(1,sum(spikes(:,size(spikeTimes,1)))),'k');
 ms = simMean(A,spikeFit.mu);
 figure;
-bounds{2} = 0:2:400;bounds{1} = linspace(0,7,1 00);
+bounds{2} = 0:2:400;bounds{1} = linspace(0,7,100);
 vsIsi = vT(isiAll);
 klIsi = klDiv(msIsi,vsIsi,spikeFit.mu,spikeFit.Sigma);
+%t1 = klDiv(zeros(size(msIsi),1),vsIsi,0,vsIsi(1),600);
+%t2 = klDiv(ms,vT,spikeFit.mu,spikeFit.Sigma,600);
+%figure;plot(t2);hold all;plot(t1);return
 imagesc(bounds{2},bounds{1},hist3([klIsi isiAll'],bounds));colormap gray;hold all;
 set(gca,'YDir','normal')
 plot(klDiv(ms,vT,spikeFit.mu,spikeFit.Sigma,600),'Linewidth',2);
-plot(temp,'Linewidth',2)
+%plot(temp,'Linewidth',2)
 %msIsi = ms(isiAll);
-
+plot(temp,'linewidth',2);
 plot(temp,'Linewidth',2);
 %%scatter(isiAll,klIsi);
 set(gca,'fontsize',16);
@@ -205,7 +210,7 @@ function d = klDiv(m0,s0,m1,s1,ts)
 if ~exist('ts','var')
     ts = numel(m0);
 end
-m1 = m1(1);s1 = s1(1);d = zeros(1,ts);
+m1 = m1(1);s1 = s1(1);%d = zeros(1,ts);
 %d = .5*(trace(s1\s0) + (m1-m0)'\inv(s1)*(m1-m0) - log(det(s0)/det(s1)) - 1);
 d = .5*(s0/s1 + conj(m1-m0).*(m1-m0)/s1 - log(s0/s1) - 1)/log(2); %%WAY 1
 %d = d(1:ts);
