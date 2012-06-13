@@ -1,5 +1,5 @@
 %% get some information
-data_dir = '/media/DA74-E37F/lgn/';%'/media/work/lgn/';
+data_dir = '/media/work/lgn/';%'/media/DA74-E37F/lgn/';%
 allFiles = dir(data_dir);
 data_file = allFiles(fileNum+2).name
 %data_file = '040218E_combined.3.h5';

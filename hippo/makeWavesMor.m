@@ -1,5 +1,7 @@
 function ts = makeWavesMor(m,dims)
-
+if dims == 64
+    dims = sqrt(dims);
+end
 w1 = getMor(10,1,1250,3);
 t1 = zeros(m.sources,dims(end));
 for i = 1:m.sources

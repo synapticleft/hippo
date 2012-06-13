@@ -1,5 +1,5 @@
 function [A, noise, R] = fitDists2(fileNum,modelSize,numInds)
-
+sub = 1;fs = 1000/sub;
 load_data;
 spikes = spktrain;
 v = signals;
@@ -7,82 +7,115 @@ if ~exist('numInds','var');
     numInds = size(v,2);
 end
 spikes = [spikes; zeros(size(v,1)-size(spikes,1),size(spikes,2))];
+%%FOR DECIMATION
+%for i = 1:numInds
+%    v1(:,i) = decimate(v(:,i),sub);
+%    spikes1(:,i) = hist(find(spikes(:,i)),[1:sub:numel(spikes(:,i))]);
+%end
+%spikes = spikes1;v = v1;
 spikes = logical(spikes(:,1:numInds));
-cMor = getMor(fm,sf,1000,5);
+cMor = getMor(fm,sf,fs,5);z = v;
 for i= 1:numInds
     z(:,i) = conv(v(:,i),cMor,'same');
-    [coeffs(i,:) noise(i)] = arburg(z(:,i),modelSize);
 end
-coeffs(end+1,:) = mean(coeffs);noise(end+1) = mean(noise);
 %%%%%%%%%%%%
+times = round(400/sub);
 temp = zeros(modelSize,sum(spikes(:)));
-for i = 1:modelSize
+for i = 1:size(temp,1)
     temp(i,:) = z(find(spikes)-i+1);
 end
-spikeFit.Sigma = cov(temp');
+spikeFit.Sigma = cov(temp');%spikeFit.Sigma
 spikeFit.mu = mean(temp,2);
 spikeTimes = getTimes1(spikes)'+1;
 z = z.'; z = z(1:size(spikeTimes,1),:);
-A = [-coeffs(end,2:end);eye(numel(coeffs(end,:))-1)];A(end,:) = [];
 R = spikeFit.Sigma;
-vT = simVar(A,noise(end),modelSize,R);
-[h xs isiAll msIsi] = histISI(spikes,z);
-h = cumsum(h);h = h/max(h);
-hIm(:,:,1) = ones(2,numel(h));hIm(:,:,2) = ones(2,1)*h;hIm(:,:,3) = hIm(:,:,2);hIm = circshift(hIm,[0 0 1]);
-ys = [0 .6];
-figure;hold all;imagesc(xs,ys,hIm);
-temp = .5*log2(2*pi*covAllZ(spikeTimes,z,400));temp = temp-temp(1);
-plot(temp,'LineWidth',3);
-temp = (log2(exp(1)*pi*vT));temp = temp-temp(1);%.5*
-plot(temp,'r','LineWidth',3); 
-scatter(median(isiAll),temp(round(median(isiAll))),100,'k','filled');
-plot([0 300],[.14 .14],'k--','Linewidth',2);axis tight;legend({'Actual','AR3'},'Location','Southeast');legend boxoff;
-set(gca,'fontsize',16);ylabel('Differential entropy (bits)');xlabel('Time after spike (ms)');
-set(gca,'xlim',[1 400],'ylim',[-.05 .9]);
-ms = simMean(A,spikeFit.mu);
-bounds{2} = 0:2:400;bounds{1} = linspace(0,7,100);
-vsIsi = vT(isiAll);
-klIsi = klDiv(msIsi,vsIsi,spikeFit.mu,spikeFit.Sigma);
-t1 = klDiv(zeros(size(vT),1),vT,0,spikeFit.Sigma,600);
-figure;imagesc(bounds{2},bounds{1},hist3([klIsi isiAll'],bounds));colormap gray;hold all;
-set(gca,'YDir','normal')
-plot(klDiv(ms,vT,spikeFit.mu,spikeFit.Sigma,600),'Linewidth',2);
-plot(t1,'linewidth',2);
-plot(temp,'Linewidth',2);%2*pi/exp(2).^2
-sum(t1)/sum(temp(1:numel(t1)).^2)
-set(gca,'fontsize',16);
-ylabel('information (bits)');xlabel('time after spike (ms)');
+for j = 1:modelSize
+    coeffs = [];noise = [];
+    for i = 1:numInds
+        [coeffs(i,:) noise(i)] = arburg(z(i,:),j);
+    end
+    coeffs(end+1,:) = mean(coeffs);noise(end+1) = mean(noise);
+    A = [-coeffs(end,2:end);eye(numel(coeffs(end,:))-1)];A(end,:) = [];
+    vT(j,:) = simVar(A,noise(end),R(1:j,1:j));
+end
+[h0, xs, isiAll] = histISI(spikes,times);h0 = h0/sum(h0);% isiAll msIsi
 
-function d = klDiv(m0,s0,m1,s1,ts)
+figure;hold all;
+[zc , ~] = covAllZ(spikeTimes,z,times);
+plot(zc,'LineWidth',3);
+%plot(vT','LineWidth',3);
+plot(vT(1,:),'c','linewidth',3);plot(vT(2,:),'g','linewidth',3);plot(vT(3,:),'r','linewidth',3);
+axis tight;legend({'Empirical','AR(1)','AR(2)','AR(3)'},'Location','NorthWest');legend boxoff;
+set(gca,'fontsize',16);ylabel('Variance');
+xlabel('Time after spike (ms)');
+vT = vT(end,:)';
+set(gca,'xlim',[1 times],'ylim',[min(vT)-.02 max(vT)+.02]);
+ms = simMean(A,spikeFit.mu);
+%vsIsi = vT(isiAll);
+%klIsi = klDiv1(msIsi,vsIsi,spikeFit.mu,spikeFit.Sigma);
+
+figure;hIm(:,:,1) = ones(2,times);hIm(:,:,2) = ones(2,1)*(1-h0(1:times)/max(h0));
+hIm(:,:,3) = hIm(:,:,2);hIm = circshift(hIm,[0 0 1]);
+imagesc([0 times-1],[0 10],hIm);
+hold all;
+set(gca,'YDir','normal')
+k1 = klDiv1(ms,vT,spikeFit.mu,spikeFit.Sigma,times);
+%plot(klDiv1(zm,zc,spikeFit.mu,spikeFit.Sigma,times),'Linewidth',2);
+c = covIsi(spikes,z,max(xs)+1);
+k = klDiv1(nanmean(c),nanvar(c),spikeFit.mu,spikeFit.Sigma,max(xs)+1);
+plot(0:times-1,k(1:times),'Linewidth',2);%scatter(1:times,k(1:times),max(.1,h0(1:times)/max(h0)*300),'filled');%
+plot(0:times-1,k1,'r','Linewidth',2);
+scatter(nansum(h0.*xs),nansum(h0.*k),100,'r','filled');
+%scatter(mean(isiAll),nanmean(k(isiAll+1)),100,'r','filled');
+legend({'Empirical','AR(3)'});legend boxoff;
+plot([0 times],[.83 .83],'k--','Linewidth',2);
+set(gca,'xlim',[0 140],'ylim',[0 14]);set(gca,'fontsize',16);
+ylabel('Information (bits)');xlabel('Time since last spike (ms)');
+%ks = k(isiAll+1);
+%figure;scatterhist(isiAll(~isnan(ks)),ks(~isnan(ks)));
+%figure;hist(isiAll,0:2:times);
+%set(gca,'xlim',[0 times]);
+%figure;hist(k(isiAll+1),0:.3:15);
+%set(gca,'xlim',[0 15]);
+
+function d = klDiv1(m0,s0,m1,s1,ts)
 if ~exist('ts','var')
     ts = numel(m0);
 end
 m0 = m0(1:ts);s0 = s0(1:ts);
-m1 = m1(1);s1 = s1(1);%d = zeros(1,ts);
-%d = .5*(trace(s1\s0) + (m1-m0)'\inv(s1)*(m1-m0) - log(det(s0)/det(s1)) - 1);
-d = (s0/s1 + conj(m1-m0).*(m1-m0)/s1 - log(s0/s1) - 1)/log(2); %.5*%WAY 1
-%d = d(1:ts);
-% m1 = [real(m1) imag(m1)]';
-% s1 = [s1 0; 0 s1];
-% for i = 1:ts
-% S0 = [s0(i) 0; 0 s0(i)];M0 = [real(m0(i)) imag(m0(i))]';
-% d(i) = 2/pi*(trace(inv(S0)*s1) + (m1-M0)'*inv(s1)*(m1-M0) + log(det(S0)/det(s1)) - 2);%COMP
-% %%d(i) = 2/pi*(trace(inv(s1)*S0) + (m1-M0)'*inv(s1)*(m1-M0) - log(det(S0)/det(s1)) - 2); %% WIKI
-% %d(i) = 2/pi*(trace(s1\S0) + (m1-M0)'/s1*(m1-M0) - log(det(S0)/det(s1)) - 2); %%WIKI
-% end
+m1 = m1(1);s1 = s1(1);
+d = (s1./s0 + conj(m1-m0).*(m1-m0)./s0 - log(s1./s0) - 1)/log(2);
 
-function [h xs fAll muAll] = histISI(spikes,z)
-xs = 0:1:700;
-h = zeros(size(xs));
-fAll = [];muAll = [];
+function c = covIsi(spikes,z,lags)
+c = nan*ones(sum(spikes(:))-size(spikes,2),lags);
+%c1 = nan*ones(sum(spikes(:))-size(spikes,2),ceil(lags/dec));
+counter = 1;
 for i = 1:size(spikes,2)
     f = find(spikes(:,i));
-    muAll = [muAll z(i,f(2:end))];
+    for j = 2:numel(f)
+        c(counter,1:min(f(j)-f(j-1),lags)) = z(i,f(j-1):min(lags+f(j-1),f(j))-1);
+%         if f(j)-f(j-1) <= lags
+%             c1(counter,ceil((f(j)-f(j-1))/dec)) = z(i,f(j));
+%         end
+%     if size(z,2)>=(f(j-1)+lags)
+%         c(counter,:) = z(i,f(j-1)+(1:lags));
+%     end
+    counter = counter+1;
+    end
+end
+%c = nanvar(c);
+
+function [h xs fAll] = histISI(spikes,times)
+xs = 0:3*times;
+h = zeros(size(xs));
+fAll = [];%muAll = [];
+for i = 1:size(spikes,2)
+    f = find(spikes(:,i));
+%    muAll = [muAll z(i,f(2:end))];
     f = diff(f);
     fAll = [fAll f'];
     h = hist(f,xs) + h;
 end
-muAll = muAll.';
 
 function mu = simMean(A,M)
 numIt = 2000;
@@ -92,7 +125,8 @@ for i = 1:numIt
     M = A*M;
 end
 
-function [v P] = simVar(A,noise,p,R)
+function [v P] = simVar(A,noise,R)
+p = size(A,1);
 E = zeros(p); E(1,1) = noise;
 P = R;
 numIt = 2000;
@@ -105,9 +139,9 @@ end
 vecP = (eye(p^2,p^2) - kron(conj(A),A))\E(:);
 P = reshape(vecP,p,p);
 P = (P+P')/2;
-[P(1,1) log(max(v)) log(real(P(1,1)))]
+[P(1,1) log(max(v)) log(real(P(1,1)))];
 
-function z = covAllZ(spikes,zs,forw)
+function [zc zm] = covAllZ(spikes,zs,forw)
 [r c] = find(spikes == 1);
 r((c+forw-1) > size(spikes,2)) = [];
 c((c+forw-1) > size(spikes,2)) = [];
@@ -115,7 +149,8 @@ z = zeros(numel(r),forw);
 for i = 1:numel(r)
     z(i,:) = zs(r(i),c(i)+(1:forw)-1);
 end
-z = var(z);
+zc = var(z);
+zm = mean(z);
 
 function t = getTimes1(spikes)
 spikes = spikes';
@@ -134,11 +169,3 @@ for i = 1:s(1)
 end
 t(t > 1000) = 500;
 t = t';
-
-function dPhase = getDiffs(sig,gap)
-angleA = angle(sig);
-if min(size(sig)) == 1
-    dPhase = circ_dist(angleA((gap+1):end),angleA(1:(end-gap)));
-else
-    dPhase = circ_dist(angleA(:,(gap+1):end),angleA(:,1:(end-gap)));
-end
