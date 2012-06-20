@@ -1,0 +1,11 @@
+% gSlow.m - slowness penalty on coeff amplitudes gaussian smoothed
+%
+
+function S = gSlow(a,p)
+for i = 1:size(a,1)
+    as(i,:) = conv(a(i,:),gausswin(p.firstlayer.a_tau_S));
+    as(i,:) = conv(as(i,end:-1:1),gausswin(p.firstlayer.a_tau_S));
+end
+norm = conv(ones(size(a,2),1),gausswin(p.firstlayer.a_tau_S));
+
+%S=diff(a,1,2).^2;

@@ -50,7 +50,7 @@ legend({'empirical','phase-AR(3)','z-AR(3)'});legend boxoff
 xlabel '\Delta\phi'; ylabel 'count'
 figure;hold all;
 lag = 300;
-for i = 1%:2%1:size(sim,1)
+for i = 1:size(sim,1)
     temp = zeros(2*lag+1,1);
     for j = 1:size(sim,2)
         temp = temp + xcorr(squeeze(sim(i,j,:)),lag,'coeff');
@@ -58,12 +58,18 @@ for i = 1%:2%1:size(sim,1)
     temp = temp / j;
     plot((-lag:lag),abs(temp),'Linewidth',2);
 end
+set(gca,'Fontsize',16);axis tight;
+legend({'empirical','phase-AR(3)','z-AR(3)'});legend boxoff%,'phase-AR(3)'
+xlabel 'lag (ms)'; ylabel 'correlation'
+return
 r = rlevinson(coeffs(end,:),noise(end));
 %temp = corrmtx(z(:,5),3);temp'*temp %first column same as r
 temp = arData([r(1:modelSize).'/r(1) zeros(1,lag-modelSize+1)],coeffs(end,:));
-plot((-lag:lag),abs([temp(end:-1:2) temp]),'r','Linewidth',2);
+plot((-lag:lag),abs([temp(end:-1:2) temp]),'Linewidth',2);
+
+return
 set(gca,'Fontsize',16);axis tight;
-legend({'empirical','z-AR(3)'});legend boxoff%,'phase-AR(3)'
+legend({'empirical','phase-AR(3)','z-AR(3)'});legend boxoff%,'phase-AR(3)'
 xlabel 'lag (ms)'; ylabel 'correlation'
 xs = -pi:.05:pi;
 [im,spread] = phaseDecay(spikes',z.',300,10,xs);

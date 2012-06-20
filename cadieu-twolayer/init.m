@@ -1,0 +1,229 @@
+function [m,p] = init(m,p,list)
+
+%% misc
+m.t = 0;
+%% init data %%
+betas = 10.^((1:10)/2-.5);
+sparses = 10.^((1:10)/2-.5);
+switch p.data_type
+    case 'lfp'   
+        p.imszt=256;% number of time steps
+        p.data_root='/media/work/hippocampus/';    
+        p.data_file='sm9603Dec32.h5';%'ec014.468Dec3296.h5';%
+        p.data_field='/hReal';
+    case 'sim'
+        p.imsz = 8;
+        p.imszt = 256;
+        p.patches_load = 1;
+end
+
+%% whitening params %%
+
+if p.whiten_patches
+    p.whitening.pixel_noise_fractional_variance = .01;
+    % the following seems redundant
+    p.whitening.pixel_noise_variance_cutoff_ratio = 1; %1.25; % 1 + var(signal)/var(noise)
+    p.whitening.X_noise_fraction = 8.;
+    p.whitening.X_noise_var = .01;
+    % run whitening
+    p.whitening.whiten_num_patches = 20*1250;%min(400*m.patch_sz,200000)/20;%160000; TEMPORARY /20
+    [m, p] = learn_whitening(m,p);
+    %m.N = m.M;
+else
+    m.M = m.patch_sz;%m.N;
+    m.I_noise_factors = 100*ones(m.M,1);%
+    if p.imszt < 256
+        temp = p.imszt;
+        p.imszt = 256;
+    end
+    nsamples = max(5,ceil(2*1250/p.imszt));
+    sampleVec = zeros(m.patch_sz,nsamples*p.imszt);
+    for i = 1:nsamples
+        sampleVec(:,(i-1)*p.imszt + (1:p.imszt)) = load_datachunk(m,p);
+%        totVar = totVar + var(temp(:));
+    end
+    m.imageMean = mean(sampleVec,2);
+    m.imageStd = sqrt(var(sampleVec,0,2));
+    p.var = sqrt(10*var(sampleVec(:)));%sqrt(10*totVar/nsamples);
+    if exist('temp','var')
+        p.imszt = temp;
+    end
+end
+%% init basis functions %%
+
+m.A = init_complex(m.M,m.N);
+%m.D = init_real(m.N,m.L);
+%m.B = init_real(m.N,m.K);
+
+%% first layer %%
+
+p.firstlayer.use_GS = 1;
+switch p.firstlayer.basis_method
+    case 'steepest_adapt'
+        p.firstlayer.A_eta=.0001;
+        p.firstlayer.eta_dA_target = .005;
+        p.firstlayer.up_factor = 1.02;
+        p.firstlayer.down_factor = .95;
+        
+    case 'steepest'
+        p.firstlayer.A_eta=.05;
+end
+
+switch p.firstlayer.prior
+    case 'slow_cauchy'        
+        % a
+        p.firstlayer.a_cauchy_beta = 10; % 2.2%1;%
+        p.firstlayer.a_cauchy_sigma = .4; % .1
+        p.firstlayer.a_lambda_S= .5;%5;
+        p.firstlayer.a_thresh  = exp(-4);
+    case 'cauchy'        
+        % a
+        p.firstlayer.a_cauchy_beta = 1;%10; % 2.2%1;%
+        p.firstlayer.a_cauchy_sigma = .4; % .1
+    case 'laplace'
+        p.firstlayer.a_laplace_beta = 1000;
+    case 'l1l2'
+        p.firstlayer.a_laplace_beta = 2000;
+    case 'slow_laplace'
+        p.firstlayer.a_laplace_beta = [10 1000];%1;
+        p.firstlayer.a_lambda_S = 10000;%.5;
+        p.firstlayer.a_tau_S = 100;
+    case 'laplace_Z'
+        p.firstlayer.a_laplace_beta = betas(list(1))*[1 1];%1;
+        p.firstlayer.a_lambda_S = sparses(list(2));%.5;
+        %p.firstlayer.a_tau_S = 100;
+    case 'laplace_AR'
+        p.firstlayer.a_laplace_beta = 100*[0.99 1];%1;
+        p.firstlayer.a_lambda_S = 100;%.5;
+end
+
+switch p.firstlayer.inference_method
+    case 'steepest'
+        p.firstlayer.iter  =  120;
+        p.firstlayer.eta_a     = .005;%.00005
+        p.firstlayer.eta_phase = .0005;
+        p.firstlayer.natural_gradient = 1;
+        
+    case 'minFunc_ind'
+        p.firstlayer.minFunc_ind_Opts.Method = 'bb';%'cg';%'bb';%'csd';%
+        p.firstlayer.minFunc_ind_Opts.Display = 'off';
+        p.firstlayer.minFunc_ind_Opts.MaxIter = 30;%15;%
+        p.firstlayer.minFunc_ind_Opts.MaxFunEvals = 60;%20;%
+        p.firstlayer.natural_gradient = 1;%1 originally
+
+end
+
+
+
+% %% ampmodel %%
+% 
+% switch p.ampmodel.basis_method
+%     case 'steepest'
+%         p.ampmodel.B_eta=.01;
+%     case 'steepest_adapt'
+%         p.ampmodel.B_eta=.01;
+%         p.ampmodel.eta_dB_target = .03;
+%         p.ampmodel.up_factor = 1.02;
+%         p.ampmodel.down_factor = .95;
+%     case 'minFunc_ind_wd'
+%         p.ampmodel.B_gamma = 0.01;
+%         p.ampmodel.B_minFunc_ind_Opts.Method = 'cg';
+%         p.ampmodel.B_minFunc_ind_Opts.Display = 'final';
+%         p.ampmodel.B_minFunc_ind_Opts.MaxIter = 100;
+%         p.ampmodel.B_minFunc_ind_Opts.MaxFunEvals = 300;
+% 
+% end
+% 
+% switch p.ampmodel.prior
+%     case 'laplace'
+%         % loga noise variance
+%         p.ampmodel.loga_noise_var=.2;
+%         p.ampmodel.loga_noise_factor = 1./p.ampmodel.loga_noise_var;
+%         % v
+%         p.ampmodel.v_laplace_beta=2;
+%     case 'cauchy'
+%         % loga noise variance
+%         p.ampmodel.loga_noise_var=.2;
+%         p.ampmodel.loga_noise_factor = 1./p.ampmodel.loga_noise_var;
+%         % v
+%         p.ampmodel.v_cauchy_beta=.1;
+%         p.ampmodel.v_cauchy_sigma=sqrt(.01);
+%     case 'slow_laplace'
+%         % loga noise variance
+%         p.ampmodel.loga_noise_var=.2;
+%         p.ampmodel.loga_noise_factor = 1./p.ampmodel.loga_noise_var;
+%         % v
+%         p.ampmodel.v_laplace_beta=2;
+%         p.ampmodel.v_lambda_S = 10;
+%     case 'slow_cauchy'
+%         % loga noise variance
+%         p.ampmodel.loga_noise_var=.2;
+%         p.ampmodel.loga_noise_factor = 1./p.ampmodel.loga_noise_var;
+%         % v
+%         p.ampmodel.v_cauchy_beta=.1;
+%         p.ampmodel.v_cauchy_sigma=.05;
+%         p.ampmodel.v_lambda_S = 10;
+% end
+% 
+% switch p.ampmodel.inference_method
+%     case 'thresholding'
+%         p.ampmodel.tcparams.adapt = 0.96;
+%         p.ampmodel.tcparams.eta = 0.1;
+%         p.ampmodel.tcparams.num_iterations = 150;
+%         p.ampmodel.tcparams.thresh_type = 1; % soft = 1, hard = 0
+%         
+%     case 'steepest'
+%         p.ampmodel.iter  =  50;
+%         p.ampmodel.eta_v     = .005;
+%   
+%     case 'minFunc_ind'
+%         p.ampmodel.minFunc_ind_Opts.Method = 'csd';%'csd';%'bb';%'cg';%
+%         p.ampmodel.minFunc_ind_Opts.Display = 'final';
+%         p.ampmodel.minFunc_ind_Opts.MaxIter = 15;%30;
+%         p.ampmodel.minFunc_ind_Opts.MaxFunEvals = 20;%60;
+% 
+% end
+% 
+% 
+% %% phasetrans %%
+% 
+% switch p.phasetrans.basis_method
+%     case 'steepest'
+%         p.phasetrans.D_eta=.01;
+% 
+%     case 'steepest_adapt'
+%         p.phasetrans.D_eta=.01;
+%         p.phasetrans.eta_dD_target = .03;
+%         p.phasetrans.up_factor = 1.02;
+%         p.phasetrans.down_factor = .95;
+% 
+% end
+% 
+% p.phasetrans.a_on_fraction = .25;
+% 
+% switch p.phasetrans.prior
+%     case 'slow_cauchy'
+%         % phase
+%         p.phasetrans.phase_noise_var=.25;
+%         p.phasetrans.phase_noise_factor=1./p.phasetrans.phase_noise_var;
+%         % w
+%         p.phasetrans.w_cauchy_beta=.5;
+%         p.phasetrans.w_cauchy_sigma=.2236;%sqrt(.5);
+%         p.phasetrans.w_lambda_S = 5.;
+%         
+%         % ignore dphase parameters
+%         p.phasetrans.a_thresh  = .2;
+% end
+% 
+% switch p.phasetrans.inference_method
+%     case 'steepest'
+%         p.phasetrans.iter  =  50;
+%         p.phasetrans.eta_w     = .02;
+% 
+%     case 'minFunc_ind'
+%         p.phasetrans.minFunc_ind_Opts.Method = 'csd';%'csd';%'bb';%'cg';%
+%         p.phasetrans.minFunc_ind_Opts.Display = 'final';
+%         p.phasetrans.minFunc_ind_Opts.MaxIter = 15;%30;
+%         p.phasetrans.minFunc_ind_Opts.MaxFunEvals = 20;%60;
+%         
+% end

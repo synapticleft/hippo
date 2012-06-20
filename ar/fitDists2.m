@@ -65,10 +65,11 @@ c = covIsi(spikes,z,max(xs)+1);
 k = klDiv1(nanmean(c),nanvar(c),spikeFit.mu,spikeFit.Sigma,max(xs)+1);
 plot(0:times-1,k(1:times),'Linewidth',2);%scatter(1:times,k(1:times),max(.1,h0(1:times)/max(h0)*300),'filled');%
 plot(0:times-1,k1,'r','Linewidth',2);
-scatter(nansum(h0.*xs),nansum(h0.*k),100,'r','filled');
+%scatter(nansum(h0.*xs),nansum(h0.*k),100,'r','filled');
+plot([0 times],nansum(h0.*k)*ones(1,2),'r--','Linewidth',2);
 %scatter(mean(isiAll),nanmean(k(isiAll+1)),100,'r','filled');
 legend({'Empirical','AR(3)'});legend boxoff;
-plot([0 times],[.83 .83],'k--','Linewidth',2);
+%plot([0 times],[.83 .83],'k--','Linewidth',2);
 set(gca,'xlim',[0 140],'ylim',[0 14]);set(gca,'fontsize',16);
 ylabel('Information (bits)');xlabel('Time since last spike (ms)');
 %ks = k(isiAll+1);
@@ -77,6 +78,7 @@ ylabel('Information (bits)');xlabel('Time since last spike (ms)');
 %set(gca,'xlim',[0 times]);
 %figure;hist(k(isiAll+1),0:.3:15);
 %set(gca,'xlim',[0 15]);
+nansum(h0.*k)
 
 function d = klDiv1(m0,s0,m1,s1,ts)
 if ~exist('ts','var')

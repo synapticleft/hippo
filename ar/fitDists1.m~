@@ -50,7 +50,7 @@ legend({'empirical','phase-AR(3)','z-AR(3)'});legend boxoff
 xlabel '\Delta\phi'; ylabel 'count'
 figure;hold all;
 lag = 300;
-for i = 1%:2%1:size(sim,1)
+for i = 1:size(sim,1)
     temp = zeros(2*lag+1,1);
     for j = 1:size(sim,2)
         temp = temp + xcorr(squeeze(sim(i,j,:)),lag,'coeff');
@@ -61,15 +61,15 @@ end
 r = rlevinson(coeffs(end,:),noise(end));
 %temp = corrmtx(z(:,5),3);temp'*temp %first column same as r
 temp = arData([r(1:modelSize).'/r(1) zeros(1,lag-modelSize+1)],coeffs(end,:));
-plot((-lag:lag),abs([temp(end:-1:2) temp]),'r','Linewidth',2);
+plot((-lag:lag),abs([temp(end:-1:2) temp]),'k','Linewidth',2);
 set(gca,'Fontsize',16);axis tight;
-legend({'empirical','z-AR(3)'});legend boxoff%,'phase-AR(3)'
+legend({'empirical','phase-AR(3)','z-AR(3)'});legend boxoff%,'phase-AR(3)'
 xlabel 'lag (ms)'; ylabel 'correlation'
 xs = -pi:.05:pi;
 [im,spread] = phaseDecay(spikes',z.',300,10,xs);
 figure;
-subplot(3,1,[1 2]);colormap gray;imagesc(0:10:290,xs,im);set(gca,'Fontsize',16);ylabel \phi;
-subplot(3,1,3);plot(0:10:290,spread,'k','Linewidth',2);set(gca,'Fontsize',16,'ylim',[0 1.02],'ytick',[0 1]);ylabel kappa;xlabel time;
+subplot(3,1,[1 2]);colormap gray;imagesc(5+(0:10:290),xs,im);set(gca,'Fontsize',16,'xtick',[]);ylabel \phi;
+subplot(3,1,3);plot(5+(0:10:290),spread,'k','Linewidth',2);set(gca,'Fontsize',16,'ylim',[0 1.02],'ytick',[0 1]);ylabel \kappa;xlabel('time (ms)');
 %%%%%%%%%%FIG 3
 A = [-coeffs(end,2:end);eye(modelSize)];A(end,:) = [];
 E = zeros(modelSize); E(1,1) = noise(end);vecP = (eye(modelSize^2) - kron(conj(A),A))\E(:);
@@ -81,7 +81,6 @@ pZ_Data = pZ_Data/sum(pZ_Data(:));
 z_fit = gmdistribution(0,vecP(1),1);%.mu = 0;z_fit.Sigma = vecP(1);
 pZ_spike_Data = hist3([real(z_spike) imag(z_spike)],bounds);
 pZ_spike_Data = pZ_spike_Data/sum(pZ_spike_Data(:));
-mean(z_spike)
 z_spike_fit = gmdistribution(mean(z_spike),var(z_spike),1);%.mu = mean(z_spike);
 %z_spike_fit.Sigma = var(z_spike);%gmdistribution.fit([real(z_spike) imag(z_spike)],1);
 [x y] = meshgrid(bounds{1});
@@ -96,13 +95,13 @@ figure;subplot(1,2,1);scatter(real(z(r)),imag(z(r)),'k','filled');hold on;
 r = rand(1,numel(z_spike)) < 1000/numel(z_spike);
 scatter(real(z_spike(r)),imag(z_spike(r)),'r','filled');axis image;%,'CData',[.66 .66 .66]
 ylim([min(bounds{1}) max(bounds{1})]);xlim([min(bounds{1}) max(bounds{1})]);
-set(gca,'fontsize',16);
+set(gca,'fontsize',16);xlabel('Real(Z)');ylabel('Imag(Z)');title('Empirical');
 temp = makeComplex(1000,sqrt(vecP(1)));
 subplot(1,2,2);scatter(real(temp),imag(temp),'k','filled');hold on;
 temp = mean(z_spike) + makeComplex(1000,std(z_spike));
 scatter(real(temp),imag(temp),'filled','r');axis image;
 ylim([min(bounds{1}) max(bounds{1})]);xlim([min(bounds{1}) max(bounds{1})]);
-set(gca,'fontsize',16);
+set(gca,'fontsize',16);title('Gaussian Fit');
 % emp(:,:,1) = pZ_Data;emp(:,:,2) = pZ_spike_Data;emp(:,:,3) = 0;
 % ana(:,:,1) = pZ_Fit;ana(:,:,2) = pZ_spike_Fit;ana(:,:,3) = 0;
 % figure;subplot(1,2,1);image(bounds{1},bounds{1},logIm(emp,-10));axis image;
@@ -116,8 +115,8 @@ for i = 1:modelSize
     temp(i,:) = z(find(spikes)-i+1);
 end
 spikeFit.Sigma = cov(temp');
-spikeFit.mu = mean(temp,2)
-xs = linspace(-pi,pi,60);%-(pi-.025):.05:(pi-.025);%circ_dist([-pi:.05:pi],angle(spikeFit.mu(1)));
+spikeFit.mu = mean(temp,2);
+xs = linspace(-pi,pi,100);%-(pi-.025):.05:(pi-.025);%circ_dist([-pi:.05:pi],angle(spikeFit.mu(1)));
 [t k] = circ_vmpar(angle(temp(1,:)));
 figure;plot(xs,hist(angle(temp(1,:)),xs),'Linewidth',2);hold all;%mean(z_spike) + makeComplex(sum(spikes(:)),std(z_spike))
 temp = circ_vmpdf(xs,t,k);
