@@ -21,7 +21,7 @@ if ~exist('spT','var')
     if strcmp('ec013.670',file)
         shanks = 5:8;
     elseif strcmp('ec014.468',file)
-        shanks = 1:8;
+        shanks = 9:12;%1:8;
     elseif strcmp('ec016.269',file)
         shanks = [1:4 7:10];
     end

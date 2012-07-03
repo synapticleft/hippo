@@ -12,26 +12,31 @@ function [array] =display_A(m,Z_var,fig_num)
 if ~exist('fig_num','var')
     fig_num=1;
 end
-
-A = double(m.A);
+%m.e = [];
+if isstruct(m)
+    A = double(m.A);
+else
+    A = m;
+    m.e = [];
+end
 if isfield(m,'dewhitenMatrix')
     A = m.dewhitenMatrix*A;
     array = display_Ahelper(A,fig_num);
     %A = m.zerophaseMatrix*A;
     display_Ahelper(m.zerophaseMatrix*A,fig_num+1);
     if nargin < 2
-       for i = 1:inf
-       display_Ahelper(A*exp(1i*i/10),fig_num);
-       display_Ahelper(m.zerophaseMatrix*A*exp(1i*i/10),fig_num+1);drawnow;
-   end
+        for i = 1:inf
+            display_Ahelper(A*exp(1i*i/10),fig_num);
+            display_Ahelper(m.zerophaseMatrix*A*exp(1i*i/10),fig_num+1);drawnow;
+        end
     end
 else
     display_Ahelper(A,fig_num);
-    if nargin < 2
-   for i = 1:inf
-       display_Ahelper(A*exp(1i*i/10),fig_num);    drawnow;
-   end
-    end
+%     if nargin < 2
+%    for i = 1:inf
+%        display_Ahelper(A*exp(1i*i/10),fig_num);    drawnow;
+%    end
+%     end
 end
 if exist('Z_var','var')  && ~isempty(Z_var) && (max(Z_var(:)) > 0)
   sfigure(fig_num+2);

@@ -1,28 +1,35 @@
-function runTrigger2(pos,v,thresh)
+function selectSVD(pos,X,thresh)
 warning off all;
 bounds = [.1 .9];
-accumbins = 50;timeBins = [-100:400];
+
 pos(pos == -1) = nan;
-if size(v,1) < size(pos,1)
-    pos = pos(1:size(v,1),:);
+if size(X,2) < size(pos,1)
+    pos = pos(1:size(X,2),:);
 end
 nanInds = find(~isnan(pos(:,1)));
 pos(:,1) = interp1(nanInds,pos(nanInds,1),1:size(pos,1));
 pos(:,2) = interp1(nanInds,pos(nanInds,2),1:size(pos,1));
 nanInds = isnan(pos(:,1));
-pos = pos(~nanInds,:);v = v(~nanInds,:);%sp = sp(:,~nanInds);
+pos = pos(~nanInds,:);X = X(:,~nanInds);pos1 = pos;%sp = sp(:,~nanInds);
 vel = angVel(pos);vel = filtLow(vel(:,1),1250/32,1);
 pos = bsxfun(@minus,pos,mean(pos));%pos = bsxfun(@rdivide,pos,std(pos));
 [a,~,~] = svd(pos(:,1:2),'econ');pos = a;
 pos(:,1) = pos(:,1)-min(pos(:,1));pos(:,1) = pos(:,1)/max(pos(:,1));
+inBounds = pos(:,1) > bounds(1) & pos(:,1) < bounds(2);sum(inBounds)
+[u s v] = svd(X(:,inBounds),'econ');
+figure;showGrid(real(u),[8 8]);
+v = (u'*X)';
+for i = 2:10
+runTrigger2(pos1,v(:,[1 i]),.7);
+end
+return
 b = nan*ones(size(pos,1),1);
 b(pos(:,1) < bounds(1)) = -1;b(pos(:,1) > bounds(2)) = 1;
 nanInds = find(~isnan(b));
 b = interp1(nanInds,b(nanInds),1:size(pos,1));
 b = [0 diff(b)];
 v(:,2) = v(:,2).*conj(v(:,1))./abs(v(:,1));
-offSet = 1;
-v(:,1) = [zeros(offSet,1); v(1+offSet:end,1).*conj(v(1:end-offSet,1))./abs(v(1:end-offSet,1))];
+v(:,1) = [0; v(2:end,1).*conj(v(1:end-1,1))./abs(v(1:end-1,1))];
 v = filtLow(v.',1250/32,1).';
 runs = bwlabel(b > 0);
 vInterp = zeros(2,2,max(runs),accumbins);
@@ -60,9 +67,9 @@ for i = 1:2
     subplot(2,numGraphs,(i-1)*numGraphs+6);imagesc(linspace(bounds(1),bounds(2),accumbins)*250,1:max(runs),squeeze(velInterp(i,:,:)),[0 prctile(velInterp(:),99)]);
     set(gca,'fontsize',16);title 'velocity';ylabel 'Trial #'; xlabel 'Time (ms)'
     for j = 1:2
-        subplot(2,numGraphs,(i-1)*numGraphs+2*j);imagesc(timeBins*32/1250,1:max(runs),complexIm(squeeze(vVel(i,3-j,:,:)),1,powers(j)));
+        subplot(2,numGraphs,(i-1)*numGraphs+2*j);imagesc(timeBins*32/1250,1:max(runs),complexIm(squeeze(vVel(i,3-j,:,:)),0,powers(j)));
         set(gca,'fontsize',16);
-        subplot(2,numGraphs,(i-1)*numGraphs+2*j+1);imagesc(linspace(bounds(1),bounds(2),accumbins)*250,1:max(runs),complexIm(squeeze(vInterp(i,3-j,:,:)),1,powers(j)));
+        subplot(2,numGraphs,(i-1)*numGraphs+2*j+1);imagesc(linspace(bounds(1),bounds(2),accumbins)*250,1:max(runs),complexIm(squeeze(vInterp(i,3-j,:,:)),0,powers(j)));
         set(gca,'fontsize',16);
     end
 end

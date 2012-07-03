@@ -1,17 +1,18 @@
-function [weights signal zpweights W] = ica_lfp_complex(X,f1,f2,fs,sources)
-
-if ~exist('fs','var')
-    fs = 1250;
-end
+function [weights signal zpweights W X] = ica_lfp_complex(X,sources,f1,f2,fs)
 
 X = X - repmat(mean(X,2),[1 size(X,2)]);
 X = X./repmat(std(X,1,2),[1 size(X,2)]);
 
-if ~isempty(f1)
+if exist('f1','var') && ~isempty(f1)
+    if ~exist('fs','var') || isempty(fs)
+        fs = 1250;
+    end
     X = hipFilter(X,f1,f2,fs);
 end
 
-X = hilbert(X')';
+if isreal(X)%sum(imag(X(:)) == 0)
+    X = hilbert(X')';
+end
 tic;
 
 %%[weights sphere] = runica(signal,'maxsteps',50);%,'interupt','on'
@@ -27,7 +28,7 @@ end
 if m<n, %assumes white noise
  	[U,D] 	= eig((X*X')/T); 
 	[puiss,k]=sort(diag(D));
- 	ibl 	= sqrt(puiss(n-m+1:n)-mean(puiss(1:n-m)));
+ 	ibl = ones(m,1);%sqrt(puiss(n-m+1:n)-mean(puiss(1:n-m)));
  	bl 	= ones(m,1) ./ ibl ;
  	W	= diag(bl)*U(1:n,k(n-m+1:n))';
  	IW 	= U(1:n,k(n-m+1:n))*diag(ibl);
@@ -37,6 +38,7 @@ else    %assumes no noise
  	W	= inv(IW);
     ZP = eye(m);
 end;
+plot(std(X,0,2)
 X	= W*X;
 
 %fast!

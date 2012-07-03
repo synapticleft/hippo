@@ -1,0 +1,5 @@
+function timeScale(v,v1)
+
+av = angle(v(:,1));
+av1 = angle(v1(:,1));
+figure;hist(circ_dist(av,av1));

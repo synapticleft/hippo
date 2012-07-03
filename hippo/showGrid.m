@@ -10,6 +10,9 @@ function hout=showGrid(A,gridsize,ratio,bg,h,clim)
 if ~exist('bg','var') || isempty(bg)
   bg='black';
 end
+if ~exist('ratio','var') || isempty(ratio)
+    ratio = [1 1];
+end
 
 [L M]=size(A);
 buf=1;

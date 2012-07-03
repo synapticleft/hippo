@@ -1,8 +1,10 @@
 function [cr,cc1,cc2,kerns]= posVsSpike(pos,sp,v,numNeuro)%,vInterp 
 bounds = [.1 .9];accumbins = 50;
 shift = 1;shifts = 0;
-if numel(sp) > size(v,1)
+if size(sp,2) > size(v,1)
     sp = sp(:,1:size(v,1));
+elseif size(v,1) < size(sp,2)
+    v = v(1:size(sp,2),:);
 end
 pos(pos == -1) = nan;
 if size(v,1) < size(pos,1)
@@ -54,7 +56,7 @@ for k = 1:2
     end
     figure;
     for j = 1:size(sp,1)
-       subplot(numX,numY,j);imagesc(complexIm(squeeze(spInterp(k,j,:,:)),0,.25));title(num2str(j));
+       subplot(numX,numY,j);imagesc(complexIm(squeeze(spInterp(k,j,:,:)),0,1));title(num2str(j));
     end
 end
 kernFig = figure;
@@ -91,5 +93,5 @@ for k = 1:2
     figure(kernFig);plot(abs(kern));
     in = squeeze(spInterp(k,input('which neuron? '),:,shifts+1:end-shifts));
     figure(h);subplot(2,4,(k-1)*4+1);imagesc(abs(in));
-    subplot(2,4,(k-1)*4+2);image(complexIm(in,0,.25));
+    subplot(2,4,(k-1)*4+2);image(complexIm(in,0,.5));
 end

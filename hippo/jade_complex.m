@@ -122,20 +122,20 @@ end;
 
 
 %% Better declare the variables used in the loop :
-B 	= [ 1 0 0 ; 0 1 1 ; 0 -i i ] ;
+B 	= [ 1 0 0 ; 0 1 1 ; 0 -1i 1i ] ;
 Bt	= B' ;
-Ip	= zeros(1,nem) ;
-Iq	= zeros(1,nem) ;
-g	= zeros(3,nem) ;
-G	= zeros(2,2) ;
-vcp	= zeros(3,3);
-D	= zeros(3,3);
-la	= zeros(3,1);
-K	= zeros(3,3);
-angles	= zeros(3,1);
-pair	= zeros(1,2);
-c	= 0 ;
-s	= 0 ;
+% Ip	= zeros(1,nem) ;
+% Iq	= zeros(1,nem) ;
+% g	= zeros(3,nem) ;
+% G	= zeros(2,2) ;
+% vcp	= zeros(3,3);
+% D	= zeros(3,3);
+% la	= zeros(3,1);
+% K	= zeros(3,3);
+% angles	= zeros(3,1);
+% pair	= zeros(1,2);
+% c	= 0 ;
+% s	= 0 ;
 
 
 %init;
@@ -157,7 +157,7 @@ while encore, encore=0;
  	angles	= vcp(:,K(3));
 	if angles(1)<0 , angles= -angles ; end ;
  	c	= sqrt(0.5+angles(1)/2);
- 	s	= 0.5*(angles(2)-j*angles(3))/c; 
+ 	s	= 0.5*(angles(2)-1i*angles(3))/c; 
 
  	if abs(s)>seuil, %%% updates matrices M and V by a Givens rotation
 	 	encore 		= 1 ;

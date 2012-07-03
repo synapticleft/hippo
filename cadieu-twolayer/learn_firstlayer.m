@@ -12,7 +12,7 @@ end
 if p.use_gpu
     m.A = gsingle(m.A);
 end
-
+Aold = m.A;
 for trial = 1:num_trials
     F = load_datachunk(m,p);
     X = crop_chunk(F,m,p);
@@ -39,13 +39,19 @@ for trial = 1:num_trials
     
     % save some memory (GPU)
     clear Z I_E
-    % save
-    if (mod(m.t,save_every)==0)
-        save_model(sprintf(fname,sprintf('progress_t=%d',m.t)),m,p);
-    end
     m.t=m.t+1;
-    if (mod(m.t,100)==0)
-        fprintf('\n%d',m.t)
+    % save
+    if (mod(m.t,save_every)==0)% && m.t > 0
+        save_model(sprintf(fname,sprintf('progress_t=%04d',m.t)),m,p);
+        if 1-min(abs(sum(m.A.*conj(Aold)))) < 1e-3
+            break;
+        else
+            Aold = m.A;
+        end
     end
-    fprintf('\n')
+% 
+%     if (mod(m.t,100)==0)
+%         fprintf('\n%d',m.t)
+%     end
+%     fprintf('\n')
 end

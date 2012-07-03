@@ -1,17 +1,40 @@
-function runTrigger2(pos,v,thresh)
+function runTriggerSTFT(pos,X,thresh)
+%downsample position vector so that can look at phase relations of theta in
+%v
 warning off all;
 bounds = [.1 .9];
-accumbins = 50;timeBins = [-100:400];
+accumbins = 50;timeBins = -10:40;
 pos(pos == -1) = nan;
-if size(v,1) < size(pos,1)
-    pos = pos(1:size(v,1),:);
-end
+% if size(v,1) < size(pos,1)
+%     pos = pos(1:size(v,1),:);
+% end
 nanInds = find(~isnan(pos(:,1)));
-pos(:,1) = interp1(nanInds,pos(nanInds,1),1:size(pos,1));
-pos(:,2) = interp1(nanInds,pos(nanInds,2),1:size(pos,1));
+for i = 1:4
+    nans = find(~isnan(pos(:,i)));
+pos(:,i) = interp1(nans,pos(nans,i),1:size(pos,1));
+end
+%pos(:,2) = interp1(nanInds,pos(nanInds,2),1:size(pos,1));
 nanInds = isnan(pos(:,1));
-pos = pos(~nanInds,:);v = v(~nanInds,:);%sp = sp(:,~nanInds);
-vel = angVel(pos);vel = filtLow(vel(:,1),1250/32,1);
+%%STFT
+params.Fs = 1250/25;
+if exist('dec','var')
+    params.Fs = params.Fs/dec;
+end
+win = [.5 .3];
+params.tapers = [1/win(1) win(1) 1];
+[S,t,f,sa] = mtspecgramc(X,win,params);
+ref = 5:7;ref1 = 12:13;
+ft = exp(-1i*angle(mean(sa(:,ref),2))*ones(size(f)));
+temp = sa.*ft;
+%%resample
+pos(nanInds,:) = 0;
+pos = resample(pos,size(temp,1),size(pos,1));
+nanInds = resample(double(nanInds),size(temp,1),size(nanInds,1));
+pos = pos(nanInds < 0.1,:);
+temp = temp(nanInds < 0.1,:);
+sa = sa(nanInds < .1,:);
+vel = angVel(pos);vel = filtLow(vel(:,1),1/win(2),1);
+figure;image(complexIm(temp.',0,1));hold all;plot(vel/10,'linewidth',2);
 pos = bsxfun(@minus,pos,mean(pos));%pos = bsxfun(@rdivide,pos,std(pos));
 [a,~,~] = svd(pos(:,1:2),'econ');pos = a;
 pos(:,1) = pos(:,1)-min(pos(:,1));pos(:,1) = pos(:,1)/max(pos(:,1));
@@ -20,9 +43,12 @@ b(pos(:,1) < bounds(1)) = -1;b(pos(:,1) > bounds(2)) = 1;
 nanInds = find(~isnan(b));
 b = interp1(nanInds,b(nanInds),1:size(pos,1));
 b = [0 diff(b)];
-v(:,2) = v(:,2).*conj(v(:,1))./abs(v(:,1));
+v = [mean(sa(:,ref),2) mean(sa(:,ref1),2)];%12:13
+v(:,2) = v(:,2).*(conj(v(:,1))./abs(v(:,1))).^2;
 v(:,1) = [0; v(2:end,1).*conj(v(1:end-1,1))./abs(v(1:end-1,1))];
-v = filtLow(v.',1250/32,1).';
+if 1/(2*win(2)) > 1
+v = filtLow(v.',1/win(2),1).';
+end
 runs = bwlabel(b > 0);
 vInterp = zeros(2,2,max(runs),accumbins);
 velInterp = zeros(2,max(runs),accumbins);
@@ -30,13 +56,17 @@ velTrace = zeros(2,max(runs),range(timeBins)+1);
 vVel = zeros(2,2,max(runs),range(timeBins)+1);
 bins = (bounds(1))+((1:accumbins)-.5)/accumbins*(diff(bounds));
 %plot(pos(:,1));hold all;plot(vel);return
+%figure;plot(vel/10);hold all;plot(abs(b));
 for k = 1:2
     runs = bwlabel(b*((-1)^k)>0);
     %avg = zeros(size(sp,1),accumbins,max(lrRuns));
 for i = 1:max(runs)
     inds = find(runs == i);inds = min(inds):max(inds);
-    indsa = min(inds)-100:max(inds);
+    indsa = min(inds)+timeBins(1):max(inds);
     start = find(vel(indsa) > thresh,1);
+    if isempty(start)
+        start = -timeBins(1);
+    end
     start = max(min(indsa)+start-1,-min(timeBins)+1);
     velTrace(k,i,:) = vel(start+timeBins);
     inds(vel(inds,1) < .1) = [];
@@ -65,35 +95,3 @@ for i = 1:2
         set(gca,'fontsize',16);
     end
 end
-
-   
-%     
-% vel = angVel(pos);
-% vel = filtLow(vel(:,1),1250/32,2);
-% vel(isnan(vel)) = 0;
-% plot(vel);hold all;
-% vel = toeplitz(vel,nan*ones(back,1));
-% x = find(vel(:,1) > thresh & ~any(vel(:,2:end)' > thresh)');
-% %plot(vel(:,1));hold all;scatter(x,vel(x,1),'r');
-% vel = vel(:,1);
-% vAll = zeros(numel(x),2*back+1,2);
-% velAll = zeros(numel(x),2*back+1);
-% for i = 1:numel(x)
-%     vAll(i,:,:) = v(x(i)+(-back:back),:);
-%     velAll(i,:) = vel(x(i)+(-back:back));
-% end
-% figure;imagesc(velAll);
-% v1 = (vAll(:,:,1).*conj(vAll(:,:,1))./abs(vAll(:,:,1)));
-% v11 = (vAll(:,2:end,1).*conj(vAll(:,1:end-1,1))./abs(vAll(:,1:end-1,1)));
-% v12 = (vAll(:,:,2).*conj(vAll(:,:,1))./abs(vAll(:,:,1)));
-% figure;subplot(221);image(complexIm(v11,0));
-% subplot(222);image(complexIm(v11,1));
-% subplot(223);image(complexIm(v12,0));
-% subplot(224);image(complexIm(v12,1));
-% figure;plot(mean(velAll));
-% figure;plot(mean(v1));hold all;plot(imag(mean(v11)));plot(real(mean(v11)));
-% plot(imag(mean(v12)));plot(real(mean(v12)));
-%
-%figure;imagesc(vel(x+floor(back/2),:));
-%figure;plot(mean(vel(x+floor(back/2),:)));
-

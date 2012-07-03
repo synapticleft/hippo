@@ -1,13 +1,12 @@
 function [weights signal zpweights W X] = ica_lfp_complex(X,sources,f1,f2,fs)
 
-if ~exist('fs','var') || isempty(fs)
-    fs = 1250;
-end
-
 X = X - repmat(mean(X,2),[1 size(X,2)]);
 X = X./repmat(std(X,1,2),[1 size(X,2)]);
 
 if exist('f1','var') && ~isempty(f1)
+    if ~exist('fs','var') || isempty(fs)
+        fs = 1250;
+    end
     X = hipFilter(X,f1,f2,fs);
 end
 
@@ -29,7 +28,7 @@ end
 if m<n, %assumes white noise
  	[U,D] 	= eig((X*X')/T); 
 	[puiss,k]=sort(diag(D));
- 	ibl 	= sqrt(puiss(n-m+1:n)-mean(puiss(1:n-m)));
+ 	ibl = ones(m,1);%sqrt(puiss(n-m+1:n)-mean(puiss(1:n-m)));
  	bl 	= ones(m,1) ./ ibl ;
  	W	= diag(bl)*U(1:n,k(n-m+1:n))';
  	IW 	= U(1:n,k(n-m+1:n))*diag(ibl);
@@ -40,7 +39,6 @@ else    %assumes no noise
     ZP = eye(m);
 end;
 X	= W*X;
-
 %fast!
 [weights signal] = jade_complex(X,m);%
 

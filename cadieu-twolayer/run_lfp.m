@@ -86,17 +86,14 @@ p.quiet = 0;
 fname=[strrep(datestr(now),' ','_') sprintf('patchsz%d_A%dx%d',m.patch_sz,m.M) '_%s.mat'];
 
 % display parameters
-display_every= 1000;
+display_every= 100;
 
 
 %% learn firstlayer A
 
-epochs = 5;
-num_trials = 1000;
-save_every= epochs*num_trials;
-for epoch = 1:epochs
-    learn_firstlayer
-end
+num_trials = 5000;
+save_every= 100;
+learn_firstlayer
     end
 end
 % epochs = 35;

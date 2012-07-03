@@ -1,0 +1,71 @@
+function load_models(sub)
+
+curDir = ['/media/work/hippocampus/state/' sub];
+f = dir([curDir '2*.*']);
+Aold = zeros(96,20);
+% for i = 1:numel(f)
+%     if i > 1
+%         Aold = m.A;
+%     end
+%     load([curDir f(i).name],'m');
+%     m.A = bsxfun(@times,m.A,exp(1i*-angle(mean(m.A))));
+%     display_A(m);pause(.01);
+%     if i > 1
+%         figure(99);scatter(i,log10(1-mean(abs(sum(m.A.*conj(Aold))))),'filled','b');hold on;
+%         scatter(i,log10(1-min(abs(sum(m.A.*conj(Aold))))),'filled','r');hold on;
+%     end
+% end
+counter = 1;
+% for i = 1:numel(f)
+%     if i > 1
+%         Aold = Anew;
+%     end
+%     load([curDir f(i).name],'m');
+%     Anew = m.A;
+%     m.A = bsxfun(@times,m.A,exp(1i*-angle(mean(m.A))));
+%     if i > 1 && log10(1-min(abs(sum(Anew.*conj(Aold))))) < -3
+%         display_Ahelper(m.A,counter);counter = counter + 1;
+%     end
+% end
+
+for i = 1:numel(f)-1
+    load([curDir f(i).name],'m');
+    m.A = bsxfun(@times,m.A,exp(1i*-angle(mean(m.A))));
+    if strcmp(f(i).name(1:20),f(i+1).%i > 1 && log10(1-min(abs(sum(Anew.*conj(Aold))))) < -3
+        display_Ahelper(m.A,counter);counter = counter + 1;
+    end
+end
+
+function array = display_Ahelper(A,subNum)
+
+[L M]=size(A);
+if L == 64
+    sz = [8 8];
+elseif L == 96
+    sz = [16 6];%[8 12];%
+end
+
+buf=1;
+m = ceil(sqrt(M));
+n = ceil(M/m);
+
+array=-ones(buf+n*(sz(1)+buf),buf+m*(sz(2)+buf))*(1+1j);
+k=1;
+for c=1:m
+  for r=1:n
+      if k > M
+          break;
+      end
+    clim=max(abs(A(:,k)));
+    array(buf+(r-1)*(sz(1)+buf)+[1:sz(1)],buf+(c-1)*(sz(2)+buf)+[1:sz(2)])=...
+	reshape(A(:,k),sz(1),sz(2))/clim;
+    k=k+1;
+  end
+end
+
+subp_space = 0.03;
+subp(4,16,subNum,subp_space);
+imagesc(angle(array),[-pi pi]);
+alpha(abs(array)/max(abs(array(:))));
+axis image off
+colormap hsv; freezeColors
