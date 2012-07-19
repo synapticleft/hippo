@@ -38,7 +38,6 @@ switch ktype
 		
 		distmat = mat1 + mat2 - 2*X1*X2';	% full distance matrix
 		K = exp(-distmat/(2*sgm^2));
-		
 	case 'gauss-diag'	% only diagonal of Gaussian kernel
 		sgm = kpar;	% kernel width
 		K = exp(-sum((X1-X2).^2,2)/(2*sgm^2));

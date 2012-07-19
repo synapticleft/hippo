@@ -32,9 +32,7 @@ N = size(X,1);
 I = eye(N);
 
 K = km_kernel(X,X,ktype,kpar);
-scatter(X,K(1,:));hold all;
-scatter(X,K(125,:));scatter(X,K(25
 alpha = (K+c*I)\Y;
-
+returen
 K2 = km_kernel(X2,X,ktype,kpar);
 Y2 = K2*alpha;

@@ -35,5 +35,4 @@ K = km_kernel(X,X,ktype,kpar);
 alpha = (K+c*I)\Y;
 
 K2 = km_kernel(X2,X,ktype,kpar);
-imagesc(K2)
 Y2 = K2*alpha;

@@ -1,4 +1,4 @@
-function [vVel vInterp velInterp] = runTriggerElecs(pos,v,Xf,thresh)
+function [vVel vInterp velInterp r t] = runTriggerElecs(pos,v,Xf,thresh)
 warning off all;
 bounds = [.1 .9];
 accumbins = 50;timeBins = [-100:400];
@@ -25,7 +25,11 @@ offSet = 1;
 %v(:,1) = [zeros(offSet,1); v(1+offSet:end,1).*conj(v(1:end-offSet,1))./abs(v(1:end-offSet,1))];
 Xf = [bsxfun(@times,Xf,exp(1i*angle(v(:,1))).'); ...
     [zeros(offSet,1); v(1+offSet:end,1).*conj(v(1:end-offSet,1))./abs(v(1:end-offSet,1))].'];
-%v = filtLow(v.',1250/32,1).';
+Xf = [real(Xf);imag(Xf)];%[abs(Xf); angle(Xf)];
+% Xf = zscore(Xf,0,2);
+% r = runica(Xf(:,b~=0),'pca',50);
+% Xf = r*Xf;
+%%v = filtLow(v.',1250/32,1).';
 runs = bwlabel(b > 0);
 vInterp = zeros(2,size(Xf,1),max(runs),accumbins);
 velInterp = zeros(2,max(runs),accumbins);
@@ -48,9 +52,9 @@ for i = 1:max(runs)
     velInterp(k,i,:) = csaps(pos(inds,1),vel(inds),1-1e-7,bins);
 end
 end
-
-b1 = [squeeze(b(1,:,:)) squeeze(b(2,:,:))];
-b1 = [squeeze(b(1,:,:))]; %b(2,:,:) weird cuz of spline
-b2 = [real(b1); imag(b1)];
-[r,s,t] = svd(b2,'econ');
-[r,~,~,~,~,~,t] = runica(b2,'pca',30);
+% %b1 = [squeeze(b(1,:,:)) squeeze(b(2,:,:))];
+b1 = [squeeze(vInterp(1,:,:))]; %b(2,:,:) weird cuz of spline
+[r,~,~,~,~,~,t] = runica(zscore(b1,0,2),'pca',50);
+figure;for i = 1:50
+subplot(5,10,i);imagesc(reshape(t(i,:),[88 50]));
+end
