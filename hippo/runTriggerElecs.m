@@ -23,7 +23,7 @@ b = [0 diff(b)];
 %v(:,2) = v(:,2).*conj(v(:,1))./abs(v(:,1));
 offSet = 1;
 %v(:,1) = [zeros(offSet,1); v(1+offSet:end,1).*conj(v(1:end-offSet,1))./abs(v(1:end-offSet,1))];
-Xf = [bsxfun(@times,Xf,exp(1i*angle(v(:,1))).'); ...
+Xf = [bsxfun(@times,Xf,exp(1i*angle(v(:,1))).');...
     [zeros(offSet,1); v(1+offSet:end,1).*conj(v(1:end-offSet,1))./abs(v(1:end-offSet,1))].'];
 Xf = [real(Xf);imag(Xf)];%[abs(Xf); angle(Xf)];
 % Xf = zscore(Xf,0,2);
@@ -47,14 +47,18 @@ for i = 1:max(runs)
     inds(vel(inds,1) < .1) = [];
     for j = 1:size(Xf,1)
         vVel(k,j,i,:) = Xf(j,start+timeBins);
-        vInterp(k,j,i,:) = csaps(pos(inds,1),Xf(j,inds),1-1e-7,bins);
+        %vInterp(k,j,i,:) = csaps(pos(inds,1),Xf(j,inds),1-1e-7,bins);
+        vInterp(k,j,i,:) = accumarray(max(1,min(accumbins,floor((pos(inds,1)-bounds(1))/(bounds(2)-bounds(1))*accumbins)+1))...
+            ,Xf(j,inds),[accumbins 1],@mean);
     end
-    velInterp(k,i,:) = csaps(pos(inds,1),vel(inds),1-1e-7,bins);
+%    velInterp(k,i,:) = csaps(pos(inds,1),vel(inds),1-1e-7,bins);
 end
 end
-% %b1 = [squeeze(b(1,:,:)) squeeze(b(2,:,:))];
-b1 = [squeeze(vInterp(1,:,:))]; %b(2,:,:) weird cuz of spline
-[r,~,~,~,~,~,t] = runica(zscore(b1,0,2),'pca',50);
-figure;for i = 1:50
-subplot(5,10,i);imagesc(reshape(t(i,:),[88 50]));
+% %b1 = [squeeze(b(1,:,:)) ];
+b1 = [squeeze(vInterp(1,:,:)) squeeze(vInterp(2,:,:))]; %b(2,:,:) weird cuz of spline
+t = b1;
+[r,~,~,~,~,~,t] = runica(zscore(b1,0,2),'pca',100);
+xdim = ceil(sqrt(size(t,1)));ydim = ceil(size(t,1)/xdim);
+figure;for i = 1:size(t,1)
+subplot(xdim,ydim,i);imagesc(real(reshape(t(i,:),[88 100])));
 end
