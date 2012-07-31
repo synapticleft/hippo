@@ -7,8 +7,10 @@ if sub
     in = in(:);
     in = in-mean(in);
     in = [real(in) imag(in)];
-    in = in/sqrtm(cov(in));
-    in  = reshape(complex(in(:,1),in(:,2)),s);
+    std(in)
+    in = sqrtm(cov(in'))\in;
+    std(in)
+    in  = reshape(complex(real(in),imag(in)),s);
     %in = in-mean(in(:));
 end
 if ~exist('h','var')

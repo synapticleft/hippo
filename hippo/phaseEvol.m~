@@ -1,13 +1,13 @@
-function phaseEvol(dat,u,s,v,inds,reds,sp,c)
+function phaseEvol(dat,u,s,v,inds,mName,sp,c)
 
 trails = 0;lags = 10;
 rdim = 2;
 skip = 1;
 if ~exist('inds','var') || isempty(inds)
-    inds = 1:skip:size(dat,2);
+    inds = 2:skip:size(dat,2);
 end
 data1 = u(:,1:rdim)*s(1:rdim,1:rdim)*v(inds,1:rdim)';
-[~,ord] = sort(angle(u(:,1)),'descend');
+[~,ord] = sort(circ_dist(angle(u(:,1)),circ_mean(angle(u(:,1)))),'descend');
 %u(:,1) = 1;
 
 h = figure;
@@ -43,11 +43,11 @@ else
     c1 = c;
 end
 circBuff1 = nan*ones(size(c1,1),lags);circBuff2 = nan*ones(size(dat,1),lags);
-inst = circ_mean(circ_dist(angle(v(1:(end-1),1)),angle(v(2:end,1))));
+%inst = circ_mean(circ_dist(angle(v(1:(end-1),1)),angle(v(2:end,1))));
 md = -circ_mean(circ_dist(angle(v(2:end,1)),angle(v(1:(end-1),1))));%circ_diff(v(:,1).')');
 for i = inds
     figure(h);
-phaseShift = -i*md*skip;%-angle(u(:,1)*v(i,1)');%angle(u(:,1)*circ_mean(angle(dat(:,i)),abs(dat(:,i))));%
+phaseShift = -angle(mean(u(:,1))*v(i-1,1)');%-i*md*skip;%-angle(u(:,1)*v(i,1)');%angle(u(:,1)*circ_mean(angle(dat(:,i)),abs(dat(:,i))));%
 if exist('sp','var') && ~isempty(sp)
     %imagesc([-.1 .1],[-2 2],[real(sp(:,i)); spa(i-inds(1)+1)] ,s*[-1 1]*2);%colormap gray;
     ps = phaseShift;%-angle(v(i,1)')
@@ -56,7 +56,7 @@ else
     temp = dat(ord,i).*exp(1i*phaseShift);
 %    temp = temp/mean(abs(temp));
 end
-scatter(real(temp),imag(temp),60,'k','p','filled');%c1
+scatter(real(temp),imag(temp),60,'k','p','filled');axis image off;%c1
 hold on;
 %scatter(real(temp(reds)),imag(temp(reds)),60,'r','p','filled');
 circBuff1 = circshift(circBuff1,[0 1]);
@@ -65,7 +65,8 @@ hold on;
 temp = data1(ord,i-inds(1)+1).*exp(1i*phaseShift);
 %%%
 scatter(real(temp),imag(temp),30,c,'o','filled');%c
-figure;imagesc(
+%tCol(ord,:) = c;
+%figure;image(reshape(tCol,[16 6 3] ));
 circBuff2 = circshift(circBuff2,[0 1]);
 circBuff2(:,1) = temp;
 if trails
@@ -84,10 +85,12 @@ temp = 10*s(1)*abs(mean(u(:,2)))*conj(v(i,2))*exp(1i*phaseShift);%exp(1i*-(angle
 hold off;
 set(gca,'xlim',[-2 2],'ylim',[-2 2]);
 title(num2str((i-inds(1)+1)*5/1250));
-%m(i-inds(1)+1) = getframe(gcf);
+m(i-inds(1)+1) = getframe(gcf);
 drawnow;
 end
-%movie2avi(m,'spin.avi');
+if exist('mName','var')
+    movie2avi(m,mName);
+end
 %c = colormap;
 %mpgwrite(m,c,'spin.avi');
 

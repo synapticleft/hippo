@@ -1,6 +1,6 @@
 function [X whiteningMatrix dewhiteningMatrix] = getData(fname,sz,rind,dec,rdim,elecs)
 
-data_root = '/media/work/hippocampus/';%'/media/Expansion Drive/redwood/';%
+data_root = '/media/Expansion Drive/redwood/';%'/media/work/hippocampus/';%
 %fname = 'hippo.h5';%'96elec.h5';%
 padding = 0;%20000;
 info = hdf5info([data_root fname]);

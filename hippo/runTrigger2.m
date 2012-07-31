@@ -60,9 +60,9 @@ for i = 1:2
     subplot(2,numGraphs,(i-1)*numGraphs+6);imagesc(linspace(bounds(1),bounds(2),accumbins)*250,1:max(runs),squeeze(velInterp(i,:,:)),[0 prctile(velInterp(:),99)]);
     set(gca,'fontsize',16);title 'velocity';ylabel 'Trial #'; xlabel 'Time (ms)'
     for j = 1:2
-        subplot(2,numGraphs,(i-1)*numGraphs+2*j);imagesc(timeBins*32/1250,1:max(runs),complexIm(squeeze(vVel(i,3-j,:,:)),1,powers(j)));
+        subplot(2,numGraphs,(i-1)*numGraphs+2*j);imagesc(timeBins*32/1250,1:max(runs),complexIm(squeeze(vVel(i,3-j,:,:)),0,powers(j)));
         set(gca,'fontsize',16);
-        subplot(2,numGraphs,(i-1)*numGraphs+2*j+1);imagesc(linspace(bounds(1),bounds(2),accumbins)*250,1:max(runs),complexIm(squeeze(vInterp(i,3-j,:,:)),1,powers(j)));
+        subplot(2,numGraphs,(i-1)*numGraphs+2*j+1);imagesc(linspace(bounds(1),bounds(2),accumbins)*250,1:max(runs),complexIm(squeeze(vInterp(i,3-j,:,:)),0,powers(j)));
         set(gca,'fontsize',16);
     end
 end

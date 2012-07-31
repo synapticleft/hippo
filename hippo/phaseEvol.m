@@ -1,10 +1,10 @@
-function phaseEvol(dat,u,s,v,inds,reds,sp,c)
+function phaseEvol(dat,u,s,v,inds,mName,sp,c)
 
 trails = 0;lags = 10;
 rdim = 2;
 skip = 1;
 if ~exist('inds','var') || isempty(inds)
-    inds = 1:skip:size(dat,2);
+    inds = 2:skip:size(dat,2);
 end
 data1 = u(:,1:rdim)*s(1:rdim,1:rdim)*v(inds,1:rdim)';
 [~,ord] = sort(circ_dist(angle(u(:,1)),circ_mean(angle(u(:,1)))),'descend');
@@ -43,11 +43,11 @@ else
     c1 = c;
 end
 circBuff1 = nan*ones(size(c1,1),lags);circBuff2 = nan*ones(size(dat,1),lags);
-inst = circ_mean(circ_dist(angle(v(1:(end-1),1)),angle(v(2:end,1))));
+%inst = circ_mean(circ_dist(angle(v(1:(end-1),1)),angle(v(2:end,1))));
 md = -circ_mean(circ_dist(angle(v(2:end,1)),angle(v(1:(end-1),1))));%circ_diff(v(:,1).')');
 for i = inds
     figure(h);
-phaseShift = -i*md*skip;%-angle(u(:,1)*v(i,1)');%angle(u(:,1)*circ_mean(angle(dat(:,i)),abs(dat(:,i))));%
+phaseShift = 0;%-angle(mean(u(:,1))*v(i-1,1)');%-i*md*skip;%-angle(u(:,1)*v(i,1)');%angle(u(:,1)*circ_mean(angle(dat(:,i)),abs(dat(:,i))));%
 if exist('sp','var') && ~isempty(sp)
     %imagesc([-.1 .1],[-2 2],[real(sp(:,i)); spa(i-inds(1)+1)] ,s*[-1 1]*2);%colormap gray;
     ps = phaseShift;%-angle(v(i,1)')
@@ -56,7 +56,7 @@ else
     temp = dat(ord,i).*exp(1i*phaseShift);
 %    temp = temp/mean(abs(temp));
 end
-scatter(real(temp),imag(temp),60,'k','p','filled');%c1
+scatter(real(temp),imag(temp),60,'k','p','filled');axis image;%c1
 hold on;
 %scatter(real(temp(reds)),imag(temp(reds)),60,'r','p','filled');
 circBuff1 = circshift(circBuff1,[0 1]);
@@ -75,7 +75,7 @@ if trails
     %scatter(real(circBuff1(:)), imag(circBuff1(:)),c1);
     %scatter(real(circBuff2(:)), imag(circBuff2(:)),c);
 end
-temp = mean(abs(dat(:,i)))*exp(1i*(-pi:.1:pi));
+temp = mean(abs(dat(:,i)))*exp(1i*(-3.2:.1:3.2));
 plot(real(temp),imag(temp),'k');
 %temp = mean(abs(dat(:,i)))*exp(1i*-(angle(v(i,1))))*exp(1i*phaseShift);%+inst*i
 temp = s(1)*abs(mean(u(:,1)))*conj(v(i,1))*exp(1i*phaseShift);%exp(1i*-(angle(v(i,1))))
@@ -83,12 +83,14 @@ temp = s(1)*abs(mean(u(:,1)))*conj(v(i,1))*exp(1i*phaseShift);%exp(1i*-(angle(v(
 temp = 10*s(1)*abs(mean(u(:,2)))*conj(v(i,2))*exp(1i*phaseShift);%exp(1i*-(angle(v(i,1))))
 %scatter(real(temp),imag(temp),50,'r','filled');
 hold off;
-set(gca,'xlim',[-2 2],'ylim',[-2 2]);
-title(num2str((i-inds(1)+1)*5/1250));
+set(gca,'xlim',[-2 2],'ylim',[-2 2],'xticklabels',[],'yticklabels',[],'fontsize',16);
+title(num2str((i-inds(1)+1)*32/1250));
 m(i-inds(1)+1) = getframe(gcf);
 drawnow;
 end
-movie2avi(m,'spin96.avi');
+if exist('mName','var')
+    movie2avi(m,mName,'fps',8);
+end
 %c = colormap;
 %mpgwrite(m,c,'spin.avi');
 
