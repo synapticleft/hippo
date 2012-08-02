@@ -1,4 +1,4 @@
-function [vInterp r t vVel velInterp] = runTriggerElecs(pos,v,Xf,thresh)
+function [vInterp r t] = runTriggerElecs(pos,v,Xf,thresh) % vVel velInterp
 warning off all;
 bounds = [.1 .9];
 accumbins = 50;timeBins = [-100:400];
@@ -27,16 +27,16 @@ b = [0 diff(b)];
 %v(:,2) = v(:,2).*conj(v(:,1))./abs(v(:,1));
 offSet = 1;
 %v(:,1) = [zeros(offSet,1); v(1+offSet:end,1).*conj(v(1:end-offSet,1))./abs(v(1:end-offSet,1))];
-Xf = [bsxfun(@times,Xf,exp(1i*angle(v(:,1))).');
+Xf = [bsxfun(@times,Xf,exp(1i*angle(v(:,1))).');...%[v(2:end,1); 0].')))];%
     [zeros(offSet,1); v(1+offSet:end,1).*conj(v(1:end-offSet,1))./abs(v(1:end-offSet,1))].'];
 Xf = [real(Xf);imag(Xf)];%[abs(Xf); angle(Xf)];
-Xf = zscore(Xf,0,2);
+%Xf = zscore(Xf,0,2);
 % r = runica(Xf(:,b~=0),'pca',50);
 % Xf = r*Xf;
 %%v = filtLow(v.',1250/32,1).';
 %figure;plot(vel/max(vel));drawnow;
 vel = [0 vel];
-%Xf = filtLow(Xf,1250/32,2);
+Xf = filtLow(Xf,1250/32,4);
 %Xf1 = zeros(50,size(Xf,2));theseCoords = b ~= 0 & vel/max(vel) > .1;
 % [r,~,Xf2] = svds(zscore(Xf(:,theseCoords),0,2),50);
 % Xf1(:,theseCoords) = Xf2.';
@@ -44,19 +44,19 @@ vel = [0 vel];
 %Xf = Xf1;
 runs = bwlabel(b > 0);
 vInterp = zeros(2,size(Xf,1),max(runs),accumbins);
-velInterp = zeros(2,max(runs),accumbins);
+%velInterp = zeros(2,max(runs),accumbins);
 %velTrace = zeros(2,max(runs),range(timeBins)+1);
 %vVel = zeros(2,size(Xf,1),max(runs),range(timeBins)+1);
-bins = (bounds(1))+((1:accumbins)-.5)/accumbins*(diff(bounds));
+%bins = (bounds(1))+((1:accumbins)-.5)/accumbins*(diff(bounds));
 for k = 1:2
     runs = bwlabel(b*((-1)^k)>0);
 for i = 1:max(runs)
     inds = find(runs == i);inds = min(inds):max(inds);
-    indsa = min(inds)-100:max(inds);
-    start = find(vel(indsa) > thresh,1);
-    start = max(min(indsa)+start-1,-min(timeBins)+1);
+%    indsa = min(inds)-100:max(inds);
+%    start = find(vel(indsa) > thresh,1);
+%    start = max(min(indsa)+start-1,-min(timeBins)+1);
 %    velTrace(k,i,:) = vel(start+timeBins);
-    inds(vel(inds) < .1) = [];
+%    inds(vel(inds) < .1) = [];
     for j = 1:size(Xf,1)
 %        vVel(k,j,i,:) = Xf(j,start+timeBins);
         %vInterp(k,j,i,:) = csaps(pos(inds,1),Xf(j,inds),1-1e-7,bins);
@@ -77,8 +77,12 @@ b1 = [squeeze(vInterp(1,:,:)) squeeze(vInterp(2,:,:))]; %b(2,:,:) weird cuz of s
 %figure;for i = 1:size(b1,1)
 %     subplot(xdim,ydim,i);imagesc(abs(reshape(b1(i,:),[max(runs) 2*accumbins])));axis off;
 %end
-[r,~,t] = runica(zscore(b1,0,2),'pca',49);%[r,~,~,~,~,~,t]
+[r,~,~,~,~,~,t] = runica(zscore(b1,0,2),'pca',49);%[r,~,~,~,~,~,t]
 xdim = ceil(sqrt(size(t,1)));ydim = ceil(size(t,1)/xdim);
-figure;for i = 1:size(t,1)
-subplot(xdim,ydim,i);imagesc(real(reshape(t(i,:),[max(runs) 2*accumbins])));axis off;
+h1 = figure;h2 = figure;
+for i = 1:size(t,1)
+    temp = reshape(t(i,:),[max(runs) 2*accumbins]);
+    [u,s,v] = svds(temp,1);
+    figure(h1);subplot(xdim,ydim,i);imagesc(temp);axis off;
+    figure(h2);subplot(xdim,ydim,i);imagesc(u*v');axis off;
 end
