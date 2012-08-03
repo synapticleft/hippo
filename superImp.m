@@ -20,7 +20,7 @@ for i = 1:size(x,1)
         x(i,:,:) =  x(i,:,:)/maxVal;
     end
 end
-%x = abs(x);
+x = abs(x);
 x = min(1,max(0,x));
 [a b]= max(x);
 a = squeeze(a); b = squeeze(b);

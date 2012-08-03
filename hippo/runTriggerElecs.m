@@ -1,4 +1,4 @@
-function [vInterp r t] = runTriggerElecs(pos,v,Xf,thresh) % vVel velInterp
+function [vInterp r t spatial] = runTriggerElecs(pos,v,Xf,r) % vVel velInterp
 warning off all;
 bounds = [.1 .9];
 accumbins = 50;timeBins = [-100:400];
@@ -48,6 +48,7 @@ vInterp = zeros(2,size(Xf,1),max(runs),accumbins);
 %velTrace = zeros(2,max(runs),range(timeBins)+1);
 %vVel = zeros(2,size(Xf,1),max(runs),range(timeBins)+1);
 %bins = (bounds(1))+((1:accumbins)-.5)/accumbins*(diff(bounds));
+numTP = [];
 for k = 1:2
     runs = bwlabel(b*((-1)^k)>0);
 for i = 1:max(runs)
@@ -56,7 +57,8 @@ for i = 1:max(runs)
 %    start = find(vel(indsa) > thresh,1);
 %    start = max(min(indsa)+start-1,-min(timeBins)+1);
 %    velTrace(k,i,:) = vel(start+timeBins);
-%    inds(vel(inds) < .1) = [];
+    inds(vel(inds) < .1) = [];
+    numTP = [numTP numel(inds)];
     for j = 1:size(Xf,1)
 %        vVel(k,j,i,:) = Xf(j,start+timeBins);
         %vInterp(k,j,i,:) = csaps(pos(inds,1),Xf(j,inds),1-1e-7,bins);
@@ -66,6 +68,7 @@ for i = 1:max(runs)
 %    velInterp(k,i,:) = csaps(pos(inds,1),vel(inds),1-1e-7,bins);
 end
 end
+mean(numTP)
 % %b1 = [squeeze(b(1,:,:)) ];
 b1 = [squeeze(vInterp(1,:,:)) squeeze(vInterp(2,:,:))]; %b(2,:,:) weird cuz of spline
 %xdim = ceil(sqrt(size(b1,1)));ydim = ceil(size(b1,1)/xdim);
@@ -77,12 +80,35 @@ b1 = [squeeze(vInterp(1,:,:)) squeeze(vInterp(2,:,:))]; %b(2,:,:) weird cuz of s
 %figure;for i = 1:size(b1,1)
 %     subplot(xdim,ydim,i);imagesc(abs(reshape(b1(i,:),[max(runs) 2*accumbins])));axis off;
 %end
-[r,~,~,~,~,~,t] = runica(zscore(b1,0,2),'pca',49);%[r,~,~,~,~,~,t]
+[~,inds] = sort(sum(abs(b1),2),'descend');
+maxInds = size(b1,1);
+inds = 1:size(b1,1);
+rdim = 121;
+if ~exist('r','var')
+    [~,r] = gestimate(zscore(b1(inds(1:maxInds),:),0,2),rdim);%
+    t = r*zscore(b1(inds(1:maxInds),:),0,2);%
+%    [r,~,~,~,~,~,t] = runica(zscore(b1,0,2),'pca',min(64,size(b1,1)));%[r,~,~,~,~,~,t]
+else
+    t = r*zscore(b1,0,2);
+end
 xdim = ceil(sqrt(size(t,1)));ydim = ceil(size(t,1)/xdim);
 h1 = figure;h2 = figure;
+r1 = pinv(r);
+spatial = zeros(size(t,1),2*accumbins);
 for i = 1:size(t,1)
     temp = reshape(t(i,:),[max(runs) 2*accumbins]);
-    [u,s,v] = svds(temp,1);
+    [~,s,v] = svds(temp,1);
+    v = s*v'; 
+    if -min(v) > max(v) 
+        v = -v; 
+    end
+    spatial(i,:) = s*v';
     figure(h1);subplot(xdim,ydim,i);imagesc(temp);axis off;
-    figure(h2);subplot(xdim,ydim,i);imagesc(u*v');axis off;
+%    figure(h2);subplot(xdim,ydim,i);imagesc(u*v');axis off;
+    figure(h2);subplot(xdim,ydim,i);imagesc(complexIm(reshape(complex(r1(1:64,i),r1(66:129,i)),[8 8]),0,1));axis off;
 end
+% params.Fs = 50;params.tapers = [3 5];
+% [S,f] = mtspectrumc(spatial',params);
+% figure;plot(spatial');figure;imagesc(spatial);
+% figure;plot(f,S)
+% figure;imagesc(f,f,log(S'));
