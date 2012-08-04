@@ -83,9 +83,9 @@ b1 = [squeeze(vInterp(1,:,:)) squeeze(vInterp(2,:,:))]; %b(2,:,:) weird cuz of s
 [~,inds] = sort(sum(abs(b1),2),'descend');
 maxInds = size(b1,1);
 inds = 1:size(b1,1);
-rdim = 121;
+rdim = maxInds-2;%121;
 if ~exist('r','var')
-    [~,r] = gestimate(zscore(b1(inds(1:maxInds),:),0,2),rdim);%
+    [~,r] = gestimate(zscore(b1(inds(1:maxInds),:),0,2),rdim,1000);%
     t = r*zscore(b1(inds(1:maxInds),:),0,2);%
 %    [r,~,~,~,~,~,t] = runica(zscore(b1,0,2),'pca',min(64,size(b1,1)));%[r,~,~,~,~,~,t]
 else
@@ -105,8 +105,13 @@ for i = 1:size(t,1)
     spatial(i,:) = s*v';
     figure(h1);subplot(xdim,ydim,i);imagesc(temp);axis off;
 %    figure(h2);subplot(xdim,ydim,i);imagesc(u*v');axis off;
-    figure(h2);subplot(xdim,ydim,i);imagesc(complexIm(reshape(complex(r1(1:64,i),r1(66:129,i)),[8 8]),0,1));axis off;
+    figure(h2);subplot(xdim,ydim,i);imagesc(complexIm(reshape(complex(r1(1:32,i),r1(34:65,i)),[8 4]),0,1));axis off;
 end
+temp = find(max(spatial') > 300);
+[~,peakLoc] = max(spatial(temp,:)');
+[~,indLoc] = sort(peakLoc);
+figure;imagesc(spatial(temp(indLoc),:))
+
 % params.Fs = 50;params.tapers = [3 5];
 % [S,f] = mtspectrumc(spatial',params);
 % figure;plot(spatial');figure;imagesc(spatial);
