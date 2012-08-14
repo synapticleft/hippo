@@ -2,7 +2,7 @@ function sPlot(data,xaxis,newFig,norm)
 %spaced out plot of 2-d data
 data = squeeze(data);
 %data = [data; mean(data)];
-if ~exist('newFig','var')
+if ~exist('newFig','var') || isempty(newFig)
     newFig = 1;
 end
 if newFig
@@ -10,6 +10,7 @@ if newFig
 end
 if ~iscell(data)
     if exist('norm','var') && norm ~= 0
+        data = bsxfun(@minus,data,mean(data,2));
         data = bsxfun(@rdivide,data,max(1e-20,std(data,0,2)));
     end
     if ~exist('xaxis','var') || isempty(xaxis)

@@ -116,7 +116,6 @@ elseif strcmp(p.model,'isa')
 elseif strcmp(p.model,'tica')
    B = randn(size(X,1),p.xdim*p.ydim);  
 end
-
 % ...and decorrelate (=orthogonalize in whitened space)
 B = B*real((B'*B)^(-0.5));
 n = size(B,2);
@@ -293,8 +292,7 @@ for i = 1:nsteps
   
 %   if rem(iter,p.write)==0 | iter==1
 %     
-     A = dewhiteningMatrix * B;
-     W = B' * whiteningMatrix;
+
 %     showGrid(A,[16 6]);drawnow;
 %       
 %     fprintf(['Writing file: ' fname '...']);
@@ -306,8 +304,9 @@ for i = 1:nsteps
 %     fprintf(' Done!\n');      
     
 end
-
-
+fprintf('\n');
+A = dewhiteningMatrix * B;
+W = B' * whiteningMatrix;
 
 
 % %-----------------------------------------------------------------
