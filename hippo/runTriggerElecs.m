@@ -1,4 +1,6 @@
 function [vInterp r t spatial] = runTriggerElecs(pos,v,Xf,r) % vVel velInterp
+%% bin demodulated complex data by position and trial number, make real-valued
+%% with 2x dimensionality, run fastICA, plot spatial and temporal profiles of components
 warning off all;
 bounds = [.1 .9];
 accumbins = 50;timeBins = [-100:400];

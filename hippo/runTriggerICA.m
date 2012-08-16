@@ -1,4 +1,6 @@
 function [r t] = runTriggerICA(pos,v,Xf,accumbins,thresh)
+%% convert demodulated complex data to real valued w/ 2x dimensionality, 
+%% run fastICA, then bin and render activations.
 warning off all;
 dec = 2;
 pos(pos == -1) = nan;
