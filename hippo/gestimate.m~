@@ -141,8 +141,9 @@ if strcmp(p.algorithm,'gradient')
   obj = [];
   objiter = [];
 end
-corrs = zeros(nsteps,1);
+corrs = zeros(nsteps,size(B,1));corrs1 = corrs;
 % Loop forever, writing result periodically
+figure;
 for i = 1:nsteps 
   B1 = B;
   % Increment iteration counter
@@ -300,12 +301,14 @@ for i = 1:nsteps
 %       eval(['save ' fname ' W A p iter']);
 %     end
 %     fprintf(' Done!\n');      
-    corrs(i) = min(abs(diag(B' * B1)));%log(1-abs(diag(corr(B,B1))));
+    corrs(i) = (abs(diag(B' * B1)));%log(1-abs(diag(corr(B,B1))));
+    plot(corrs(i,:));drawnow;
 end
 fprintf('\n');
 A = dewhiteningMatrix * B;
 W = B' * whiteningMatrix;
-figure;plot(log(1-corrs));
+figure;imagesc(corrs);
+figure;imagesc(corrs1);
 
 % %-----------------------------------------------------------------
 % % GenerateNB - generates the neighborhood matrix for TICA

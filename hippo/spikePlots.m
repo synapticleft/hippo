@@ -1,10 +1,28 @@
-function [spf spT spId spShank] = spikePlots(file,pos,v,spf,spT,spId)%,sp)
+function [spf,cellType,sp] = spikePlots(file,pos,v,linear,spf,cellType)%,spT,spId) spT spId spShank
 %% make plots of spiking during linear track runs
 fs = 1250/32;               %Sampling Rate
 bounds = [.1 .9];           %Part of track to consider runway
 accumbins = 50;             %binning of track length
+
+%% extract spikes from file if havent done so already
+if ~exist('spf','var')
+%     if numel(strfind(file,'ec013'))%strcmp('ec013.670',file)
+%         shanks = 5:8;
+%     elseif numel(strfind(file,'ec014'))%strcmp('ec014.468',file)
+%         shanks = 1:8;
+%     elseif numel(strfind(file,'ec016'))%strcmp('ec016.269',file)
+%         shanks = [1:4 7:10];
+%     end
+    [sp cellType] = hipSpikes(file,1000/fs);%spT spId spShank bad
+%    spf = [bad;spf];            %lump artifacts & unsorted spikes at beginning of matrix
+    spf = morFilter(sp,8,fs);  %hilbert-transform spiking data
+    return;
+end
+if ~exist('cellType','var')
+    cellType = ones(size(spf,1),1);
+end
+%% Preprocess valid position data
 pos(pos == -1) = nan;
-%% Discretize position along track
 sV = size(v,1);
 %if size(v,1) < size(pos,1)
 pos = pos(1:sV,:);
@@ -14,34 +32,26 @@ for i = 1:2
 end
 nanInds = isnan(pos(:,1));
 pos = pos(~nanInds,:);v = v(~nanInds,:);
+%% preprocess and demodulate spike data
+spf = spf(:,1:sV);
+spf = spf(:,~nanInds);
+% nanInds = find(nanInds);
+% if exist('spT','var')
+%     spT = spT - max(nanInds(nanInds < size(pos,1)/2));
+%     inds = spT < 1 | spT > max(size(pos,1)); spT(inds) = [];spId(inds) = [];
+% end
+if ~isreal(spf)
+    spf = bsxfun(@times,spf,exp(1i*angle(v(:,1))).');
+end
+ydim = ceil(sqrt(size(spf,1))*1.5);xdim = ceil(size(spf,1)/ydim);figure;
+[~,indSort] = sort(cellType,'ascend');
+if linear
+%% 1D CASE
+%% separate runs into trials
 pos = bsxfun(@minus,pos,mean(pos));
 [pos,~,~] = svd(pos(:,1:2),'econ');
 pos(:,1) = pos(:,1)-min(pos(:,1));pos(:,1) = pos(:,1)/(max(pos(:,1))+.00001);
 posd = floor(pos(:,1)*accumbins)+1;
-%% extract spikes from file if havent done so already
-if ~exist('spf','var')
-    if numel(strfind(file,'ec013'))%strcmp('ec013.670',file)
-        shanks = 5:8;
-    elseif numel(strfind(file,'ec014'))%strcmp('ec014.468',file)
-        shanks = 1:8;
-    elseif numel(strfind(file,'ec016'))%strcmp('ec016.269',file)
-        shanks = [1:4 7:10];
-    end
-    [spf spT spId spShank bad] = hipSpikes(file,1000/fs,shanks);
-    spf = [bad;spf];            %lump artifacts & unsorted spikes at beginning of matrix
-    spf = morFilter(spf,8,fs);  %hilbert-transform spiking data
-    return;
-end
-spf = spf(:,1:sV);
-spf = spf(:,~nanInds);
-nanInds = find(nanInds);
-if exist('spT','var')
-    spT = spT - max(nanInds(nanInds < size(pos,1)/2));
-    inds = spT < 1 | spT > max(size(pos,1)); spT(inds) = [];spId(inds) = [];
-end
-%% Demodulate filtered spike train
-spf = bsxfun(@times,spf,exp(1i*angle(v(:,1))).');
-%% separate runs into trials
 b = nan*ones(size(pos,1),1);
 b(pos(:,1) < bounds(1)) = -1;b(pos(:,1) > bounds(2)) = 1;
 nanInds = find(~isnan(b));
@@ -53,20 +63,34 @@ w = watershed(b==0);
 w = w-1; %w(w== max(w)) = 0;
 %% accummulate spiking samples for every trial and position bin
 for k = 1:2
-    runs = bwlabel(w>0 & mod(w,2) == k-1);%b*((-1)^k)>0);
-    inds = runs > 0;
+    runs1 = bwlabel(w>0 & mod(w,2) == k-1);%b*((-1)^k)>0);
+    inds = runs1 > 0;
     for j = 1:size(spf,1)
-        spInterp(k,j,:,:) = accumarray([runs(inds); posd(inds)']',spf(j,inds),[max(runs) accumbins] ,@mean);
+        spInterp(k,j,:,:) = accumarray([runs1(inds); posd(inds)']',spf(j,inds),[max(runs) accumbins] ,@mean);
     end
 end
 spInterp = [squeeze(spInterp(1,:,:)) squeeze(spInterp(2,:,:))];
 %% display results
-ydim = 8;xdim = ceil(size(spf,1)/ydim);figure;
 for i = 1:size(spInterp,1)
-    temp = reshape(spInterp(i,:),[max(runs) 2*accumbins]);
+    temp = reshape(spInterp(indSort(i),:),[max(runs) 2*accumbins]);
     subplot(xdim,ydim,i);imagesc(complexIm(temp,0,1));axis off;
+    title(cellType(indSort(i)));
 end
-
+else
+%% 2D CASE
+accumbins = 20;
+for i = 1:2
+    pos(:,i) = pos(:,i)-min(pos(:,i));pos(:,i) = pos(:,i)/(max(pos(:,i))+.00001);
+    pos(:,i) = floor(pos(:,i)*accumbins)+1;
+end
+if ~isreal(spf)
+    spf = abs(spf);
+end
+for i = 1:size(spf,1)
+    subplot(xdim,ydim,i);imagesc(accumarray(pos(:,1:2),spf(indSort(i),:),[accumbins accumbins],@mean));axis off;
+    title(cellType(indSort(i)));
+end
+end
 %% introns
 % vDemod(:,1) = [0; v(2:end,1).*exp(1i*-angle(v(1:end-1,1)))];
 % vDemod(:,2) = v(:,2).*exp(1i*-angle(v(:,1)));

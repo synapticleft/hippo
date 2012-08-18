@@ -87,7 +87,8 @@ maxInds = size(b1,1);
 inds = 1:size(b1,1);
 rdim = maxInds-2;%121;
 if ~exist('r','var')
-    [~,r] = gestimate(zscore(b1(inds(1:maxInds),:),0,2),rdim,1000);%
+    %[~,r] = gestimate(zscore(b1(inds(1:maxInds),:),0,2),rdim,500);%
+    [~,r] = fastica(zscore(b1(inds(1:maxInds),:),0,2),'stabilization','on','lastEig',rdim,'g','tanh','approach','symm');
     t = r*zscore(b1(inds(1:maxInds),:),0,2);%
 %    [r,~,~,~,~,~,t] = runica(zscore(b1,0,2),'pca',min(64,size(b1,1)));%[r,~,~,~,~,~,t]
 else
@@ -96,6 +97,7 @@ end
 xdim = ceil(sqrt(size(t,1)));ydim = ceil(size(t,1)/xdim);
 h1 = figure;h2 = figure;
 r1 = pinv(r);
+%figure;scatter(r1(:),r2(:));
 spatial = zeros(size(t,1),2*accumbins);
 for i = 1:size(t,1)
     temp = reshape(t(i,:),[max(runs) 2*accumbins]);
@@ -107,12 +109,12 @@ for i = 1:size(t,1)
     spatial(i,:) = s*v';
     figure(h1);subplot(xdim,ydim,i);imagesc(temp);axis off;
 %    figure(h2);subplot(xdim,ydim,i);imagesc(u*v');axis off;
-    figure(h2);subplot(xdim,ydim,i);imagesc(complexIm(reshape(complex(r1(1:32,i),r1(34:65,i)),[8 4]),0,1));axis off;
+    figure(h2);subplot(xdim,ydim,i);imagesc(complexIm(reshape(complex(r1(1:32,i),r1((end-31:end)-1,i)),[8 4]),0,1));axis off;
 end
 temp = find(max(spatial') > 300);
 [~,peakLoc] = max(spatial(temp,:)');
 [~,indLoc] = sort(peakLoc);
-figure;imagesc(spatial(temp(indLoc),:))
+figure;plot(spatial(temp(indLoc),:)')
 
 % params.Fs = 50;params.tapers = [3 5];
 % [S,f] = mtspectrumc(spatial',params);

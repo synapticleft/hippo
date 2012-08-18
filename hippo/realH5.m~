@@ -1,6 +1,12 @@
 function  realH5(input,output,numChans,samples)
-
-h5filecreate(output);
+load('/media/work/hippocampus/KenjiData.mat');
+whichDay = strcmp(inpu,Beh(:,4));
+%dayID = Beh(whichDay,2);
+%dayCells = PyrIntMap.Map(:,1) == find(strcmp(dayID,PyrIntMap.fileBase)) & Region == 1;
+d = ['/media/Kenji_data/' Beh{whichDay,3} '/' Beh{whichDay,1} '/' file '/'];
+if ~exist(output,'file')
+    h5filecreate(output);
+end
 if ~exist('samples','var')
 if exist('numChans','var')
     [~,~,nSamples,numChans] = LoadBinary(input,1,numChans,[],[],[],[1 2]);
@@ -9,13 +15,13 @@ else
 end
 samples = [1 nSamples];
 end
-[nSamples numChans]
+[samples numChans]
 step = 400000;
 h5datacreate(output,'/hReal','type','int16','size',[numChans samples(2)-samples(1)+1]);
-for i = 1:step:samples(2)
-    numElems = min(step,nSamples-i+1);
+for i = samples(1):step:samples(2)
+    numElems = min(step,samples(2)-i+1);
     a = LoadBinary(input,1:numChans,numChans,[],[],'int16',i+[1 numElems]-1);
-    h5varput(output,'/hReal',[0 i-1],[numChans numElems],a);
+    h5varput(output,'/hReal',[0 i-samples(1)],[numChans numElems],a);
     i
 end
 % 

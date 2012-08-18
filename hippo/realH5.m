@@ -1,5 +1,9 @@
 function  realH5(input,output,numChans,samples)
-
+load('/media/work/hippocampus/KenjiData.mat','Beh');
+whichDay = strcmp(input,Beh(:,4));
+%dayID = Beh(whichDay,2);
+%dayCells = PyrIntMap.Map(:,1) == find(strcmp(dayID,PyrIntMap.fileBase)) & Region == 1;
+input = ['/media/Kenji_data/' Beh{whichDay,3} '/' Beh{whichDay,1} '/' input '/' input '.eeg'];
 if ~exist(output,'file')
     h5filecreate(output);
 end

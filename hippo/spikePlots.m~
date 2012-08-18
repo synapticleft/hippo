@@ -1,10 +1,25 @@
-function [spf spT spId spShank] = spikePlots(file,pos,v,spf,spT,spId)%,sp)
+function [spf,cellType] = spikePlots(file,pos,v,spf,cellType)%,spT,spId) spT spId spShank
 %% make plots of spiking during linear track runs
 fs = 1250/32;               %Sampling Rate
 bounds = [.1 .9];           %Part of track to consider runway
 accumbins = 50;             %binning of track length
+
+%% extract spikes from file if havent done so already
+if ~exist('spf','var')
+%     if numel(strfind(file,'ec013'))%strcmp('ec013.670',file)
+%         shanks = 5:8;
+%     elseif numel(strfind(file,'ec014'))%strcmp('ec014.468',file)
+%         shanks = 1:8;
+%     elseif numel(strfind(file,'ec016'))%strcmp('ec016.269',file)
+%         shanks = [1:4 7:10];
+%     end
+    [spf cellType] = hipSpikes(file,1000/fs);%spT spId spShank bad
+%    spf = [bad;spf];            %lump artifacts & unsorted spikes at beginning of matrix
+    spf = morFilter(spf,8,fs);  %hilbert-transform spiking data
+    return;
+end
+%% Discretize position along track
 pos(pos == -1) = nan;
-% 
 sV = size(v,1);
 %if size(v,1) < size(pos,1)
 pos = pos(1:sV,:);
@@ -14,34 +29,22 @@ for i = 1:2
 end
 nanInds = isnan(pos(:,1));
 pos = pos(~nanInds,:);v = v(~nanInds,:);
-if ~exist('spf','var')
-    %d = ['/media/Expansion Drive/KenjiMizuseki/'; file '/'];%%'/media/work/hippocampus/'
-    %[spT,spId,~,d] = LoadCluRes([d file],[1:4 7:10]);
-    %spT = (spT/d.SampleRate*fs);
-    if numel(strfind(file,'ec013'))%strcmp('ec013.670',file)
-        shanks = 5:8;
-    elseif numel(strfind(file,'ec014'))%strcmp('ec014.468',file)
-        shanks = 1:8;
-    elseif numel(strfind(file,'ec016'))%strcmp('ec016.269',file)
-        shanks = [1:4 7:10];
-    end
-    [spf spT spId spShank bad] = hipSpikes(file,1000/fs,shanks);
-    spf = [bad;spf];
-    spf = morFilter(spf,8,fs);
-    return;
-end
-spf = spf(:,1:sV);
-spf = spf(:,~nanInds);
-nanInds = find(nanInds);
-if exist('spT','var')
-    spT = spT - max(nanInds(nanInds < size(pos,1)/2));
-    inds = spT < 1 | spT > max(size(pos,1)); spT(inds) = [];spId(inds) = [];
-end
-spf = bsxfun(@times,spf,exp(1i*angle(v(:,1))).');
 pos = bsxfun(@minus,pos,mean(pos));
 [pos,~,~] = svd(pos(:,1:2),'econ');
 pos(:,1) = pos(:,1)-min(pos(:,1));pos(:,1) = pos(:,1)/(max(pos(:,1))+.00001);
 posd = floor(pos(:,1)*accumbins)+1;
+%% preprocess and demodulate spike data
+spf = spf(:,1:sV);
+spf = spf(:,~nanInds);
+% nanInds = find(nanInds);
+% if exist('spT','var')
+%     spT = spT - max(nanInds(nanInds < size(pos,1)/2));
+%     inds = spT < 1 | spT > max(size(pos,1)); spT(inds) = [];spId(inds) = [];
+% end
+spf = bsxfun(@times,spf,exp(1i*angle(v(:,1))).');
+ydim = ceil(sqrt(size(spf,1)));xdim = ceil(size(spf,1)/ydim);figure;
+%% 1D CASE
+%% separate runs into trials
 b = nan*ones(size(pos,1),1);
 b(pos(:,1) < bounds(1)) = -1;b(pos(:,1) > bounds(2)) = 1;
 nanInds = find(~isnan(b));
@@ -50,7 +53,8 @@ b = [0 diff(b)];
 runs = bwlabel(b > 0);
 spInterp = zeros(2,size(spf,1),max(runs),accumbins(1));
 w = watershed(b==0);
-w = w-1; %w(w== max(w)) = 0;
+%w = w-1;% w(w== max(w)) = 0;
+%% accummulate spiking samples for every trial and position bin
 for k = 1:2
     runs = bwlabel(w>0 & mod(w,2) == k-1);%b*((-1)^k)>0);
     inds = runs > 0;
@@ -59,11 +63,16 @@ for k = 1:2
     end
 end
 spInterp = [squeeze(spInterp(1,:,:)) squeeze(spInterp(2,:,:))];
-ydim = 8;xdim = ceil(size(spf,1)/ydim);figure;
+%% display results
+[~,inds] = sort(cellType,'ascend');
 for i = 1:size(spInterp,1)
-    temp = reshape(spInterp(i,:),[max(runs) 2*accumbins]);
+    temp = reshape(spInterp(inds(i),:),[max(runs) 2*accumbins]);
     subplot(xdim,ydim,i);imagesc(complexIm(temp,0,1));axis off;
+    title(cellType(inds(i)));
 end
+%% 2D CASE
+
+%% introns
 % vDemod(:,1) = [0; v(2:end,1).*exp(1i*-angle(v(1:end-1,1)))];
 % vDemod(:,2) = v(:,2).*exp(1i*-angle(v(:,1)));
 % angBins = 20;posBins = 30;
