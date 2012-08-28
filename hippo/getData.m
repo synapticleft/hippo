@@ -30,7 +30,7 @@ end
 %X = double(h5varget([data_root fname],'/hReal',[0 rind],[nSamples(1) sz]));%-1
 
 if dec > 1
-    X1 = zeros(nSamples(1),round(sz/dec));
+    X1 = zeros(numel(elecs),round(sz/dec));
     for i = elecs
         tic;
         temp = double(h5varget([data_root fname],'/hReal',[i-1 rind],[1 sz]));%nSamples(1)

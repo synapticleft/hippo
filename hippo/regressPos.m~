@@ -1,7 +1,7 @@
 function regressPos(pos,v,Xf,thresh)
 
 warning off all;
-s = size(Xf,1);
+s = size(Xf,1)+1;
 bounds = [.1 .9];
 accumbins = 50;timeBins = [-100:400];
 pos(pos == -1) = nan;
@@ -51,6 +51,7 @@ for k = 1:2
         %testInds = testInds(1):testInds(2);
         trainInds = vec(randTrials ~= i);%setdiff(1:samples,testInds);
         dat = b*((-1)^k)>0 & vel > thresh & ismember(data,trainInds);
+        figure;plot(
         rbfPos = gaussPos(pos(dat,1),bases);%
         tempKern(i,:,:) = ((Xf(:,dat)*Xf(:,dat)'+1000)\Xf(:,dat)*rbfPos')';
         dat = b*((-1)^k)>0 & vel > thresh & ismember(data,testInds);
@@ -95,10 +96,13 @@ subplot(xdim,ydim,i);imagesc(imfilter(reshape(t(i,:),[max(runs) 2*accumbins]),fs
 end
 superImp(reshape([squeeze(vInterp(1,:,:)) squeeze(vInterp(2,:,:))],...
    [size(vInterp,2) size(vInterp,3) 2*size(vInterp,4)]),1:size(vInterp,2),1);
-xdim = ceil(sqrt(2*size(kern,2)));ydim = ceil(2*size(kern,2)/sqrt(2*size(kern,2)));
+xdim = ceil(sqrt(2*size(kern,2)));ydim = ceil(2*size(kern,2)/xdim);
 figure;for k = 1:2
+    k1 = squeeze(kern(k,:,:));
+    %k1 = pinv(k1)';
     for i = 1:size(kern,2)
-    subplot(xdim,ydim,(ki);imagesc(complexIm(reshape(squeeze(complex(kern(
+        subplot(xdim,ydim,(k-1)*size(kern,2)+i);imagesc(complexIm(reshape(...
+            squeeze(complex(k1(i,1:s),k1(i,(s+2):(end-1)))),[8 s/8]),0,1));
     end
 end
 

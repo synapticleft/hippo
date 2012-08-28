@@ -1,13 +1,15 @@
-function [spikeMat cellInfo] = hipSpikes(file,bin,subSet)%a b c badUnits
+function [spikeMat cellInfo] = hipSpikesTony(file,bin,subSet)%a b c badUnits
 %% extract all spikes into matrix downsampled to match lfp and position files.
 %bin usually 32/1.25
-load('/media/work/hippocampus/KenjiData.mat');
-whichDay = strcmp(file,Beh(:,4));
-dayID = Beh(whichDay,2);
-dayCells = PyrIntMap.Map(:,1) == find(strcmp(dayID,PyrIntMap.fileBase));% & Region == 1;
+%%new way for Kenji's data
+%load('/media/work/hippocampus/KenjiData.mat');
+%whichDay = strcmp(file,Beh(:,4));
+%dayID = Beh(whichDay,2);
+%dayCells = PyrIntMap.Map(:,1) == find(strcmp(dayID,PyrIntMap.fileBase));% & Region == 1;
 %d = ['/media/Kenji_data/' Beh{whichDay,3} '/' Beh{whichDay,1} '/' file '/'];
-d = ['/media/work/hippocampus/';% file '/'];%['/media/Expansion Drive/KenjiMizuseki/'];%
 %someShanks = unique(PyrIntMap.Map(dayCells,3));
+%%old way
+d = ['/media/work/hippocampus/AB3-58/'];% file '/'];%['/media/Expansion Drive/KenjiMizuseki/'];%
 if exist('someShanks','var') && ~isempty(someShanks)
     [a,b,c,d] = LoadCluRes([d file],someShanks);
 else
@@ -28,17 +30,18 @@ for i = 1:max(b)
     if c(i,3) == 0 || c(i,3) == 1
         cellInfo(i) = c(i,3) - 2;
     else
-        cellInd = dayCells & c(i,2) == PyrIntMap.Map(:,3) & c(i,3) == PyrIntMap.Map(:,4);
-        assert(sum(cellInd) == 1);
-        if ~Clean(cellInd)
-            cellInfo(i) = 0;
-        else
-            for j = 1:3
-                if iCell{j}(cellInd)
-                    cellInfo(i) = j;
-                end
-            end
-        end
+        cellInfo(i) = 1;
+%         cellInd = dayCells & c(i,2) == PyrIntMap.Map(:,3) & c(i,3) == PyrIntMap.Map(:,4);
+%         assert(sum(cellInd) == 1);
+%         if ~Clean(cellInd)
+%             cellInfo(i) = 0;
+%         else
+%             for j = 1:3
+%                 if iCell{j}(cellInd)
+%                     cellInfo(i) = j;
+%                 end
+%             end
+%         end
     end
 end
 %badUnits = [ spikeMat(c(:,3) == 0,:); spikeMat(c(:,3) == 1,:)];

@@ -63,7 +63,7 @@ end
 % dimensionality simultaneously).
 whiteningMatrix = inv (sqrt (D)) * E';
 dewhiteningMatrix = E * sqrt (D);
-
+%zerophaseMatrix = E*inv (sqrt (D))*E';
 % Project to the eigenvectors of the covariance matrix.
 % Whiten the samples and reduce dimension simultaneously.
 if b_verbose, fprintf ('Whitening...\n'); end

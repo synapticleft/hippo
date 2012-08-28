@@ -1,13 +1,15 @@
 function [spikeMat cellInfo] = hipSpikes(file,bin,subSet)%a b c badUnits
 %% extract all spikes into matrix downsampled to match lfp and position files.
 %bin usually 32/1.25
+%%new way for Kenji's data
 load('/media/work/hippocampus/KenjiData.mat');
 whichDay = strcmp(file,Beh(:,4));
 dayID = Beh(whichDay,2);
-dayCells = PyrIntMap.Map(:,1) == find(strcmp(dayID,PyrIntMap.fileBase)) & Region == 1;
+dayCells = PyrIntMap.Map(:,1) == find(strcmp(dayID,PyrIntMap.fileBase));% & Region == 1;
 d = ['/media/Kenji_data/' Beh{whichDay,3} '/' Beh{whichDay,1} '/' file '/'];
-%d = ['/media/work/hippocampus/' file '/'];%['/media/Expansion Drive/KenjiMizuseki/'];%
 someShanks = unique(PyrIntMap.Map(dayCells,3));
+%%old way
+%d = ['/media/work/hippocampus/' file '/'];%['/media/Expansion Drive/KenjiMizuseki/'];%
 if exist('someShanks','var') && ~isempty(someShanks)
     [a,b,c,d] = LoadCluRes([d file],someShanks);
 else

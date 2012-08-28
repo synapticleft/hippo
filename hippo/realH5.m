@@ -3,7 +3,8 @@ load('/media/work/hippocampus/KenjiData.mat','Beh');
 whichDay = strcmp(input,Beh(:,4));
 %dayID = Beh(whichDay,2);
 %dayCells = PyrIntMap.Map(:,1) == find(strcmp(dayID,PyrIntMap.fileBase)) & Region == 1;
-input = ['/media/Kenji_data/' Beh{whichDay,3} '/' Beh{whichDay,1} '/' input '/' input '.eeg'];
+input = ['/media/work/hippocampus/' input '/' input '.eeg'];
+%input = ['/media/Kenji_data/' Beh{whichDay,3} '/' Beh{whichDay,1} '/' input '/' input '.eeg'];
 if ~exist(output,'file')
     h5filecreate(output);
 end
@@ -16,7 +17,7 @@ end
 samples = [1 nSamples];
 end
 [samples numChans]
-step = 400000;
+step = 80000;
 h5datacreate(output,'/hReal','type','int16','size',[numChans samples(2)-samples(1)+1]);
 for i = samples(1):step:samples(2)
     numElems = min(step,samples(2)-i+1);

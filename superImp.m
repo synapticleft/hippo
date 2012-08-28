@@ -1,4 +1,4 @@
-function im = superImp(c,frames,rad,maxVal,bb)
+function im = superImp(x,frames,rad,maxVal,bb)
 %%SUPERIMP combines multiple components into 1 image, assigning each
 %%component a different color, for each pixel, choosing the component with
 %%the largest magnitude at that location. All components are normalized.
@@ -7,11 +7,14 @@ function im = superImp(c,frames,rad,maxVal,bb)
 %%          rad = width of gaussian smoothing kernel
 %%          maxVal = if you want to normalize all components by a fixed value (default: normalize maximum of each component to 1)
 %%          bb = in case you want a separate background image to assign the intensity of the pixel, rather than the componnent
-
-x = c(frames,:,:);
+if exist('frames','var') && ~isempty('frames')
+    x = x(frames,:,:);
+else
+    x = x(randperm(size(x,1)),:,:);
+end
 
 for i = 1:size(x,1)
-    if rad
+    if exist('rad','var') && rad
         x(i,:,:) = imfilter(squeeze(x(i,:,:)),fspecial('gaussian',5,rad));
     end
     if ~exist('maxVal','var')

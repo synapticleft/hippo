@@ -1,5 +1,6 @@
 function [spf,cellType,sp] = spikePlots(file,pos,v,linear,spf,cellType)%,spT,spId) spT spId spShank
 %% make plots of spiking during linear track runs
+% USAGE = >> spikePlots('',pos,v,1,spf,cellType
 fs = 1250/32;               %Sampling Rate
 bounds = [.1 .9];           %Part of track to consider runway
 accumbins = 50;             %binning of track length
@@ -13,7 +14,7 @@ if ~exist('spf','var')
 %     elseif numel(strfind(file,'ec016'))%strcmp('ec016.269',file)
 %         shanks = [1:4 7:10];
 %     end
-    [sp cellType] = hipSpikes(file,1000/fs);%spT spId spShank bad
+    [sp cellType] = hipSpikesTony(file,1000/fs,size(v,1)/fs);%spT spId spShank bad
 %    spf = [bad;spf];            %lump artifacts & unsorted spikes at beginning of matrix
     spf = morFilter(sp,8,fs);  %hilbert-transform spiking data
     return;
@@ -23,6 +24,11 @@ if ~exist('cellType','var')
 end
 %% Preprocess valid position data
 pos(pos == -1) = nan;
+reject = 0;
+for i = 1:4
+    reject = reject | min([0; diff(pos(:,i))],flipud([0; diff(flipud(pos(:,i)))])) < -20;
+end
+pos(reject,:) = nan;
 sV = size(v,1);
 %if size(v,1) < size(pos,1)
 pos = pos(1:sV,:);
@@ -43,7 +49,7 @@ spf = spf(:,~nanInds);
 if ~isreal(spf)
     spf = bsxfun(@times,spf,exp(1i*angle(v(:,1))).');
 end
-ydim = ceil(sqrt(size(spf,1))*1.5);xdim = ceil(size(spf,1)/ydim);figure;
+ydim = ceil(sqrt(size(spf,1)));xdim = ceil(size(spf,1)/ydim);figure;
 [~,indSort] = sort(cellType,'ascend');
 if linear
 %% 1D CASE
@@ -63,7 +69,7 @@ w = watershed(b==0);
 w = w-1; %w(w== max(w)) = 0;
 %% accummulate spiking samples for every trial and position bin
 for k = 1:2
-    runs1 = bwlabel(w>0 & mod(w,2) == k-1);%b*((-1)^k)>0);
+    runs1 = bwlabel(w>0 & mod(w,2) == k-1 & w <=2*max(runs));%b*((-1)^k)>0);
     inds = runs1 > 0;
     for j = 1:size(spf,1)
         spInterp(k,j,:,:) = accumarray([runs1(inds); posd(inds)']',spf(j,inds),[max(runs) accumbins] ,@mean);
@@ -74,7 +80,7 @@ spInterp = [squeeze(spInterp(1,:,:)) squeeze(spInterp(2,:,:))];
 for i = 1:size(spInterp,1)
     temp = reshape(spInterp(indSort(i),:),[max(runs) 2*accumbins]);
     subplot(xdim,ydim,i);imagesc(complexIm(temp,0,1));axis off;
-    title(cellType(indSort(i)));
+%    title(cellType(indSort(i)));
 end
 else
 %% 2D CASE

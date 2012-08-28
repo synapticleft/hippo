@@ -52,9 +52,11 @@ for k = 1:2
         trainInds = vec(randTrials ~= i);%setdiff(1:samples,testInds);
         dat = b*((-1)^k)>0 & vel > thresh & ismember(data,trainInds);
         rbfPos = gaussPos(pos(dat,1),bases);%
+        %XrbfPos = gaussPos(data(dat)',bases);
         tempKern(i,:,:) = ((Xf(:,dat)*Xf(:,dat)'+1000)\Xf(:,dat)*rbfPos')';
         dat = b*((-1)^k)>0 & vel > thresh & ismember(data,testInds);
         rbfPos = gaussPos(pos(dat,1),bases);
+        %rbfPos = gaussPos(data(dat)',bases);
         temp = squeeze(tempKern(i,:,:))*Xf(:,dat);
         c = [c corr(rbfPos(:),temp(:))];
     end
@@ -66,8 +68,9 @@ for k = 1:2
     kern(k,:,:) = mean(tempKern);
     Xf1((k-1)*bases+(1:bases),:) = squeeze(kern(k,:,:))*Xf;
 end
-mean(c)
 Xf = Xf1;clear Xf1;
+% figure;subplot(211);plot(Xf(1:10,:)');subplot(212);plot(Xf(11:20,:)');
+% sPlot(Xf);return
 vInterp = zeros(2,size(Xf,1),max(runs),accumbins);
 for k = 1:2
    runs = bwlabel(b*((-1)^k)>0);
