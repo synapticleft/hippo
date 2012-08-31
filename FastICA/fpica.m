@@ -47,7 +47,6 @@ function [A, W] = fpica(X, whiteningMatrix, dewhiteningMatrix, approach, ...
 %   See also FASTICA, FASTICAG, WHITENV, PCAMAT
 
 % @(#)$Id: fpica.m,v 1.7 2005/06/16 12:52:55 jarmo Exp $
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Global variable for stopping the ICA calculations from the GUI
 global g_FastICA_interrupt;
@@ -347,7 +346,6 @@ if approachMode == 1,
       end
       return;
     end
-    
     
     % Symmetric orthogonalization.
     B = B * real(inv(B' * B)^(1/2));
@@ -888,8 +886,6 @@ if ~isreal(A)
   A = real(A);
   W = real(W);
 end
-
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

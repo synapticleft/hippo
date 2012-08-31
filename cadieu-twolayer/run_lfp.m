@@ -27,8 +27,6 @@
 %%%       7. Display the results
 
 %% Initialize parameters
-for i = 1:8
-    for j = 1:8
 clear m;clear p;
 
 reset(RandStream.getDefaultStream);
@@ -42,9 +40,9 @@ run_name = '1';
 p.data_type = 'lfp';% 'vid075-chunks';'sim';%
 
 % specify model dimensions
-m.patch_sz =  96; % num elecs size
+m.patch_sz =  64; % num elecs size
 %m.M =        64; % this parameter is determined by the whitening proceedure
-m.N =        20;  % firstlayer basis functions
+m.N =        30;  % firstlayer basis functions
 %m.L =        25;  % phasetrans basis functions
 %m.K =        25;  % ampmodel basis functions
 
@@ -77,7 +75,7 @@ p.show_p = 0;
 p.quiet = 0;
 
 %% Init
-[m, p] = init(m,p,[i j]);
+[m, p] = init(m,p);
 %display_A(m);
 
 % save path
@@ -94,8 +92,6 @@ display_every= 100;
 num_trials = 5000;
 save_every= 100;
 learn_firstlayer
-    end
-end
 % epochs = 35;
 % p.firstlayer.eta_dA_target = 2*p.firstlayer.eta_dA_target;
 % 

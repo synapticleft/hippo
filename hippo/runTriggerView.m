@@ -33,12 +33,15 @@ Xf = [bsxfun(@times,Xf,exp(1i*angle(v(:,1))).');...
 Xf = [real(Xf);imag(Xf)];
 vel = filtLow(vel,1250/32,1);
 vel = vel/max(vel);inds = vel > thresh;
-[E, D]=pcamat(Xf, 1, numel(posInds), 'off','off');
-r1 = pinv(r);
-r1 = r1(:,posInds);r = r(posInds,:);
-r1 = E*inv(sqrt (D))*E'*r1;
-t = r*zscore(Xf,0,2);%(:,inds)
-%r1 = r';%pinv(r);
+r1 = pinv(r);%r';%
+lambda = 1000;
+if exist('posInds','var')
+%    [E, D]=pcamat(Xf, 1, size(r,1), 'off','off');
+%    dD = flipud(diag(D));
+%    r1 = E*inv(sqrt (D) + lambda*eye(size(D)))*E'*r1;%
+    r1 = r1(:,posInds);r = r(posInds,:); %% IS THIS RIGHT??
+end
+t = r*zscore(Xf,0,2);
 xdim = ceil(sqrt(size(t,1)));ydim = ceil(size(t,1)/xdim);
 % %%FOR 1D TRACK
 % %%v = filtLow(v.',1250/32,1).';
@@ -51,7 +54,12 @@ runs = bwlabel(b > 0);
 vInterp = zeros(2,size(t,1),max(runs),accumbins(1));
 w = watershed(b==0);
 w = w-1; %w(w== max(w)) = 0;
-%%
+%u = zeros(max(w),size(Xf,1));
+% for i = 1:max(w)/2
+%     [temp,~,~] = svds(Xf(:,(w == 2*i | w == 2*i-1) & inds'),2);
+%     u(i,:) = temp(:,2);
+% end
+%
 for k = 1:2
     runs1 = bwlabel(w>0 & mod(w,2) == k-1 & w <=2*max(runs));%b*((-1)^k)>0);
     inds = runs1 > 0;
@@ -61,7 +69,7 @@ for k = 1:2
 end
 t1 = [squeeze(vInterp(1,:,:)) squeeze(vInterp(2,:,:))];
 %h1 = figure;
-spatial = zeros(size(t1,1),2*accumbins(1));
+spatial = randn(size(t1,1),2*accumbins(1));
 negs = zeros(size(t1,1),1);
 for i = 1:size(t1,1)
     temp = reshape(t1(i,:),[max(runs) 2*accumbins(1)]);
@@ -75,7 +83,7 @@ for i = 1:size(t1,1)
 %    figure(h2);subplot(xdim,ydim,i);imagesc(complexIm(reshape(complex(r1(1:32,i),r1(34:65,i)),[8 4]),0,1));axis off;
 end
 figure;plot(spatial');
-posInds = 1:numel(posInds);%find(max(spatial') > 300);%1:size(r,1);%
+posInds = find(max(spatial') > 300);%1:size(r,1);%
 [~,peakLoc] = max(spatial(posInds,:)');
 [~,indLoc] = sort(peakLoc);
 posInds = posInds(indLoc);
@@ -104,6 +112,7 @@ for i = 1:numel(posInds)
     end
 %    up1 = up1(:,[1:4 6 5 8 7]);
     up1 = up1(:,[1:12 14 13 16 15]);
+    %up1 = diff(up1);
     up1 = [up1(:,1:8) zeros(size(up1,1),1) up1(:,9:16)];
     ups(i,:,:) = up1;
     figure(h2);subplot(xdim,ydim,i);imagesc(complexIm(up1,0,1));axis off;

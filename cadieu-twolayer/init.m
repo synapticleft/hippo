@@ -1,4 +1,4 @@
-function [m,p] = init(m,p,list)
+function [m,p] = init(m,p)
 
 %% misc
 m.t = 0;
@@ -89,8 +89,8 @@ switch p.firstlayer.prior
         p.firstlayer.a_lambda_S = 10000;%.5;
         p.firstlayer.a_tau_S = 100;
     case 'laplace_Z'
-        p.firstlayer.a_laplace_beta = betas(list(1))*[1 1];%1;
-        p.firstlayer.a_lambda_S = sparses(list(2));%.5;
+        p.firstlayer.a_laplace_beta = betas(4)*[1 1];%1;
+        p.firstlayer.a_lambda_S = sparses(4);%.5;
         %p.firstlayer.a_tau_S = 100;
     case 'laplace_AR'
         p.firstlayer.a_laplace_beta = 100*[0.99 1];%1;

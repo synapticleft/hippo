@@ -64,5 +64,5 @@ vel = vel/max(vel);inds = vel > thresh;
 %t = Xf(:,inds);
 %[r,~,t] = runica(Xf(:,inds),'pca',50);
 rdim = size(Xf,1)/2;
-[~,W] = fastica(zscore(Xf(:,inds),0,2),'lastEig',rdim,'g','tanh','approach','symm','stabilization','on','maxNumIterations',0);%
+[~,W] = fastica(zscore(Xf(:,inds),0,2),'lastEig',rdim,'g','tanh','approach','symm','stabilization','on');%
 t = W*zscore(Xf,0,2);

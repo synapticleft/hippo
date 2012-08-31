@@ -413,11 +413,11 @@ else
     
     % Calculate PCA
     [E, D]=pcamat(mixedsig, firstEig, lastEig, interactivePCA, verbose);
-    if lastEig == size(mixedsig,1)
-        figure;plot(filtfilt(gausswin(20),1,diff(log(diag(D)))));
-        lastEig = input('Enter cutoff: ');
-        E(:,1:lastEig) = [];D = D(lastEig+1:end,lastEig+1:end);
-    end
+%     if lastEig == size(mixedsig,1)
+%         figure;plot(filtfilt(gausswin(20),1,diff(log(diag(D)))));
+%         lastEig = input('Enter cutoff: ');
+%         E(:,1:lastEig) = [];D = D(lastEig+1:end,lastEig+1:end);
+%     end
   end
 end
 
