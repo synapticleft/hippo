@@ -32,11 +32,6 @@ if isfield(m,'dewhitenMatrix')
     end
 else
     display_Ahelper(A,fig_num);
-%     if nargin < 2
-%    for i = 1:inf
-%        display_Ahelper(A*exp(1i*i/10),fig_num);    drawnow;
-%    end
-%     end
 end
 if exist('Z_var','var')  && ~isempty(Z_var) && (max(Z_var(:)) > 0)
   sfigure(fig_num+2);
@@ -54,22 +49,13 @@ drawnow
 function array = display_Ahelper(A,fig_num)
 
 [L M]=size(A);
-if L == 64
-    sz = [8 8];
-elseif L == 96
-    sz = [16 6];%[8 12];%
+sz = [8 4];
+if L == 96
+    sz = [16 6];
 end
 %sz=sqrt(L);
 
 buf=1;
-
-% if floor(sqrt(M))^2 ~= M
-%   m=sqrt(M/2);
-%   n=M/m;
-% else
-%   m=sqrt(M);
-%   n=m;
-% end
 m = ceil(sqrt(M));
 n = ceil(M/m);
 
@@ -82,7 +68,7 @@ for c=1:m
       end
     clim=max(abs(A(:,k)));
     array(buf+(r-1)*(sz(1)+buf)+[1:sz(1)],buf+(c-1)*(sz(2)+buf)+[1:sz(2)])=...
-	reshape(A(:,k),sz(1),sz(2))/clim;
+	reshape(A(1:end-1,k),sz(1),sz(2))/clim;
     k=k+1;
   end
 end

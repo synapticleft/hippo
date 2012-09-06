@@ -1,10 +1,6 @@
 function X = crop_chunk(F,m,p)
 
-if strcmp(p.data_type,'lfp')
-    X = F;
-elseif strcmp(p.data_type,'sim')
-    X = reshape(F,size(F,1)*size(F,2),size(F,3));
-end
+X = F;
 
 % if p.normalize_crop
 %     X = X-mean(X(:));

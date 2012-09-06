@@ -7,12 +7,11 @@ function im = superImp(x,frames,rad,maxVal,bb)
 %%          rad = width of gaussian smoothing kernel
 %%          maxVal = if you want to normalize all components by a fixed value (default: normalize maximum of each component to 1)
 %%          bb = in case you want a separate background image to assign the intensity of the pixel, rather than the componnent
-if exist('frames','var') && ~isempty('frames')
-    x = x(frames,:,:);
+if exist('frames','var') && ~isempty(frames)
+    x = x(frames(randperm(numel(frames))),:,:);
 else
     x = x(randperm(size(x,1)),:,:);
 end
-
 for i = 1:size(x,1)
     if exist('rad','var') && rad
         x(i,:,:) = imfilter(squeeze(x(i,:,:)),fspecial('gaussian',5,rad));

@@ -4,6 +4,7 @@ a = abs(Z);
 % Z(2:end,:) = bsxfun(@times,Z(2:end,:),exp(1i*-angle(Z(1,:))));
 % Z(1,2:end) = Z(1,2:end).*exp(1i*-angle(Z(1,1:end-1)));
 phase = angle(Z);
+m.imageMean = 0;
 if p.whiten_patches
     I  = bsxfun(@plus,m.dewhitenMatrix*I, m.imageMean);
     Ih = bsxfun(@plus,m.dewhitenMatrix*Ih,m.imageMean);

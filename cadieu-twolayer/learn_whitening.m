@@ -1,41 +1,9 @@
-function [m, p] = learn_whitening(m,p)
-num_patches = p.whitening.whiten_num_patches;
-
-
-%% setup
-X = zeros(m.patch_sz,num_patches);
-
-
-%% Collect some data
-
-%crops_per_chunk = p.patches_load;
-sind = 1;
-%crop_ind = 0;
-
-while sind < num_patches
-%   if mod(crop_ind,crops_per_chunk) == 0
-%        F = load_datachunk(m,p);
-%   end
-%   x = crop_chunk(F,m,p);
-%   crop_ind = crop_ind + 1;
-   x = load_datachunk(m,p);
-   x = crop_chunk(x,m,p);
-   len_chunk = size(x,2);
-   eind =sind+len_chunk-1;
-   if eind > num_patches
-       eind = num_patches;
-       x = x(:,1:eind - sind + 1);
-       len_chunk = size(x,2);
-   end
-   X(:,sind:eind) = x;
-   sind = sind + len_chunk;
-end
-
+function [m, p] = learn_whitening(m,p,X)
+num_patches = size(X,2);%p.whitening.whiten_num_patches;
 
 %% Subtract mean
 m.imageMean = mean(X,2);
 X = bsxfun(@minus,X,m.imageMean);
-
 m.pixel_variance = var(X(:));
 m.pixel_noise_variance = p.whitening.pixel_noise_fractional_variance*m.pixel_variance;
 
@@ -60,10 +28,11 @@ E = E(:,1:m.M);
 D = diag(factors);
 
 m.I_noise_factors = ones(m.M,1);
-%%removed per Jascha's suggestion
-%rolloff_ind = sum(varX>variance_cutoff*p.whitening.X_noise_fraction);
-%m.I_noise_factors(rolloff_ind+1:end) = .5*(1+cos(linspace(0,pi,m.M-rolloff_ind))); 
 
+%%removed per Jascha's suggestion
+
+rolloff_ind = sum(varX>variance_cutoff*p.whitening.X_noise_fraction);
+m.I_noise_factors(rolloff_ind+1:end) = .5*(1+cos(linspace(0,pi,m.M-rolloff_ind))); 
 m.I_noise_factors = m.I_noise_factors/p.whitening.X_noise_var;
 m.I_noise_vars = 1./m.I_noise_factors;
 

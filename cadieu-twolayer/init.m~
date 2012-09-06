@@ -2,20 +2,7 @@ function [m,p] = init(m,p)
 
 %% misc
 m.t = 0;
-
-%% init data %%
-
-switch p.data_type
-    case 'lfp'   
-        p.imszt=256;% number of time steps
-        p.data_root='/media/work/hippocampus/';    
-        p.data_file='ec014.468Dec32.h5';
-        p.data_field='/hReal';
-    case 'sim'
-        p.imsz = 8;
-        p.imszt = 256;
-        p.patches_load = 1;
-end
+p.imszt=256;% number of time steps
 
 %% whitening params %%
 
@@ -28,7 +15,7 @@ if p.whiten_patches
     % run whitening
     p.whitening.whiten_num_patches = 20*1250;%min(400*m.patch_sz,200000)/20;%160000; TEMPORARY /20
     [m, p] = learn_whitening(m,p);
-    m.N = m.M;
+    %m.N = m.M;
 else
     m.M = m.patch_sz;%m.N;
     m.I_noise_factors = 100*ones(m.M,1);%
@@ -61,7 +48,7 @@ p.firstlayer.use_GS = 1;
 switch p.firstlayer.basis_method
     case 'steepest_adapt'
         p.firstlayer.A_eta=.0001;
-        p.firstlayer.eta_dA_target = .05;
+        p.firstlayer.eta_dA_target = .005;
         p.firstlayer.up_factor = 1.02;
         p.firstlayer.down_factor = .95;
         
@@ -85,9 +72,16 @@ switch p.firstlayer.prior
     case 'l1l2'
         p.firstlayer.a_laplace_beta = 2000;
     case 'slow_laplace'
-        p.firstlayer.a_laplace_beta = 10;%1;
-        p.firstlayer.a_lambda_S = 100;%.5;
+        p.firstlayer.a_laplace_beta = [10 1000];%1;
+        p.firstlayer.a_lambda_S = 10000;%.5;
         p.firstlayer.a_tau_S = 100;
+    case 'laplace_Z'
+        p.firstlayer.a_laplace_beta = betas(4)*[1 1];%1;
+        p.firstlayer.a_lambda_S = sparses(4);%.5;
+        %p.firstlayer.a_tau_S = 100;
+    case 'laplace_AR'
+        p.firstlayer.a_laplace_beta = 100*[0.99 1];%1;
+        p.firstlayer.a_lambda_S = 100;%.5;
 end
 
 switch p.firstlayer.inference_method
@@ -100,8 +94,8 @@ switch p.firstlayer.inference_method
     case 'minFunc_ind'
         p.firstlayer.minFunc_ind_Opts.Method = 'bb';%'cg';%'bb';%'csd';%
         p.firstlayer.minFunc_ind_Opts.Display = 'off';
-        p.firstlayer.minFunc_ind_Opts.MaxIter = 15;%30;
-        p.firstlayer.minFunc_ind_Opts.MaxFunEvals = 20;%60;
+        p.firstlayer.minFunc_ind_Opts.MaxIter = 30;%15;%
+        p.firstlayer.minFunc_ind_Opts.MaxFunEvals = 60;%20;%
         p.firstlayer.natural_gradient = 1;%1 originally
 
 end

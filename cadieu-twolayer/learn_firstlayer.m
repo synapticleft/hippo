@@ -14,7 +14,7 @@ if p.use_gpu
 end
 Aold = m.A;
 for trial = 1:num_trials
-    F = load_datachunk(m,p);
+    F = load_datachunk(m,p,Xf);
     X = crop_chunk(F,m,p);
     if strcmp(p.firstlayer.prior,'laplace_AR')
         x1 = X(:,2:end); X = X(:,1:end-1);  

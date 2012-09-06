@@ -1,4 +1,4 @@
-function run_lfp(pos,v,Xf,thresh)
+function m = run_lfp_real(pos,v,Xf,thresh)
 
 %% driver script for learning a model
 %%%   
@@ -56,47 +56,44 @@ end
 offSet = 1;
 Xf = [bsxfun(@times,Xf,exp(1i*angle(v(:,1).')));...
      [zeros(offSet,1); v(1+offSet:end,1).*conj(v(1:end-offSet,1))./abs(v(1:end-offSet,1))].'];
-%Xf = [real(Xf);imag(Xf)];
+Xf = [real(Xf);imag(Xf)];
+Xf = bsxfun(@minus,Xf,mean(Xf,2));
 vel = filtLow(vel,1250/32,1);
 vel = vel/max(vel);inds = vel > thresh;
 
 %% Initialize parameters
 
-reset(RandStream.getDefaultStream);
-warning('off','MATLAB:divideByZero')
-warning('off','MATLAB:nearlySingularMatrix')
+%% Whitening transform
+p.whitening.pixel_noise_fractional_variance = .0002;
+% the following seems redundant
+% p.whitening.pixel_noise_variance_cutoff_ratio = 1; %1.25; % 1 + var(signal)/var(noise)
+% p.whitening.X_noise_fraction = 8.;
+% p.whitening.X_noise_var = .01;
+C = Xf*Xf'/size(Xf,2);
+[E, D] = eig(C);
+[~, sind] = sort(diag(D),'descend');
+d = diag(D);
+d = d(sind);
+figure;plot(log(d));
+E = E(:,sind);
+% determine cutoff:
+%variance_cutoff = p.whitening.pixel_noise_variance_cutoff_ratio*m.pixel_noise_variance;
+rdim = size(Xf,1); % number of valid dims
 
-m.patch_sz =  size(Xf,1); % num elecs size
-m.N =        30;  % firstlayer basis functions
+factors = real(d(1:rdim).^(-.5));
 
-% specify priors
-p.firstlayer.prior = 'laplace_Z';%'l1l2';%'slow_cauchy';% changed per jascha's suggestion %slow_
 
-% specify outerloop learning method
-p.firstlayer.basis_method = 'steepest_adapt';%'steepest';%
+noise_factors = ones(rdim,1);
 
-% specifiy inference methods
-p.firstlayer.inference_method='minFunc_ind';%'steepest';%
+%%removed per Jascha's suggestion
 
-% misc
-p.use_gpu = 0;
-p.renorm_length=1;%1;
-%p.normalize_crop=0;
-p.whiten_patches=1;
-p.p_every = 0;
-p.show_p = 1;
-p.quiet = 0;
-
-%% Init
-[m, p] = init(m,p,Xf(:,inds));
-
-% save path
-fname=[strrep(datestr(now),' ','_') sprintf('patchsz%d_A%dx%d',m.patch_sz,m.M) '_%s.mat'];
-
-% display parameters
-display_every= 10
-
-%% learn firstlayer A
-num_trials = 50000;
-save_every= 100;
-learn_firstlayer
+rolloff_ind = rdim-5;%rdim - sum(d(1:rdim)>variance_cutoff*p.whitening.X_noise_fraction);
+noise_factors(rolloff_ind+1:end) = .5*(1+cos(linspace(0,pi,rdim-rolloff_ind))); 
+factors = diag(D).*noise_factors;
+figure;plot(log(diag(D)));hold all;plot(log());
+E = E(:,1:rdim);
+D = diag(factors);
+%% whitening transform
+m.whitenMatrix = D*E';
+m.dewhitenMatrix = E*D^(-1);
+m.zerophaseMatrix = E*D*E';

@@ -1,4 +1,4 @@
-function [W t] = runTriggerICA(pos,v,Xf,accumbins,thresh)
+function [A,W,Z,t] = runTriggerICA(pos,v,Xf,accumbins,thresh)
 %% convert demodulated complex data to real valued w/ 2x dimensionality, 
 %% run fastICA, then bin and render activations.
 warning off all;
@@ -63,6 +63,6 @@ vel = vel/max(vel);inds = vel > thresh;
 %sum(inds)
 %t = Xf(:,inds);
 %[r,~,t] = runica(Xf(:,inds),'pca',50);
-rdim = size(Xf,1)/2;
-[~,W] = fastica(zscore(Xf(:,inds),0,2),'lastEig',rdim,'g','tanh','approach','symm','stabilization','on');%
+rdim = size(Xf,1);
+[A,W,Z] = gfastica(zscore(Xf(:,inds),0,2),'lastEig',rdim,'g','tanh','approach','symm','stabilization','on');%
 t = W*zscore(Xf,0,2);

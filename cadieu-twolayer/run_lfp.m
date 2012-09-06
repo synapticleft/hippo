@@ -1,3 +1,5 @@
+function m = run_lfp(pos,v,Xf,thresh)
+
 %% driver script for learning a model
 %%%   
 %%%   m - struct containing the basis function variables
@@ -26,183 +28,75 @@
 %%%       6. Learn second layer amplitude components
 %%%       7. Display the results
 
+bounds = [.1 .9];
+pos(pos == -1) = nan;
+reject = 0;
+for i = 1:4
+    reject = reject | min([0; diff(pos(:,i))],flipud([0; diff(flipud(pos(:,i)))])) < -20;
+end
+pos(reject,:) = nan;
+if size(v,1) < size(pos,1)
+    pos = pos(1:size(v,1),:);
+end
+for i = 1:4
+    nanInds = find(~isnan(pos(:,i)));
+    pos(:,i) = interp1(nanInds,pos(nanInds,i),1:size(pos,1));
+end
+nanInds = isnan(pos(:,1)) | isnan(pos(:,3));
+pos = pos(~nanInds,:);v = v(~nanInds,:);Xf = Xf(:,~nanInds);
+vel = angVel(pos);
+vel = [0; vel(:,1)];
+pos = bsxfun(@minus,pos,mean(pos));
+[a,~,~] = svd(pos(:,1:2),'econ');pos = a;
+for i = 1:2    
+    pos(:,i) = pos(:,i) - min(pos(:,i));
+    pos(:,i) = pos(:,i)/(max(pos(:,i)));
+    pos(:,i) = min(pos(:,i),.9999);
+end
+offSet = 1;
+Xf = [bsxfun(@times,Xf,exp(1i*angle(v(:,1).')));...
+     [zeros(offSet,1); v(1+offSet:end,1).*conj(v(1:end-offSet,1))./abs(v(1:end-offSet,1))].'];
+%Xf = [real(Xf);imag(Xf)];
+vel = filtLow(vel,1250/32,1);
+vel = vel/max(vel);inds = vel > thresh;
+
 %% Initialize parameters
-clear m;clear p;
 
 reset(RandStream.getDefaultStream);
-
 warning('off','MATLAB:divideByZero')
 warning('off','MATLAB:nearlySingularMatrix')
 
-run_name = '1';
-
-% data
-p.data_type = 'lfp';% 'vid075-chunks';'sim';%
-
-% specify model dimensions
-m.patch_sz =  64; % num elecs size
-%m.M =        64; % this parameter is determined by the whitening proceedure
-m.N =        30;  % firstlayer basis functions
-%m.L =        25;  % phasetrans basis functions
-%m.K =        25;  % ampmodel basis functions
-
-if strcmp(p.data_type,'sim')
-    m.N = 2;
-end
+m.patch_sz =  size(Xf,1); % num elecs size
+m.N =        60;  % firstlayer basis functions
 
 % specify priors
 p.firstlayer.prior = 'laplace_Z';%'l1l2';%'slow_cauchy';% changed per jascha's suggestion %slow_
-%p.ampmodel.prior = 'slow_laplace';
-%p.phasetrans.prior = 'slow_laplace';%'slow_cauchy';
 
 % specify outerloop learning method
 p.firstlayer.basis_method = 'steepest_adapt';%'steepest';%
-%p.ampmodel.basis_method = 'steepest_adapt';
-%p.phasetrans.basis_method = 'steepest_adapt';
 
 % specifiy inference methods
 p.firstlayer.inference_method='minFunc_ind';%'steepest';%
-%p.ampmodel.inference_method='minFunc_ind';%'minFunc_ind';%
-%p.phasetrans.inference_method='minFunc_ind';%'minFunc_ind';%
 
 % misc
 p.use_gpu = 0;
 p.renorm_length=1;%1;
 %p.normalize_crop=0;
-p.whiten_patches=0;
+p.whiten_patches=1;
 p.p_every = 0;
-p.show_p = 0;
+p.show_p = 1;
 p.quiet = 0;
 
 %% Init
-[m, p] = init(m,p);
-%display_A(m);
+[m, p] = init(m,p,Xf(:,inds));
 
 % save path
-%fname=[sprintf('patchsz%d_A%dx%d_D%d_B%d_%s',m.patch_sz,m.M,m.N,m.L,m.K,run_name) '_%s.mat'];
-
 fname=[strrep(datestr(now),' ','_') sprintf('patchsz%d_A%dx%d',m.patch_sz,m.M) '_%s.mat'];
 
 % display parameters
-display_every= 100;
-
+display_every= 10
 
 %% learn firstlayer A
-
-num_trials = 5000;
-save_every= 100;
+num_trials = 10000;
+save_every= num_trials;%100;
 learn_firstlayer
-% epochs = 35;
-% p.firstlayer.eta_dA_target = 2*p.firstlayer.eta_dA_target;
-% 
-% for epoch = 1:epochs
-%     learn_firstlayer
-% end
-% 
-% % anneal
-% epochs = 5;
-% p.firstlayer.eta_dA_target = .25*p.firstlayer.eta_dA_target;
-% 
-% for epoch = 1:epochs
-%     learn_firstlayer
-% end
-% 
-% if p.use_gpu
-%     m.A = double(m.A);
-% end
-% 
-% save_model(sprintf(fname,sprintf('learn_firstlayer_t=%d',m.t)),m,p);
-% 
-%% Collect data for second layer learning
-% 
-% p.firstlayer.prior = 'slow_gauss';
-% p.firstlayer.a_gauss_beta = 8.;
-% 
-% p.load_segments = 100; % p.patches_load*p.load_segments*p.segment_szt ~= total_time_slices
-% collect_firstlayer_responses
-% 
-% eval(['save data/' sprintf(fname,'Z_responses') ' m p Z_store']);
-% 
-% %% learn phasetrans D
-% if ~exist('Z_store','var')
-%     eval(['load data/' sprintf(fname,'Z_responses') ' Z_store']);
-%     p.segment_szt = p.imszt*p.cons_chunks;
-%     p.load_segments = size(Z_store,2)/p.segment_szt;
-% end
-% 
-% epochs = 5;
-% num_trials = 500;
-% 
-% for epoch = 1:epochs
-%     learn_phasetrans
-% end
-% 
-% epochs = 35;
-% p.phasetrans.eta_dD_target = 2*p.phasetrans.eta_dD_target;
-% 
-% for epoch = 1:epochs
-%     learn_phasetrans
-% end
-% 
-% % anneal
-% epochs = 5;
-% p.phasetrans.eta_dD_target = .25*p.phasetrans.eta_dD_target;
-% 
-% for epoch = 1:epochs
-%     learn_phasetrans
-% end
-% 
-% if p.use_gpu
-%     m.D = double(m.D);
-% end
-% 
-% save_model(sprintf(fname,sprintf('learn_phasetrans_t=%d',m.t)),m,p);
-% 
-% 
-% %% learn ampmodel B
-% 
-% if ~exist('Z_store','var')
-%     eval(['load data/' sprintf(fname,'Z_responses') ' Z_store']);
-%     p.segment_szt = p.imszt*p.cons_chunks;
-%     p.load_segments = size(Z_store,2)/p.segment_szt;
-% end
-% 
-% [m, p] = init_ampmodel(Z_store,m,p);
-% 
-% p.batch_size = 100;
-% 
-% epochs = 5;
-% num_trials = 500;
-% 
-% for epoch = 1:epochs
-%     learn_ampmodel
-% end
-% 
-% epochs = 35;
-% p.ampmodel.eta_dB_target = 2*p.ampmodel.eta_dB_target;
-% 
-% for epoch = 1:epochs
-%     learn_ampmodel
-% end
-% 
-% % anneal
-% epochs = 5;
-% p.ampmodel.eta_dB_target = .25*p.ampmodel.eta_dB_target;
-% 
-% for epoch = 1:epochs
-%     learn_ampmodel
-% end
-% 
-% if p.use_gpu
-%     m.B = double(m.B);
-% end
-% 
-% save_model(sprintf(fname,sprintf('learn_ampmodel_t=%d',m.t)),m,p);
-% 
-% %% save final results and display
-% save_model(sprintf(fname,'final'),m,p);
-% 
-% close all
-% display_A(m,[],1);
-% display_B(m,3);
-% display_D(m,5);

@@ -6,9 +6,9 @@ sz = size(I,2);
 if p.use_gpu
     Z = .2*complex(grandn(m.N,sz),grandn(m.N,sz));
 else
-%    Z = .2*complex(randn(m.N,sz),randn(m.N,sz));
-      Z = pinv(m.A)*I;
-      Z = conj(Z);
+    Z = .2*complex(randn(m.N,sz),randn(m.N,sz));
+%      Z = pinv(m.A)*I;
+%      Z = conj(Z);
 end
 a = abs(Z);
 phase = angle(Z);
