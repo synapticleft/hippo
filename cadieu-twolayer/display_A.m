@@ -21,9 +21,9 @@ else
 end
 if isfield(m,'dewhitenMatrix')
     A = m.dewhitenMatrix*A;
-    array = display_Ahelper(A,fig_num);
+    array = display_Ahelper(A(1:end,:),fig_num);
     %A = m.zerophaseMatrix*A;
-    display_Ahelper(m.zerophaseMatrix*A,fig_num+1);
+    display_Ahelper(m.zerophaseMatrix*A,fig_num+1);%A(1:end,:)
     if nargin < 2
         for i = 1:inf
             display_Ahelper(A*exp(1i*i/10),fig_num);
@@ -49,7 +49,7 @@ drawnow
 function array = display_Ahelper(A,fig_num)
 
 [L M]=size(A);
-sz = [8 4];
+sz = [8 8];
 if L == 96
     sz = [16 6];
 end

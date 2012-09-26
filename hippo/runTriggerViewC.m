@@ -1,4 +1,4 @@
-function [posInds,t,vel] = runTriggerView(pos,v,Xf,accumbins,thresh,r,probes,posInds,r1)
+function [posInds,t,vel] = runTriggerViewC(pos,v,Xf,accumbins,thresh,r,probes,posInds,r1)
 
 bounds = [.1 .9];
 pos(pos == -1) = nan;
@@ -42,9 +42,9 @@ Xf = [bsxfun(@times,Xf,exp(1i*angle(v(:,1))).');...
     [zeros(offSet,1); v(1+offSet:end,1).*conj(v(1:end-offSet,1))./abs(v(1:end-offSet,1))].'];
 %  Xf = [bsxfun(@times,Xf,v(:,1).');...
 %    [zeros(offSet,1); v(1+offSet:end,1).*conj(v(1:end-offSet,1))].'];
+%Xf = [real(Xf);imag(Xf)];
 inds = bwmorph(inds,'dilate',20);
 Xf = Xf(:,inds);posd = posd(inds,:);veld = veld(inds,:);vel = vel(inds);pos = pos(inds,:);
-Xf = [real(Xf);imag(Xf)];
 Xf = bsxfun(@minus,Xf,mean(Xf,2));
 if ~exist('r1','var')
     r1 = pinv(r);%r';%
@@ -56,8 +56,8 @@ end
 if exist('posInds','var') && ~isempty(posInds)
     r1 = r1(:,posInds);r = r(posInds,:); %% IS THIS RIGHT??
 end
-t = r*zscore(Xf,0,2);
-sk = skewness(t,0,2);t = bsxfun(@times,t,sk);r = bsxfun(@times,r,sk);
+t = r*zscore(Xf,0,2);%r1*bsxfun(@minus,Xf,mean(Xf,2));%
+t = abs(t);%[real(t);imag(t)];
 if 0
     [B M] = size(t);
     opts = lbfgs_options('iprint', -1, 'maxits', 20, ...
@@ -77,48 +77,47 @@ if 0
     end
 end
 % %2d stuff
-%
-% for i = 1:size(t,1)
-%    cc(i,:) = xcorr(t(i,:),vel,1000);
+% %
+% % for i = 1:size(t,1)
+% %    cc(i,:) = xcorr(t(i,:),vel,1000);
+% % end
+% % sPlot(cc);
+% %figure;plot(cc');
+% %xdim = ceil(sqrt(size(cc,1)));ydim= ceil(size(cc,1)/xdim);
+% %posd = posd(inds,:);veld = veld(inds,:);
+% %figure;for i = 1:size(cc,1)
+% %    subplot(xdim,ydim,i);imagesc(imfilter(accumarray(veld,t(i,:),accumbins,@mean,0),fspecial('gaussian',5,1)));
+% %end
+% %sPlot([10*vel';t;abs(v(:,1)')/1000]);
+% if isempty(posInds)
+%     posInds = 1:size(r1,2);
 % end
-% sPlot(cc);
-%figure;plot(cc');
-%xdim = ceil(sqrt(size(cc,1)));ydim= ceil(size(cc,1)/xdim);
-%posd = posd(inds,:);veld = veld(inds,:);
-%figure;for i = 1:size(cc,1)
-%    subplot(xdim,ydim,i);imagesc(imfilter(accumarray(veld,t(i,:),accumbins,@mean,0),fspecial('gaussian',5,1)));
-%end
-%sPlot([10*vel';t;abs(v(:,1)')/1000]);
-if isempty(posInds)
-    posInds = 1:size(r1,2);
-end
-xdim = ceil(sqrt(numel(posInds)));ydim = ceil(numel(posInds)/xdim);
-f1 = figure;f2 = figure;
-t = bsxfun(@times,t, sign(skewness(t,0,2)));
-t = zscore(t,0,2);
-%[sk,si] = sort(abs(skewness(t,0,2)),'descend');
-%r1 = r1(:,si);t = t(si,:);
-for i = 1:numel(posInds)
-    u = complex(r1(1:size(Xf,1)/2-1,i),r1(size(Xf,1)/2+1:end-1,i));%r1(1:size(Xf,1)-1,posInds(i));%
-    if exist('probes','var') && ~isempty(probes)
-        up1 = probes;
-        for ii = 1:size(probes,1)
-            for j = 1:size(probes,2)
-                up1(ii,j) = u(probes(ii,j)+1);%-256
-            end
-        end
-        %    up1 = up1(:,[1:4 6 5 8 7]);
-        up1 = up1(:,[1:12 14 13 16 15]);
-        %up1 = diff(up1);
-        up1 = [up1(:,1:8) zeros(size(up1,1),1) up1(:,9:16)];
-    else
-        up1 = reshape(u,[8 8]);
-    end
-    figure(f1);subplot(xdim,ydim,i);imagesc(complexIm(up1,0,1));axis off;
-    figure(f2);subplot(xdim,ydim,i);imagesc(imfilter(accumarray(posd,t(i,:),accumbins,@mean,0),fspecial('gaussian',5,1)),[-.5 2]);axis off;
-end
-sPlot([10*vel';t;abs(v(inds,1)')/1000]);
-return
+% xdim = ceil(sqrt(numel(posInds)));ydim = ceil(numel(posInds)/xdim);
+% f1 = figure;f2 = figure;
+% %[sk,si] = sort(abs(skewness(t,0,2)),'descend');
+% %r1 = r1(:,si);t = t(si,:);
+% t = r*zscore(Xf,0,2);
+% for i = 1:numel(posInds)
+%     u = complex(r1(1:size(Xf,1)/2-1,i),r1(size(Xf,1)/2+1:end-1,i));%r1(1:size(Xf,1)-1,posInds(i));%
+%         if exist('probes','var') && ~isempty(probes)
+%         up1 = probes;
+%         for ii = 1:size(probes,1)
+%             for j = 1:size(probes,2)
+%                 up1(ii,j) = u(probes(ii,j)+1);%-256
+%             end
+%         end
+%         %    up1 = up1(:,[1:4 6 5 8 7]);
+%         up1 = up1(:,[1:12 14 13 16 15]);
+%         %up1 = diff(up1);
+%         up1 = [up1(:,1:8) zeros(size(up1,1),1) up1(:,9:16)];
+%     else
+%         up1 = reshape(u,[8 8]);
+%     end
+%     figure(f1);subplot(xdim,ydim,i);imagesc(complexIm(up1,0,1));axis off;
+%     figure(f2);subplot(xdim,ydim,i);imagesc(imfilter(accumarray(posd,t(i,:),accumbins,@mean,0),fspecial('gaussian',5,1)));axis off;
+% end
+% sPlot([10*vel';t;abs(v(inds,1)')/1000]);
+% return
 % %%FOR 1D TRACK
 b = nan*ones(size(pos,1),1);
 b(pos(:,1) < bounds(1)) = -1;b(pos(:,1) > bounds(2)) = 1;
@@ -176,7 +175,7 @@ tes = zeros(numel(posInds),max(runs),2*accumbins(1));
 if exist('probes','var') && ~isempty(probes)
     ups = zeros(numel(posInds),size(probes,1),size(probes,2)+1);
 else
-    ups = zeros(numel(posInds),8,(size(Xf,1)/2-1)/8);%
+    ups = zeros(numel(posInds),8,(size(Xf,1)-1)/8);%/2
 end
 for i = 1:numel(posInds)
     te = reshape(t1(posInds(i),:),[max(runs) 2*accumbins(1)]);
@@ -196,7 +195,8 @@ for i = 1:numel(posInds)
 %     subplot(311);plot(mean(S,2),'r','linewidth',2);pause(1);%hold off;
 %     subplot(312);plot(mtspectrumc(mean(temp,2)),'r','linewidth',2);
 %     subplot(313);plot(mtspectrumc(spatial(i,51:100)-mean(spatial(i,51:100))),'r','linewidth',2);
-    u = complex(r1(1:size(Xf,1)/2-1,posInds(i)),r1(size(Xf,1)/2+1:end-1,posInds(i)));%r1(1:size(Xf,1)-1,posInds(i));%
+    %u = complex(r1(1:size(Xf,1)/2-1,posInds(i)),r1(size(Xf,1)/2+1:end-1,posInds(i)));%r1(1:size(Xf,1)-1,posInds(i));%
+    u = r1(1:size(Xf,1)-1,posInds(i));
     if exist('probes','var') && ~isempty(probes)
         up1 = probes;
         for ii = 1:size(probes,1)
@@ -208,7 +208,8 @@ for i = 1:numel(posInds)
         up1 = up1(:,[1:12 14 13 16 15]);
         up1 = [up1(:,1:8) zeros(size(up1,1),1) up1(:,9:16)];
     else
-        up1 = reshape(u,[8 ,(size(Xf,1)/2-1)/8]);
+        %up1 = reshape(u,[8 ,(size(Xf,1)/2-1)/8]);
+        up1 = reshape(u,[8,(size(Xf,1)-1)/8]);
     end
     ups(i,:,:) = up1;
     figure(h2);subplot(xdim,ydim,i);imagesc(complexIm(up1,0,1));axis off;

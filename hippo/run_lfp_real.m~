@@ -1,4 +1,4 @@
-function m = run_lfp(pos,v,Xf,thresh)
+%function [phi,whitenMatrix,dewhitenMatrix,zerophaseMatrix] = run_lfp_real(pos,v,Xf,thresh)
 
 %% driver script for learning a model
 %%%   
@@ -28,6 +28,7 @@ function m = run_lfp(pos,v,Xf,thresh)
 %%%       6. Learn second layer amplitude components
 %%%       7. Display the results
 
+bounds = [.1 .9];
 pos(pos == -1) = nan;
 reject = 0;
 for i = 1:4
@@ -55,50 +56,33 @@ end
 offSet = 1;
 Xf = [bsxfun(@times,Xf,exp(1i*angle(v(:,1).')));...
      [zeros(offSet,1); v(1+offSet:end,1).*conj(v(1:end-offSet,1))./abs(v(1:end-offSet,1))].'];
-%Xf = [real(Xf);imag(Xf)];
+Xf = [real(Xf);imag(Xf)];
+%Xf = bsxfun(@minus,Xf,mean(Xf,2));
+%Xf = zscore(Xf,0,2);
 vel = filtLow(vel,1250/32,1);
 vel = vel/max(vel);inds = vel > thresh;
 
 %% Initialize parameters
 
-reset(RandStream.getDefaultStream);
-warning('off','MATLAB:divideByZero')
-warning('off','MATLAB:nearlySingularMatrix')
-
-m.patch_sz =  size(Xf,1); % num elecs size
-m.N = 60;  % firstlayer basis functions
-
-% specify priors
-p.firstlayer.prior = 'laplace_Z';%'l1l2';%'slow_cauchy';% changed per jascha's suggestion %slow_
-
-% specify outerloop learning method
-p.firstlayer.basis_method = 'steepest_adapt';%'steepest';%
-
-% specifiy inference methods
-p.firstlayer.inference_method='minFunc_ind';%'steepest';%
-
-% misc
-p.use_gpu = 0;
-p.renorm_length=1;%1;
-%p.normalize_crop=0;
-p.whiten_patches=1;
-p.p_every = 0;
-p.show_p = 1;
-p.quiet = 0;
-Xf = Xf(:,inds);
-%% Init
-[m, p] = init(m,p,Xf);%(:,inds)
-
-% save path
-fname=[strrep(datestr(now),' ','_') sprintf('patchsz%d_A%dx%d',m.patch_sz,m.M) '_%s.mat'];
-
-% display parameters
-display_every= 10
-
-%% learn firstlayer A
-num_trials = 2000;
-save_every= num_trials;%100;
-for i = 1:4
-    learn_firstlayer
-    p.firstlayer.eta_dA_target = p.firstlayer.eta_dA_target /2;
-end
+%% Whitening transform
+verbose = 'on';
+%[E, D]= gpcamat(Xf(:,inds), 1, size(Xf,1),'off', verbose);
+%[Xf, whitenMatrix, dewhitenMatrix, zerophaseMatrix] = gwhitenv(Xf(:,inds), E, D, verbose);
+dewhitenMatrix = eye(size(Xf,1));
+zerophaseMatrix = eye(size(Xf,1));
+unittest
+% % nic = 60;
+% % a = zeros(1,nic)';
+% % b = ones(1,nic)';
+% % neig = size(Xf,1);
+% % W0 = randn(nic,neig)/10;
+% % phi = hminu(Xf', nic, a, b, '', W0);%
+% nHidden = 60; nInput = size(Xf, 1);
+% phi = randn(nHidden, nInput); 
+% options.Method  = 'lbfgs';
+% options.maxIter = 100;	    % Maximum number of iterations of L-BFGS to run 
+% options.display = 'on';
+% [phi, cost] = minFunc( @icaScoreMatching, ...
+%                         phi(:), options, Xf, ...
+%                         nHidden, nInput);
+% phi = reshape(phi, nHidden, nInput);

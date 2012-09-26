@@ -1,5 +1,5 @@
 function [newVectors, whiteningMatrix, dewhiteningMatrix, zerophaseMatrix] = gwhitenv ...
-    (vectors, E, D, s_verbose);
+    (vectors, E, D, cumVar, s_verbose);
 %WHITENV - Whitenv vectors.
 %
 % [newVectors, whiteningMatrix, dewhiteningMatrix] = ...
@@ -28,7 +28,7 @@ function [newVectors, whiteningMatrix, dewhiteningMatrix, zerophaseMatrix] = gwh
 
 % ========================================================
 % Default value for 'verbose'
-if nargin < 4, s_verbose = 'on'; end
+if nargin < 5, s_verbose = 'on'; end
 
 % Check the optional parameter verbose;
 switch lower(s_verbose)
@@ -63,16 +63,21 @@ end
 % dimensionality simultaneously).
 factors = diag(D);
 noise_factors = ones(size(D,1),1);
-rolloff_ind = floor(size(D,1)/20);%rdim - sum(d(1:rdim)>variance_cutoff*p.whitening.X_noise_fraction);
+rolloff_ind = sum(cumsum(flipud(factors))/cumVar > .99995)
+%rolloff_ind = sum(factors < .002)
+%rolloff_ind = floor(size(D,1)/20);%rdim - sum(d(1:rdim)>variance_cutoff*p.whitening.X_noise_fraction);
 noise_factors(1:rolloff_ind) = .5*(1+cos(linspace(pi-.01,0,rolloff_ind))); 
-factors = factors.*1./noise_factors;
+%factors = factors./noise_factors;
 %plot(noise_factors);pause(1);
 % rolloff_ind = ceil(size(D,1)*4/5);%rdim - sum(d(1:rdim)>variance_cutoff*p.whitening.X_noise_fraction);
 % noise_factors(rolloff_ind+1:end) = .5*(1+cos(linspace(0,pi-.01,size(D,1)-rolloff_ind))); 
 % factors = factors.*noise_factors;
-D = diag(factors);
+D = diag(factors./noise_factors);
 whiteningMatrix = (sqrt (D)) \ E';
 dewhiteningMatrix = E * sqrt (D);
+rolloff_ind = max(2,sum(cumsum(flipud(factors))/cumVar < .9))
+noise_factors(:) = 1;
+noise_factors(1:rolloff_ind) = .5*(1+cos(linspace(pi-.01,0,rolloff_ind))); 
 D = diag(flipud(1./noise_factors));
 zerophaseMatrix = E*inv (sqrt (D))*E';
 % Project to the eigenvectors of the covariance matrix.

@@ -1,4 +1,4 @@
-function [X whiteningMatrix dewhiteningMatrix] = getData(fname,sz,rind,dec,rdim,elecs)
+function [X whiteningMatrix dewhiteningMatrix] = getData(fname,elecs,sz,rind,dec,rdim)
 
 data_root = '/media/work/hippocampus/';%'/media/Expansion Drive/redwood/';%
 %fname = 'hippo.h5';%'96elec.h5';%
@@ -9,7 +9,7 @@ nSamples = info.GroupHierarchy.Datasets(1).Dims;
 if ~exist('dec','var') || isempty(dec)
     dec = 1;
 end
-if isempty(sz)
+if ~exist('sz','var') || isempty(sz)
     sz = nSamples(2)
     sz = dec*(floor(sz/dec))
 end

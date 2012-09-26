@@ -1,7 +1,7 @@
 function sPlot(data,xaxis,newFig,norm)
 %spaced out plot of 2-d data
 data = squeeze(data);
-%data = [data; mean(data)];
+
 if ~exist('newFig','var') || isempty(newFig)
     newFig = 1;
 end
@@ -36,15 +36,3 @@ else
     end
 end
 axis tight;
-%hold all;
-%plot([0 0],[-size(data,1) 0],'k--','linewidth',2);
-% set(gca,'xlim',[xaxis(1) xaxis(end)],'ylim',spacing*[-size(data,1)-1 .5],'fontsize',20,'ytick',[]);
-% xlabel 'time (s)';
-
-% if isreal(data)
-%     plot(data'-repmat(spacing*(1:size(data,1))',[1 size(data,2)])');
-% else
-%     plot(real(data')-repmat(spacing*(1:size(data,1))',[1 size(data,2)])','b');
-%     hold on;
-%     plot(imag(data')-repmat(spacing*(1:size(data,1))',[1 size(data,2)])','r');
-% end

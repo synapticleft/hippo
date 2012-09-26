@@ -63,9 +63,12 @@ end
 % dimensionality simultaneously).
 factors = diag(D);
 noise_factors = ones(size(D,1),1);
+maxLastEig = sum(cumsum(d)/sum(d) < .9999)
 rolloff_ind = floor(size(D,1)/20);%rdim - sum(d(1:rdim)>variance_cutoff*p.whitening.X_noise_fraction);
 noise_factors(1:rolloff_ind) = .5*(1+cos(linspace(pi-.01,0,rolloff_ind))); 
-plot(noise_factors);hol
+figure;plot(factors);
+figure;plot(noise_factors);
+return
 factors = factors.*1./noise_factors;
 %plot(noise_factors);pause(1);
 % rolloff_ind = ceil(size(D,1)*4/5);%rdim - sum(d(1:rdim)>variance_cutoff*p.whitening.X_noise_fraction);
@@ -74,6 +77,7 @@ factors = factors.*1./noise_factors;
 D = diag(factors);
 whiteningMatrix = (sqrt (D)) \ E';
 dewhiteningMatrix = E * sqrt (D);
+D = diag(flipud(1./noise_factors));
 zerophaseMatrix = E*inv (sqrt (D))*E';
 % Project to the eigenvectors of the covariance matrix.
 % Whiten the samples and reduce dimension simultaneously.

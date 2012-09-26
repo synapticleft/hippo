@@ -7,10 +7,10 @@ p.imszt=256;% number of time steps
 %% whitening params %%
 
 if p.whiten_patches
-    p.whitening.pixel_noise_fractional_variance = .0002;
+    p.whitening.pixel_noise_fractional_variance = .001;
     % the following seems redundant
     p.whitening.pixel_noise_variance_cutoff_ratio = 1; %1.25; % 1 + var(signal)/var(noise)
-    p.whitening.X_noise_fraction = 8.;
+    p.whitening.X_noise_fraction = 5.;
     p.whitening.X_noise_var = .01;
     % run whitening
     p.whitening.whiten_num_patches = 20000;%min(400*m.patch_sz,200000)/20;%160000; TEMPORARY /20
@@ -30,8 +30,8 @@ m.A = init_complex(m.M,m.N);
 p.firstlayer.use_GS = 1;
 switch p.firstlayer.basis_method
     case 'steepest_adapt'
-        p.firstlayer.A_eta=.0001;
-        p.firstlayer.eta_dA_target = .001;
+        p.firstlayer.A_eta=.01;
+        p.firstlayer.eta_dA_target = .1;
         p.firstlayer.up_factor = 1.02;
         p.firstlayer.down_factor = .95;
         
@@ -59,7 +59,7 @@ switch p.firstlayer.prior
         p.firstlayer.a_lambda_S = 10000;%.5;
         p.firstlayer.a_tau_S = 100;
     case 'laplace_Z'
-        p.firstlayer.a_laplace_beta = 100;
+        p.firstlayer.a_laplace_beta = 1000;
         p.firstlayer.a_lambda_S =0;
         %p.firstlayer.a_tau_S = 100;
     case 'laplace_AR'
