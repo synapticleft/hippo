@@ -1,4 +1,8 @@
 function [X whiteningMatrix dewhiteningMatrix] = getData(fname,elecs,sz,rind,dec,rdim)
+% USAGE  >> X = getData('ec014.468.h5',1:64,[],[],32); %32 is the
+% decimation factor, you may also use a smaller one to get high-freq
+% information. You will need to change data_root to match the folder where
+% you store the data files.
 
 data_root = '/media/work/hippocampus/';%'/media/Expansion Drive/redwood/';%
 %fname = 'hippo.h5';%'96elec.h5';%

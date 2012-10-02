@@ -1,0 +1,8 @@
+function runTriggerFFT(FT,f,pos)
+
+ind = find(min(abs(f-8)));
+[u,~,v] = svds(squeeze(FT(:,ind,:)).');
+FT = realign(FT,f,v);
+
+
+function 
