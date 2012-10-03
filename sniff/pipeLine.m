@@ -1,4 +1,4 @@
-function [cc mse kern snr f] = pipeLine(y,x,numCross,ridge,fs,numX,useKern)
+function [cc mse kern snr f] = pipeLine(y,x,numCross,ridge,~,~,useKern) %fs,numX
 figsOn = 0;
 samples = size(x,1);
 scramble = randperm(numel(y));

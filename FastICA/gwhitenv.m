@@ -63,7 +63,7 @@ end
 % dimensionality simultaneously).
 factors = diag(D);
 noise_factors = ones(size(D,1),1);
-rolloff_ind = sum(cumsum(flipud(factors))/cumVar > .995)
+rolloff_ind = sum(cumsum(flipud(factors))/cumVar > .9995)
 %rolloff_ind = sum(factors < .002)
 %rolloff_ind = floor(size(D,1)/20);%rdim - sum(d(1:rdim)>variance_cutoff*p.whitening.X_noise_fraction);
 noise_factors(1:rolloff_ind) = .5*(1+cos(linspace(pi-.01,0,rolloff_ind))); 
