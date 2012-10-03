@@ -1,4 +1,4 @@
-function [cc mse kern snr f] = pipeLine1(y,x,numCross,ridge,fs,numX,useKern)
+function [cc mse kern snr f] = pipeLine1(y,x,numCross,ridge,~,~,useKern)
 figsOn = 0;
 samples = size(x,1);
 %x = bsxfun(@minus,x,mean(x));

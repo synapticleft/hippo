@@ -1,10 +1,10 @@
-function [allX,samplePos,W,t] = runChunks(X,v,pos,act)
+function [allX,samplePos,W,t] = runChunks(X,v,pos,act,A)
 
 ratio = round(size(X,2)/size(pos,1));
 dec = 32/ratio;
-
+peakToPeak = ceil(1250/dec/8);
 %%Processing of position information
-thresh = .05;bounds = [.1 .9];win = [-1 1]*ceil(1250/dec/8/2);
+thresh = .05;bounds = [.1 .9];win = [-1 1]*ceil(1250/dec/8);
 pos(pos == -1) = nan;
 reject = 0;
 for i = 1:4
@@ -43,7 +43,7 @@ b = [0 diff(b)];
 runs = bwlabel(b > 0);
 w = watershed(b==0);
 w = w-1; %w(w== max(w)) = 0;
-allX = zeros(size(X,1)*(range(win)+1),ceil(size(X,2)/range(win)/2));counter = 1;
+allX = zeros(size(X,1)*(range(win)+1),ceil(size(X,2)/peakToPeak/2));counter = 1;
 samplePos = [];ys = zeros(size(act,1),size(allX,2));
 for k = 1:2
 %    runs1 = b*(-1^k)>0;runs1 = bwlabel(runs1);
@@ -76,25 +76,30 @@ for k = 1:2
 end
 %[~,sortPos] = sort(samplePos,'ascend');
 allX(:,counter:end) = [];ys(:,counter:end) = [];
-figure;scatter(samplePos(:,1),samplePos(:,2),max(.1,ys(1,:)*50),'filled');
+figure;
+for i = 1:size(ys,1)
+    scatter(samplePos(:,1),samplePos(:,2),max(.1,ys(i,:)/max(ys(i,:))*50),'filled');pause(1);
+end
 [ys ym] = remmean(ys);
 [allX allXm] = remmean(allX);
-[cc,~,W] = pipeLine(ys,allX',3,100);
-mean(cc)
-W = mean(W)';
+[cc,~,W] = pipeLine1(ys,allX',3,1);
+W = squeeze(mean(W));
 %W = (allX*allX' + eye(size(allX,1))*lambda*1)\allX*ys';
-yHat = W'*allX;Wp = pinv(A
-figure;plot(ys(1,:));hold all;plot(yHat(1,:))
+yHat = W'*allX;
+Wp = (yHat'\allX')';
+%figure;plot(ys(1,:));hold all;plot(yHat(1,:))
+xdim = ceil(sqrt(size(W,2)));ydim = ceil(size(W,2)/xdim);
+A = complex(A(:,1:end/2-1),A(:,end/2+1:end-1));
 figure;
 for i = 1:size(W,2)
-    temp = reshape(W(:,i),[size(allX,1)/size(X,1) size(X,1)]);
-    subplot(2,2,i);plot(temp);
-    subplot(2,2,2+i);
-    for j = 1:inf
-    for k = 1:size(temp,1)
-        imagesc(reshape(temp(k,:),[8 8]),[min(temp(:)) max(temp(:))]);pause(.05);drawnow;
-    end
-    end
+    temp = reshape(Wp(:,i),[size(allX,1)/size(X,1) size(X,1)]);
+    subplot(xdim,ydim,i);plot(temp);axis tight;
+%     subplot(2,2,2+i);
+%     for j = 1:inf
+%     for k = 1:size(temp,1)
+%         imagesc(reshape(temp(k,:),[8 8]),[min(temp(:)) max(temp(:))]);pause(.05);drawnow;
+%     end
+%     end
 end
 return
 imagesc(reshape(W',[size(W,2) size(allX,1)/size(X,1) size(X,1) ]));
