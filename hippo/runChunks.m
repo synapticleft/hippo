@@ -4,7 +4,7 @@ ratio = round(size(X,2)/size(pos,1));
 dec = 32/ratio;
 peakToPeak = ceil(1250/dec/8);
 %%Processing of position information
-thresh = .05;bounds = [.1 .9];win = [-1 1]*ceil(1250/dec/8);
+thresh = .05;bounds = [.1 .9];win = [-1 1]*ceil(1250/dec/8/2);
 pos(pos == -1) = nan;
 reject = 0;
 for i = 1:4
@@ -78,7 +78,8 @@ end
 allX(:,counter:end) = [];ys(:,counter:end) = [];
 % figure;
 % for i = 1:size(ys,1)
-%     scatter(samplePos(:,1),samplePos(:,2),max(.1,ys(i,:)/max(ys(i,:))*50),'filled');pause(1);
+%     subplot(211);plot(act(i,:));hold all;plot(samplePos(:,3),ys(i,:));hold off;
+%     subplot(212);scatter(samplePos(:,1),samplePos(:,2),max(.1,skewness(ys(i,:))*ys(i,:)/max(ys(i,:))*50),'filled');pause(1);
 % end
 [ys ym] = remmean(ys);
 [allX allXm] = remmean(allX);
@@ -86,16 +87,24 @@ allX(:,counter:end) = [];ys(:,counter:end) = [];
 W = squeeze(mean(W));
 %W = (allX*allX' + eye(size(allX,1))*lambda*1)\allX*ys';
 yHat = W'*allX;
-Wp = (yHat'\allX')';
+Wp = zeros(size(W));
+for i = 1:size(Wp,2)
+    Wp(:,i) = yHat(i,:)'\allX';
+end
+%Wp = (yHat'\allX')';
+Wp = [Wp allXm];
 %figure;plot(ys(1,:));hold all;plot(yHat(1,:))
-xdim = ceil(sqrt(size(W,2)));ydim = ceil(size(W,2)/xdim);
+xdim = ceil(sqrt(size(Wp,2)));ydim = ceil(size(Wp,2)/xdim);
 A = complex(A(1:end/2-1,:),A(end/2+1:end-1,:));
+params.tapers = [1 1];params.Fs = 1250/32*ratio;
 figure;
-for i = 1:size(W,2)
+for i = 1:size(Wp,2)
     temp = reshape(Wp(:,i),[size(allX,1)/size(X,1) size(X,1)]);
     subplot(xdim,ydim,i);
-    set(gca,'nextPlot','add','ColorOrder',squeeze(complexIm(A(:,i),0,1)));
-    plot(temp);axis tight off;drawnow;
+    set(gca,'nextPlot','add','ColorOrder',squeeze(complexIm(A(:,min(size(W,2),i)),0,1)));
+    plot(temp);set(gca,'xticklabel',[],'yticklabel',[]);title(cc(min(size(W,2),i)));axis tight;drawnow;
+    [tempF,f] = mtspectrumc(temp,params);
+    fs(i,:) = mean(tempF,2);
 %     subplot(2,2,2+i);
 %     for j = 1:inf
 %     for k = 1:size(temp,1)
@@ -103,6 +112,12 @@ for i = 1:size(W,2)
 %     end
 %     end
 end
+figure;plot(f,fs');
+figure;plot(f,log(fs'));
+for i = 1:size(fs,1)
+    fs(i,:) = filtfilt(gausswin(3),1,fs(i,:));
+end
+figure;imagesc(f,f,bsxfun(@rdivide,fs,sqrt(sum(fs'.^2))'));
 return
 imagesc(reshape(W',[size(W,2) size(allX,1)/size(X,1) size(X,1) ]));
 figure;imagesc(allX);
