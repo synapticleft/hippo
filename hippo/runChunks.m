@@ -47,10 +47,7 @@ allX = zeros(size(X,1)*(range(win)+1),ceil(size(X,2)/peakToPeak/2));counter = 1;
 samplePos = [];ys = zeros(size(act,1),size(allX,2));
 for k = 1:2
 %    runs1 = b*(-1^k)>0;runs1 = bwlabel(runs1);
-    runs1 = bwlabel(w>0 & mod(w,2) == k-1 & w <=2*max(runs));%b*((-1)^k)>0);
-%     for i = 1:max(runs1)
-%         sPlot([X(:,runs1 == i);angle(v(runs1 == i)/50000); inds(runs1 == i)'],[],0);pause(1);
-%     end
+    runs1 = bwlabel(w>0 & mod(w,2) == k-1 & w <=2*max(runs));
     for i = 1:max(runs1)
         runInds = find(runs1 == i);
         %aV = -angle(v(runInds));
@@ -74,35 +71,65 @@ for k = 1:2
         %subplot(122);plot(allX(:,max(1,counter-5):counter-1));drawnow;pause(.05);
     end
 end
-%[~,sortPos] = sort(samplePos,'ascend');
+[~,ind] = min(diff(samplePos(:,2)));
+ind = ind+1;
+samplePos(:,1) = max(0,samplePos(:,1)-prctile(samplePos(:,1),1));
+samplePos(:,1) = min(.999,samplePos(:,1)/prctile(samplePos(:,1),99));
+samplePos(ind:end,1) = samplePos(ind:end,1)+1;samplePos(:,1) = samplePos(:,1)/2;
 allX(:,counter:end) = [];ys(:,counter:end) = [];
+sk = skewness(ys,0,2);
+ys = bsxfun(@times,ys,sk);act = bsxfun(@times,act,sk);
+%A = bsxfun(@times,A,sk');
 % figure;
 % for i = 1:size(ys,1)
-%     subplot(211);plot(act(i,:));hold all;plot(samplePos(:,3),ys(i,:));hold off;
-%     subplot(212);scatter(samplePos(:,1),samplePos(:,2),max(.1,skewness(ys(i,:))*ys(i,:)/max(ys(i,:))*50),'filled');pause(1);
+% %     subplot(211);plot(act(i,:));hold all;scatter(samplePos(:,3),ys(i,:));hold off;
+% %     subplot(212);
+%     scatter(samplePos(:,1),samplePos(:,2),max(.1,ys(i,:)/max(ys(i,:))*50),'filled');pause(5);%skewness(ys(i,:))*
 % end
-[ys ym] = remmean(ys);
+% return
+%[ys ym] = remmean(ys);
+allXOr = allX;
 [allX allXm] = remmean(allX);
 [cc,~,W] = pipeLine1(ys,allX',3,1);
 W = squeeze(mean(W));
-%W = (allX*allX' + eye(size(allX,1))*lambda*1)\allX*ys';
 yHat = W'*allX;
+yHat(end+1,:) = allXm\allXOr;ys(end+1,:) = yHat(end,:);
 Wp = zeros(size(W));
 for i = 1:size(Wp,2)
     Wp(:,i) = yHat(i,:)'\allX';
 end
 %Wp = (yHat'\allX')';
 Wp = [Wp allXm];
-%figure;plot(ys(1,:));hold all;plot(yHat(1,:))
 xdim = ceil(sqrt(size(Wp,2)));ydim = ceil(size(Wp,2)/xdim);
 A = complex(A(1:end/2-1,:),A(end/2+1:end-1,:));
 params.tapers = [1 1];params.Fs = 1250/32*ratio;
-figure;
+yp = prctile(yHat,99.9,2);
+f1 = figure;f2 = figure;f3 = figure;f4 = figure;
 for i = 1:size(Wp,2)
-    temp = reshape(Wp(:,i),[size(allX,1)/size(X,1) size(X,1)]);
-    subplot(xdim,ydim,i);
+    %temp = reshape(Wp(:,i)*yp(i)+Wp(:,end)*yp(end),[size(allX,1)/size(X,1) size(X,1)]);
+        highResp = yHat(i,:) > prctile(yHat(i,:),98);
+        yTemp = filtfilt(gausswin(5),1,yHat(i,:));
+        for j = 1:max(samplePos(:,2))
+            temp = yTemp;temp(samplePos(:,2) ~= j) = 0;
+            [maxRun(j,1) maxRun(j,2)] = max(temp);
+        end
+        highResp = maxRun(maxRun(:,1) > .5*max(maxRun(:,1)),2);
+    temp = reshape(mean(bsxfun(@times,allXOr(:,highResp),yHat(i,highResp)),2),[size(allX,1)/size(X,1) size(X,1)]);
+    figure(f1);subplot(xdim,ydim,i);
     set(gca,'nextPlot','add','ColorOrder',squeeze(complexIm(A(:,min(size(W,2),i)),0,1)));
-    plot(temp);set(gca,'xticklabel',[],'yticklabel',[]);title(cc(min(size(W,2),i)));axis tight;drawnow;
+    plot(temp);set(gca,'xticklabel',[],'yticklabel',[]);title(numel(highResp));axis tight;drawnow;%cc(min(size(W,2),i))
+    temp = reshape(mean(Wp(:,i)*yHat(i,highResp)+Wp(:,end)*yHat(end,highResp),2),[size(allX,1)/size(X,1) size(X,1)]);
+    figure(f3);subplot(xdim,ydim,i);
+    set(gca,'nextPlot','add','ColorOrder',squeeze(complexIm(A(:,min(size(W,2),i)),0,1)));
+    plot(temp);set(gca,'xticklabel',[],'yticklabel',[]);title(mean(yHat(i,highResp)));axis tight;drawnow;
+    temp = reshape(Wp(:,i),[size(allX,1)/size(X,1) size(X,1)]);
+    figure(f4);subplot(xdim,ydim,i);
+    set(gca,'nextPlot','add','ColorOrder',squeeze(complexIm(A(:,min(size(W,2),i)),0,1)));
+    plot(temp);set(gca,'xticklabel',[],'yticklabel',[]);title(numel(highResp));axis tight;drawnow;
+     temp = reshape(mean(bsxfun(@times,allX(:,highResp),yHat(i,highResp)),2),[size(allX,1)/size(X,1) size(X,1)]);
+    figure(f2);subplot(xdim,ydim,i);
+    set(gca,'nextPlot','add','ColorOrder',squeeze(complexIm(A(:,min(size(W,2),i)),0,1)));
+    plot(temp);set(gca,'xticklabel',[],'yticklabel',[]);title(numel(highResp));axis tight;drawnow;%cc(min(size(W,2),i))
     [tempF,f] = mtspectrumc(temp,params);
     fs(i,:) = mean(tempF,2);
 %     subplot(2,2,2+i);
@@ -132,5 +159,5 @@ t = W*remmean(allX);
 %figure;imagesc(allX(:,sortPos));
 end
 Xm = reshape(mean(allX,2),[size(allX,1)/size(X,1) size(X,1)]);
-figure;imagesc(Xm');
+figure;imagesc(sqrt(Xm)');
 % figure;plot(Xm');

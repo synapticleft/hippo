@@ -157,11 +157,11 @@ for i = 1:size(t1,1)
 %    figure(h2);subplot(xdim,ydim,i);imagesc(complexIm(reshape(complex(r1(1:32,i),r1(34:65,i)),[8 4]),0,1));axis off;
 end
 figure;plot(spatial');
-if ~exist('posInds','var') || isempty(posInds)
-    posInds = find(max(spatial') > 100);
-else
+% if ~exist('posInds','var') || isempty(posInds)
+%     posInds = find(max(spatial') > 10);
+% else
    posInds = 1:size(r,1);%
-end
+% end
 spatial = spatial(posInds,:);
 [~,peakLoc] = max(spatial');
 [~,indLoc] = sort(peakLoc);
@@ -170,7 +170,7 @@ spatial = spatial(indLoc,:);
 figure;imagesc(spatial);
 h1 = figure;
 h2 = figure;
-xdim = ceil(sqrt(numel(posInds)));ydim = ceil(numel(posInds)/xdim);
+ydim = ceil(sqrt(numel(posInds)));xdim = ceil(numel(posInds)/ydim);
 sk = ones(1,numel(posInds));
 tes = zeros(numel(posInds),max(runs),2*accumbins(1));
 if exist('probes','var') && ~isempty(probes)
@@ -196,27 +196,28 @@ for i = 1:numel(posInds)
 %     subplot(311);plot(mean(S,2),'r','linewidth',2);pause(1);%hold off;
 %     subplot(312);plot(mtspectrumc(mean(temp,2)),'r','linewidth',2);
 %     subplot(313);plot(mtspectrumc(spatial(i,51:100)-mean(spatial(i,51:100))),'r','linewidth',2);
-    u = complex(r1(1:size(Xf,1)/2-1,posInds(i)),r1(size(Xf,1)/2+1:end-1,posInds(i)));%r1(1:size(Xf,1)-1,posInds(i));%
-    if exist('probes','var') && ~isempty(probes)
-        up1 = probes;
-        for ii = 1:size(probes,1)
-            for j = 1:size(probes,2)
-                up1(ii,j) = u(probes(ii,j)+1-min(probes(:)));%-256
-            end
-        end
-        %up1 = up1(:,[1:4 6 5 8 7]);
-        up1 = up1(:,[1:12 14 13 16 15]);
-        up1 = [up1(:,1:8) zeros(size(up1,1),1) up1(:,9:16)];
-    else
-        up1 = reshape(u,[8 ,(size(Xf,1)/2-1)/8]);
-    end
-    ups(i,:,:) = up1;
-    figure(h2);subplot(xdim,ydim,i);imagesc(complexIm(up1,0,1));axis off;
+
+%     u = complex(r1(1:size(Xf,1)/2-1,posInds(i)),r1(size(Xf,1)/2+1:end-1,posInds(i)));%r1(1:size(Xf,1)-1,posInds(i));%
+%     if exist('probes','var') && ~isempty(probes)
+%         up1 = probes;
+%         for ii = 1:size(probes,1)
+%             for j = 1:size(probes,2)
+%                 up1(ii,j) = u(probes(ii,j)+1-min(probes(:)));%-256
+%             end
+%         end
+%         %up1 = up1(:,[1:4 6 5 8 7]);
+%         up1 = up1(:,[1:12 14 13 16 15]);
+%         up1 = [up1(:,1:8) zeros(size(up1,1),1) up1(:,9:16)];
+%     else
+%         up1 = reshape(u,[8 ,(size(Xf,1)/2-1)/8]);
+%     end
+%     ups(i,:,:) = up1;
+%     figure(h2);subplot(xdim,ydim,i);imagesc(complexIm(up1,0,1));axis off;
 end
 %sPlot(bsxfun(@times,t(temp(indLoc),:),sk'));
 t = t(posInds,:);
 sPlot([bsxfun(@times,t,sk'); vel']);
 %figure;imagesc(complexIm(corr(complex(r(temp(indLoc),1:513),r(temp(indLoc),514:end))'),0,1));
-figure;imagesc(complexIm(corr(ups(:,:)'),0,1));
+%figure;imagesc(complexIm(corr(ups(:,:)'),0,1));
 %figure;imagesc(squeeze(std(ups)));
 superImp(tes,[],1);
