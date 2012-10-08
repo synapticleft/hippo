@@ -1,5 +1,6 @@
 function [allX,samplePos,W,t] = runChunks(X,v,pos,act,A)
 
+angCol = colormap('hsv');
 ratio = round(size(X,2)/size(pos,1));
 dec = 32/ratio;
 peakToPeak = ceil(1250/dec/8);
@@ -77,17 +78,20 @@ samplePos(:,1) = max(0,samplePos(:,1)-prctile(samplePos(:,1),1));
 samplePos(:,1) = min(.999,samplePos(:,1)/prctile(samplePos(:,1),99));
 samplePos(ind:end,1) = samplePos(ind:end,1)+1;samplePos(:,1) = samplePos(:,1)/2;
 allX(:,counter:end) = [];ys(:,counter:end) = [];
+complexAct =1;
+if ~complexAct
 sk = skewness(ys,0,2);
 ys = bsxfun(@times,ys,sk);act = bsxfun(@times,act,sk);
-%A = bsxfun(@times,A,sk');
-% figure;
-% for i = 1:size(ys,1)
-% %     subplot(211);plot(act(i,:));hold all;scatter(samplePos(:,3),ys(i,:));hold off;
-% %     subplot(212);
-%     scatter(samplePos(:,1),samplePos(:,2),max(.1,ys(i,:)/max(ys(i,:))*50),'filled');pause(5);%skewness(ys(i,:))*
-% end
-% return
-%[ys ym] = remmean(ys);
+A = bsxfun(@times,A,sk');
+end
+figure;
+for i = 1:size(ys,1)
+%     subplot(211);plot(act(i,:));hold all;scatter(samplePos(:,3),ys(i,:));hold off;
+%     subplot(212);
+    scatter(samplePos(:,1),samplePos(:,2),max(.1,abs(ys(i,:))/max(abs(ys(i,:)))*50),angCol(phase2Col(angle(ys(i,:))),:),'filled');pause(5);%skewness(ys(i,:))*
+end
+return
+[ys ym] = remmean(ys);
 allXOr = allX;
 [allX allXm] = remmean(allX);
 [cc,~,W] = pipeLine1(ys,allX',3,1);
@@ -161,3 +165,6 @@ end
 Xm = reshape(mean(allX,2),[size(allX,1)/size(X,1) size(X,1)]);
 figure;imagesc(sqrt(Xm)');
 % figure;plot(Xm');
+
+function c = phase2Col(ang)
+c = ceil((ang+pi)/(2*pi)*64);
