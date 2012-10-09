@@ -161,7 +161,7 @@ for i = 1:size(t1,1)
 end
 figure;plot(spatial');
 if ~exist('posInds','var') || isempty(posInds)
-    posInds = find(max(spatial') > 1100);
+    posInds = find(max(spatial') > 600);
 else
    posInds = 1:size(r,1);%
 end
@@ -224,4 +224,4 @@ sPlot([bsxfun(@times,t,sk'); vel']);
 %figure;imagesc(complexIm(corr(complex(r(temp(indLoc),1:513),r(temp(indLoc),514:end))'),0,1));
 figure;imagesc(complexIm(corr(ups(:,:)'),0,1));
 %figure;imagesc(squeeze(std(ups)));
-superImp(tes,[],1);
+superImpC(tes,[],1);

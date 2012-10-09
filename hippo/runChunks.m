@@ -68,8 +68,8 @@ for k = 1:2
             counter = counter + 1;
         end
         samplePos = [samplePos; [pos(pk) i*ones(numel(pk),1) pk']];
-        %subplot(121);plot(-abs(aV));hold all;scatter(pk-runInds(1)+1,zeros(1,numel(pk)),'filled');hold off;title(i*10000+counter);drawnow;
-        %subplot(122);plot(allX(:,max(1,counter-5):counter-1));drawnow;pause(.05);
+        subplot(121);plot(-abs(aV));hold all;scatter(pk-runInds(1)+1,zeros(1,numel(pk)),'filled');hold off;title(i*10000+counter);drawnow;
+        subplot(122);plot(allX(:,max(1,counter-5):counter-1));drawnow;pause(.05);
     end
 end
 [~,ind] = min(diff(samplePos(:,2)));

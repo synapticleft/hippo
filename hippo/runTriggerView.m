@@ -56,10 +56,12 @@ end
 if exist('posInds','var') && ~isempty(posInds)
     r1 = r1(:,posInds);r = r(posInds,:); %% IS THIS RIGHT??
 end
-complexAct = 1;
+complexAct = 0;
 if ~complexAct
     t = r*zscore(Xf,0,2);
-    sk = skewness(t,0,2);t = bsxfun(@times,t,sk);r = bsxfun(@times,r,sk);
+    sk = sign(skewness(t,0,2));
+    t = bsxfun(@times,t,sk);
+    r = bsxfun(@times,r,sk);
 else
     Xf = zscore(Xf,0,2);Xf = complex(Xf(1:end/2,:),Xf(end/2+1:end,:));
     t = complex(r(:,1:end/2),r(:,end/2+1:end))*conj(Xf);
@@ -155,9 +157,9 @@ for i = 1:size(t1,1)
     temp = reshape(t1(i,:),[max(runs) 2*accumbins(1)]);
     [~,s,v] = svds(temp,1);
     v = s*v'; 
-%     if -min(v) > max(v) 
-%         v = -v; 
-%     end
+    if -min(v) > max(v) 
+        v = -v; 
+    end
     spatial(i,:) = s*v';
 %    subplot(xdim,ydim,i);imagesc(temp);axis off;
 %    figure(h2);subplot(xdim,ydim,i);imagesc(complexIm(reshape(complex(r1(1:32,i),r1(34:65,i)),[8 4]),0,1));axis off;
@@ -171,7 +173,7 @@ figure;plot(real(spatial)');
 spatial = spatial(posInds,:);
 [~,peakLoc] = max(abs(spatial)');
 [~,indLoc] = sort(peakLoc);
-%posInds = posInds(indLoc);
+posInds = posInds(indLoc);
 spatial = spatial(indLoc,:);
 figure;imagesc(complexIm(spatial,0,1));
 h1 = figure;
@@ -192,7 +194,7 @@ for i = 1:numel(posInds)
         sk(i) = -1;
     end
     end
-    figure(h1);subplot(xdim,ydim,i);imagesc(complexIm(imfilter(te,fspecial('gaussian',5,1)),0,1));axis off;%s(temp(indLoc(i))),[0 max(te(:))]
+    figure(h1);subplot(xdim,ydim,i);imagesc(imfilter(te,fspecial('gaussian',5,1)));axis off;%s(temp(indLoc(i))),[0 max(te(:))]
     tes(i,:,:) = te;
 %     temp = te(:,1:50)';temp = temp-mean(temp(:));
 %     [S,f]= mtspectrumc(temp);
@@ -228,4 +230,4 @@ sPlot([bsxfun(@times,t,sk'); vel']);
 %figure;imagesc(complexIm(corr(complex(r(temp(indLoc),1:513),r(temp(indLoc),514:end))'),0,1));
 %figure;imagesc(complexIm(corr(ups(:,:)'),0,1));
 %figure;imagesc(squeeze(std(ups)));
-superImpC(tes,[],1);
+superImp(tes,[],1);
