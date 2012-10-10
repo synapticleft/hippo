@@ -62,8 +62,7 @@ end
 %t = real(t);%abs(t);%[real(t);imag(t)];
 Xf = [[real(Xf);imag(Xf)] [-imag(Xf);-real(Xf)]];
 t = r*zscore(Xf,0,2);
-t = complex(t(:,1:end/2),t(:,end/2+1:end));
-t = abs(t);
+t = complex(t(:,1:end/2),t(end/2+1:end)
 %r = complex(r(:,1:end/2),r(:,end/2+1:end));
 %t = conj(r)*zscore(Xf,0,2);t = abs(t);
 if 0

@@ -40,7 +40,7 @@ for i = 1:2
 end
 offSet = 1;
 %Xf = [Xf; [zeros(64,offSet) Xf(:,1:end-offSet)]];
-%Xf = [bsxfun(@times,Xf,exp(1i*angle(v(:,1))).');...
+Xf = [bsxfun(@times,Xf,exp(1i*angle(v(:,1))).')];%...
 %     [zeros(offSet,1); v(1+offSet:end,1).*conj(v(1:end-offSet,1))./abs(v(1:end-offSet,1))].'];
 %Xf = [bsxfun(@times,Xf,exp(1i*angle(v(:,1))).');...
 %     [zeros(offSet,1); v(1+offSet:end,1).*conj(v(1:end-offSet,1))./abs(v(1:end-offSet,1))].'];
@@ -67,7 +67,7 @@ vel = vel/max(vel);inds = vel > thresh;
 %t = Xf(:,inds);
 %[r,~,t] = runica(Xf(:,inds),'pca',50);
 Xf = Xf(:,inds);
-Xf = [real(Xf);imag(Xf)];%[abs(Xf); angle(Xf)];
+Xf = [[real(Xf);imag(Xf)] [-imag(Xf);-real(Xf)]];%[abs(Xf); angle(Xf)];
 rdim = size(Xf,1);
 [A,W,Z] = gfastica(zscore(Xf,0,2),'lastEig',rdim,'g','tanh','approach','symm','stabilization','on');%
 %t = W*zscore(Xf,0,2);
