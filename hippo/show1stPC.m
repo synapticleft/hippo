@@ -1,6 +1,6 @@
 function show1stPC(pos,v,Xf,accumbins,thresh)
 
-bounds = [.1 .9];
+bounds = [.2 .8];
 pos(pos == -1) = nan;
 reject = 0;
 for i = 1:4
@@ -45,7 +45,8 @@ Xf = filtLow(Xf,1250/32,2);
 Xf = Xf(:,inds);posd = posd(inds,:);veld = veld(inds,:);vel = vel(inds);pos = pos(inds,:);
 %Xf = zscore(Xf,0,2);
 v = Xf.';
-[~,~,v] = svds(bsxfun(@minus,Xf,mean(Xf,2)),4);
+[~,s,v] = svd(bsxfun(@minus,Xf,mean(Xf,2)),'econ');
+s = diag(s).^2;
 % %%FOR 1D TRACK
 b = nan*ones(size(pos,1),1);
 b(pos(:,1) < bounds(1)) = -1;b(pos(:,1) > bounds(2)) = 1;
@@ -55,16 +56,22 @@ b = [0 diff(b)];
 runs = bwlabel(b > 0);
 vInterp = zeros(2,max(runs),accumbins(1));
 w = watershed(b==0);
-w = w-1;
+%w = w-1;
+%figure;plot(posd(:,1));hold all;plot(w);return
 figure;
+inda = [1 2 4 8];
 for j = 1:4
     for k = 1:2
         runs1 = bwlabel(w>0 & mod(w,2) == k-1 & w <=2*max(runs));%b*((-1)^k)>0);
         inds = runs1 > 0;
-        vInterp(k,:,:) = accumarray([runs1(inds); posd(inds,1)']',v(inds,j),[max(runs) accumbins(1)] ,@mean);
+        vInterp(k,:,:) = accumarray([runs1(inds); posd(inds,1)']',v(inds,inda(j)),[max(runs) accumbins(1)] ,@mean);
     end
     subplot(2,2,j);imagesc(complexIm(imfilter([squeeze(vInterp(1,:,:)) squeeze(vInterp(2,:,:))],fspecial('gaussian',5,.5)),0,1));
-    set(gca,'fontsize',16,'xtick',[]);ylabel('Trial #');
+    set(gca,'fontsize',16,'xtick',[1 accumbins(1) accumbins(1)*2],'xticklabel',{'0','250','0'}...
+        ,'ytick',[1 size(vInterp,2)]);ylabel('Trial #');xlabel('Position (cm)');title(['PC ' num2str(inda(j)) ' (' num2str(s(inda(j))/sum(s)*100,'%6.2g') '%)']);
+    if j ~= 3
+        axis off;
+    end
 end
 % t1 = [squeeze(vInterp(1,:,:)) squeeze(vInterp(2,:,:))];
 % figure;image(complexIm(imfilter(t1,fspecial('gaussian',5,0.5)),0,1));

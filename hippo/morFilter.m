@@ -8,7 +8,7 @@ Fb = 1/500;
 %Fb = 1/500, win = 1 for hippocampal LFP
 %Fb = 1/5000, Fc = 160, win = 5 for ripples
 [psi,x] = cmorwavf(-win,win,Fs*2*win,Fb,Fc);
-figure;plot(x,real(psi));hold all;plot(x,imag(psi));plot(x,abs(psi));return
+%figure;plot(x,real(psi));hold all;plot(x,imag(psi));plot(x,abs(psi));return
 Xf = zeros(size(X));
 for i = 1:size(X,1)
     Xf(i,:) = fliplr(filter(conj(psi),1,fliplr(filter(psi,1,X(i,:)))));
