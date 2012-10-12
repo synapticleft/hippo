@@ -56,8 +56,11 @@ end
 if exist('posInds','var') && ~isempty(posInds)
     r1 = r1(:,posInds);r = r(posInds,:); %% IS THIS RIGHT??
 end
-t = r*zscore(Xf,0,2);%r1*bsxfun(@minus,Xf,mean(Xf,2));%
-t = abs(t);%[real(t);imag(t)];
+r = complex(r(:,1:end/2),r(:,end/2+1:end));r1 = complex(r1(1:end/2,:),r1(end/2+1:end,:));
+Xf = zscore([real(Xf);imag(Xf)],0,2);
+Xf = complex(Xf(1:end/2,:),Xf(end/2+1:end,:));
+t = conj(r)*Xf;%r1*bsxfun(@minus,Xf,mean(Xf,2));%
+%t = abs(t);%[real(t);imag(t)];
 if 0
     [B M] = size(t);
     opts = lbfgs_options('iprint', -1, 'maxits', 20, ...
@@ -127,46 +130,43 @@ b = [0 diff(b)];
 runs = bwlabel(b > 0);
 vInterp = zeros(2,size(t,1),max(runs),accumbins(1));
 w = watershed(b==0);
-w = w-1; %w(w== max(w)) = 0;
-%u = zeros(max(w),size(Xf,1));
-% for i = 1:max(w)/2
-%     [temp,~,~] = svds(Xf(:,(w == 2*i | w == 2*i-1) & inds'),2);
-%     u(i,:) = temp(:,2);
-% end
-%
-for k = 1:2
-    runs1 = bwlabel(w>0 & mod(w,2) == k-1 & w <=2*max(runs));%b*((-1)^k)>0);
-    inds = runs1 > 0;
-    for j = 1:size(t,1)
-        vInterp(k,j,:,:) = accumarray([runs1(inds); posd(inds,1)']',t(j,inds),[max(runs) accumbins(1)] ,@mean);
-    end
+w = w-1; 
+posd(mod(w,2) ==1 ,1) = posd(mod(w,2) ==1 ,1) + max(posd(:));
+pos(mod(w,2) ==1 ,1) = pos(mod(w,2) ==1 ,1) + max(pos(:));
+runs1 = round(w/2);
+inds = runs1 > 0 & runs1 <= max(runs);
+t1 = zeros(size(t,1),max(runs),accumbins(1)*2);
+for j = 1:size(t,1)
+         t1(j,:,:) = accumarray([runs1(inds); posd(inds,1)']',t(j,inds),[max(runs) 2*accumbins(1)] ,@mean);
 end
-t1 = [squeeze(vInterp(1,:,:)) squeeze(vInterp(2,:,:))];
 %h1 = figure;
 spatial = randn(size(t1,1),2*accumbins(1));
 for i = 1:size(t1,1)
     temp = reshape(t1(i,:),[max(runs) 2*accumbins(1)]);
-    [~,s,v] = svds(temp,1);
-    v = s*v'; 
-    if -min(v) > max(v) 
-        v = -v; 
-    end
-    spatial(i,:) = s*v';
-%    subplot(xdim,ydim,i);imagesc(temp);axis off;
-%    figure(h2);subplot(xdim,ydim,i);imagesc(complexIm(reshape(complex(r1(1:32,i),r1(34:65,i)),[8 4]),0,1));axis off;
+    [u,s,v] = svds(temp,1);
+    spatial(i,:) = exp(1i*angle(mean(u)))*s*v';% 
+%     if -min(v) > max(v) 
+%         v = -v; 
+%     end
 end
-figure;plot(spatial');
+
 if ~exist('posInds','var') || isempty(posInds)
-    posInds = find(max(spatial') > 0);
+    posInds = find(max(abs(spatial')) > 600);
 else
    posInds = 1:size(r,1);%
 end
+t = t(posInds,:);t1 = t1(posInds,:,:);
+t = reshape(zscore(t(:)),size(t));
+t1 = reshape(zscore(t1(:)),size(t1));
+figure;plot(abs(spatial)');
 spatial = spatial(posInds,:);
-[~,peakLoc] = max(spatial');
+[~,peakLoc] = max(abs(spatial)');
 [~,indLoc] = sort(peakLoc);
+peakLoc = peakLoc(indLoc);
 %posInds = posInds(indLoc);
 spatial = spatial(indLoc,:);
-figure;imagesc(spatial);
+t = t(indLoc,:);
+
 h1 = figure;
 h2 = figure;
 xdim = ceil(sqrt(numel(posInds)));ydim = ceil(numel(posInds)/xdim);
@@ -177,26 +177,31 @@ if exist('probes','var') && ~isempty(probes)
 else
     ups = zeros(numel(posInds),8,(size(Xf,1)-1)/8);%/2
 end
+
+%t1 = reshape(zscore(t1(:)),size(t1));
+meanAng = zeros(1,size(t,1));
+for i = 1:size(t,1)
+    meanAng(i) = mean(r1(1:size(Xf,1)-1,posInds(i)));%
+    meanAng(i) = mean(t(i,posd(:,1) == peakLoc(i)));% < peakLoc(i)+accumbins(1)/10 & posd(:,1) > peakLoc(i)-accumbins(1)/10));
+    meanAng(i) = angle(meanAng(i));
+%    meanAng(i) = circ_mean(angle(r1(1:size(Xf,1)-1,posInds(i))),abs(r1(1:size(Xf,1)-1,posInds(i))));
+end
+spatial = bsxfun(@times,spatial,exp(1i*(pi/2-meanAng')));
+figure;imagesc(complexIm(spatial,0,1));
+spsh = spatial;
+for i = 1:size(spsh,1)
+    spsh(i,:) = circshift(spsh(i,:),[0 -peakLoc(i)+accumbins(1)]);
+end
+figure;imagesc(complexIm(spsh,0,1));
 for i = 1:numel(posInds)
-    te = reshape(t1(posInds(i),:),[max(runs) 2*accumbins(1)]);
-    if skewness(te(:)) < 0
-        te = -te;
-        sk(i) = -1;
-    end
-    figure(h1);subplot(xdim,ydim,i);imagesc(imfilter(te,fspecial('gaussian',5,1)));axis off;%s(temp(indLoc(i))),[0 max(te(:))]
+    te = reshape(t1(i,:),[max(runs) 2*accumbins(1)]);
+%     if skewness(te(:)) < 0
+%         te = -te;
+%         sk(i) = -1;
+%     end
+    figure(h1);subplot(xdim,ydim,i);imagesc(complexIm(imfilter(te.*exp(1i*(pi/2-meanAng(i))),fspecial('gaussian',5,1)),0,1,[],[],2.5));axis off;%s(temp(indLoc(i))),[0 max(te(:))]
     tes(i,:,:) = te;
-%     temp = te(:,1:50)';temp = temp-mean(temp(:));
-%     [S,f]= mtspectrumc(temp);
-%     figure(h2);subplot(311);hold all;plot(mean(S,2),'b','linewidth',2);%plot(S,'b');
-%     subplot(312);plot(mtspectrumc(mean(temp,2)),'b','linewidth',2);hold all;
-%     subplot(313);plot(mtspectrumc(spatial(i,1:50)-mean(spatial(i,1:50))),'b','linewidth',2);hold all;
-%     temp = te(:,51:100)';temp = temp-mean(temp(:));
-%     [S,f] = mtspectrumc(temp);
-%     subplot(311);plot(mean(S,2),'r','linewidth',2);pause(1);%hold off;
-%     subplot(312);plot(mtspectrumc(mean(temp,2)),'r','linewidth',2);
-%     subplot(313);plot(mtspectrumc(spatial(i,51:100)-mean(spatial(i,51:100))),'r','linewidth',2);
-    %u = complex(r1(1:size(Xf,1)/2-1,posInds(i)),r1(size(Xf,1)/2+1:end-1,posInds(i)));%r1(1:size(Xf,1)-1,posInds(i));%
-    u = r1(1:size(Xf,1)-1,posInds(i));
+    u = r1(1:size(Xf,1)-1,posInds(i));%*exp(1i*(pi/2-meanAng(i)));
     if exist('probes','var') && ~isempty(probes)
         up1 = probes;
         for ii = 1:size(probes,1)
@@ -214,10 +219,20 @@ for i = 1:numel(posInds)
     ups(i,:,:) = up1;
     figure(h2);subplot(xdim,ydim,i);imagesc(complexIm(up1,0,1));axis off;
 end
-%sPlot(bsxfun(@times,t(temp(indLoc),:),sk'));
-t = t(posInds,:);
-sPlot([bsxfun(@times,t,sk'); vel']);
-%figure;imagesc(complexIm(corr(complex(r(temp(indLoc),1:513),r(temp(indLoc),514:end))'),0,1));
-figure;imagesc(complexIm(corr(ups(:,:)'),0,1));
-%figure;imagesc(squeeze(std(ups)));
-superImp(tes,[],1);
+
+%sPlot([bsxfun(@times,t,sk'); vel']);
+%figure;imagesc(complexIm(corr(ups(:,:)'),0,1));
+superImpC(tes,[],1,prctile(abs(tes(:)),99.5));
+
+% figure;
+% for i = 1:max(runs1)
+%     for j = 1:size(t,1)
+%         indUse = runs1' == i & posd(:,1) < peakLoc(j)+accumbins(1)/10 & posd(:,1) > peakLoc(j)-accumbins(1)/10;
+% %        plot(pos(indUse,1),posd(indUse,1));
+% %        meanAng(j) = angle(mean(t(j,indUse)));
+%         scatter(pos(indUse,1),angle(t(j,indUse)*exp(-1i*meanAng(j))),abs(t(j,indUse))*40,'filled');%angle(spatial(i,peakLoc(j)))
+%  %       plot(pos(indUse,1),angle(t(j,indUse)*exp(-1i*meanAng(j))),'k');%angle(spatial(i,peakLoc(j)))
+%         hold all;
+%     end
+%     hold off;pause(2);
+% end

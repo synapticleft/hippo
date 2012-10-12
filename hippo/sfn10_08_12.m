@@ -57,3 +57,17 @@ c = ceil(mod(angle(v2),2*pi)/(2*pi)*64);%(angle(v2*1i)+pi)
 subplot(4,1,3);scatter(1:numel(v2),real(v2),[],angCol(c,:),'filled');
 set(gca,'color','w','xtick',[],'ytick',[]);axis tight; colorbar;
 %% panel 6
+offSet = 1;
+Xf1 = [bsxfun(@times,Xf,exp(1i*angle(v(:,1))).');...
+[zeros(offSet,1); v(1+offSet:end,1).*conj(v(1:end-offSet,1))./abs(v(1:end-offSet,1))].'];
+Xf1 = [real(Xf1);imag(Xf1)];
+Xf1 = zscore(Xf1,0,2);
+t = conj(complex(W(p2,1:end/2),W(p2,end/2+1:end)))*complex(Xf1(1:65,:),Xf1(66:end,:));
+%%
+t = W(p2,:)*zscore(Xf1,0,2);
+Wp = pinv(W);Wp = Wp(:,p2);
+%%
+[sp cellInfo] = hipSpikes('ec014.468',32/1.25);
+spf = morFilter(sp,8,1250/32);clear sp;
+s1 =  [35    17    19     7    26    27    60     6    33    39    50    54    18    67    21    31 14    36    46    44    40     1    56    59  24];
+runTriggerViewSp(pos,v,spf(cellInfo == 1,:),[50 1],.05,s1(r(1:25)));

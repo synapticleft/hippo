@@ -1,4 +1,4 @@
-function im = superImpC(x,frames,rad,maxVal)
+function im = superImpC(x,frames,rad,maxVal,meanAng)
 %%SUPERIMP combines multiple components into 1 image, assigning each
 %%component a different color, for each pixel, choosing the component with
 %%the largest magnitude at that location. All components are normalized.
@@ -30,12 +30,16 @@ x = min(1,max(0,x));
 [a b]= max(x);
 a = squeeze(a); b = squeeze(b);
 im = zeros(3,size(a,1),size(a,2));
-scale = 6;angCol = colormap('hsv');
+scale = 4;angCol = colormap('hsv');
 figure;
-
+if ~exist('meanAng','var')
+    for i = 1:size(vs,1)
+        meanAng(i) = angle(vs(i,peakLoc(i)));
+    end
+end
 c = mod(peakLoc*scale/size(x,3),1);
-cc = angCol(ceil(c*64),:);
-subplot(5,1,3);set(gca,'nextPlot','add','ColorOrder',cc,'Color',[0 0 0],'xticklabel',[],'yticklabel',[]);
+cc = angCol(max(1,ceil(c*64)),:);
+subplot(5,1,3);set(gca,'nextPlot','add','ColorOrder',cc,'Color',[0 0 0],'xticklabel',[],'yticklabel',[],'fontsize',16);
 plot(abs(vs)');axis tight;
 subplot(5,1,[4 5]);hold on;
 for i = 1:size(x,1);
@@ -44,16 +48,21 @@ for i = 1:size(x,1);
     im(3,b == i) = a(b == i);
 %     scatter(1:size(x,3),angle(vs(i,:)*exp(-1i*angle(vs(i,peakLoc(i))))),...
 %         abs(vs(i,:))*100/max(abs(vs(i,:))),cc(i,:),'filled');
-inds = max(1,peakLoc(i)-10):min(size(x,3),peakLoc(i)+10);
-    scatter(inds,angle(vs(i,inds)*exp(-1i*angle(vs(i,peakLoc(i))))),...
-        abs(vs(i,inds))*100/max(abs(vs(i,:))),cc(i,:),'filled');
+inds = [max(1,peakLoc(i)-10):min(size(x,3),peakLoc(i)+10) find(abs(vs(i,:)) > .3*max(abs(vs(i,:))))];
+    if ~exist('maxVal','var')
+        s = abs(vs(i,inds))*100/max(abs(vs(i,:)));
+    else
+        s =  abs(vs(i,inds))*10/maxVal;
+    end
+    scatter(inds,angle(vs(i,inds)*exp(-1i*meanAng(i))),...
+        s,cc(i,:),'filled');%,'ytick',[-3 0 3],'yticklabel',{'-pi','0','pi'}
 %        sqrt(min(1,abs(vs(i,:))'/prctile(abs(vs(i,:)),99)))),'filled');
 end
-set(gca,'Color',[0 0 0]);
-ylabel phase;xlabel('position (a.u.)');
+set(gca,'Color',[0 0 0],'xtick',[1 size(x,3)/2 size(x,3)],'xticklabel',[0 250 0],'fontsize',16);
+ylabel phase;xlabel('position (cm)');
 axis tight;
 im = max(0,im);
 im = permute(im,[2 3 1]);
 im = hsv2rgb(im);
-subplot(5,1,[1 2]);image(im);
+subplot(5,1,[1 2]);image(im);set(gca,'xtick',[],'fontsize',16);
 ylabel('trial #');
