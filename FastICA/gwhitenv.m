@@ -86,9 +86,9 @@ if b_verbose, fprintf ('Whitening...\n'); end
 newVectors =  whiteningMatrix * vectors;
 % ========================================================
 % Just some security...
-if ~isreal(newVectors)
-  error ('Whitened vectors have imaginary values.');
-end
+% if ~isreal(newVectors)
+%   error ('Whitened vectors have imaginary values.');
+% end
 
 % Print some information to user
 if b_verbose

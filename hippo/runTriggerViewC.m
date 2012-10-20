@@ -38,16 +38,17 @@ for i = 1:2
     veld(:,i) = floor(veld(:,i)*accumbins(min(numel(accumbins),i)))+1;
 end
 offSet = 1;
-Xf = [bsxfun(@times,Xf,exp(1i*angle(v(:,1))).');...
-    [zeros(offSet,1); v(1+offSet:end,1).*conj(v(1:end-offSet,1))./abs(v(1:end-offSet,1))].'];
+Xf = [bsxfun(@times,Xf,exp(1i*angle(v(:,1))).')];...
+%     [zeros(offSet,1); v(1+offSet:end,1).*conj(v(1:end-offSet,1))./abs(v(1:end-offSet,1))].'];
 %  Xf = [bsxfun(@times,Xf,v(:,1).');...
 %    [zeros(offSet,1); v(1+offSet:end,1).*conj(v(1:end-offSet,1))].'];
 %Xf = [real(Xf);imag(Xf)];
 inds = bwmorph(inds,'dilate',20);
 Xf = Xf(:,inds);posd = posd(inds,:);veld = veld(inds,:);vel = vel(inds);pos = pos(inds,:);
-Xf = bsxfun(@minus,Xf,mean(Xf,2));
+%Xf = bsxfun(@minus,Xf,mean(Xf,2));
 if ~exist('r1','var')
     r1 = pinv(r);%r';%
+    r1 = r1(1:64,:);
 end
 %lambda = 1000;
 %    [E, D]=pcamat(Xf, 1, size(r,1), 'off','off');
@@ -56,10 +57,11 @@ end
 if exist('posInds','var') && ~isempty(posInds)
     r1 = r1(:,posInds);r = r(posInds,:); %% IS THIS RIGHT??
 end
-r = complex(r(:,1:end/2),r(:,end/2+1:end));r1 = complex(r1(1:end/2,:),r1(end/2+1:end,:));
-Xf = zscore([real(Xf);imag(Xf)],0,2);
-Xf = complex(Xf(1:end/2,:),Xf(end/2+1:end,:));
-t = conj(r)*Xf;%r1*bsxfun(@minus,Xf,mean(Xf,2));%
+% r = complex(r(:,1:end/2),r(:,end/2+1:end));r1 = complex(r1(1:end/2,:),r1(end/2+1:end,:));
+% Xf = zscore([real(Xf);imag(Xf)],0,2);
+% Xf = complex(Xf(1:end/2,:),Xf(end/2+1:end,:));
+%Xf = zscore(Xf,0,2);
+t = (r)*[Xf];%r1*bsxfun(@minus,Xf,mean(Xf,2));%
 %t = abs(t);%[real(t);imag(t)];
 if 0
     [B M] = size(t);
@@ -151,7 +153,7 @@ for i = 1:size(t1,1)
 end
 
 if ~exist('posInds','var') || isempty(posInds)
-    posInds = find(max(abs(spatial')) > 600);
+    posInds = find(max(abs(spatial')) > 10);
 else
    posInds = 1:size(r,1);%
 end
@@ -175,13 +177,13 @@ tes = zeros(numel(posInds),max(runs),2*accumbins(1));
 if exist('probes','var') && ~isempty(probes)
     ups = zeros(numel(posInds),size(probes,1),size(probes,2)+1);
 else
-    ups = zeros(numel(posInds),8,(size(Xf,1)-1)/8);%/2
+    ups = zeros(numel(posInds),8,(size(Xf,1))/8);%/2
 end
 
 %t1 = reshape(zscore(t1(:)),size(t1));
 meanAng = zeros(1,size(t,1));
 for i = 1:size(t,1)
-    meanAng(i) = mean(r1(1:size(Xf,1)-1,posInds(i)));%
+    meanAng(i) = mean(r1(1:size(Xf,1),posInds(i)));%
     meanAng(i) = mean(t(i,posd(:,1) == peakLoc(i)));% < peakLoc(i)+accumbins(1)/10 & posd(:,1) > peakLoc(i)-accumbins(1)/10));
     meanAng(i) = angle(meanAng(i));
 %    meanAng(i) = circ_mean(angle(r1(1:size(Xf,1)-1,posInds(i))),abs(r1(1:size(Xf,1)-1,posInds(i))));
@@ -201,7 +203,7 @@ for i = 1:numel(posInds)
 %     end
     figure(h1);subplot(xdim,ydim,i);imagesc(complexIm(imfilter(te.*exp(1i*(pi/2-meanAng(i))),fspecial('gaussian',5,1)),0,1,[],[],2.5));axis off;%s(temp(indLoc(i))),[0 max(te(:))]
     tes(i,:,:) = te;
-    u = r1(1:size(Xf,1)-1,posInds(i));%*exp(1i*(pi/2-meanAng(i)));
+    u = r1(1:size(Xf,1),posInds(i));%*exp(1i*(pi/2-meanAng(i)));
     if exist('probes','var') && ~isempty(probes)
         up1 = probes;
         for ii = 1:size(probes,1)
@@ -214,7 +216,7 @@ for i = 1:numel(posInds)
         up1 = [up1(:,1:8) zeros(size(up1,1),1) up1(:,9:16)];
     else
         %up1 = reshape(u,[8 ,(size(Xf,1)/2-1)/8]);
-        up1 = reshape(u,[8,(size(Xf,1)-1)/8]);
+        up1 = reshape(u,[8,(size(Xf,1))/8]);
     end
     ups(i,:,:) = up1;
     figure(h2);subplot(xdim,ydim,i);imagesc(complexIm(up1,0,1));axis off;
