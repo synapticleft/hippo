@@ -38,8 +38,8 @@ for i = 1:2
     veld(:,i) = floor(veld(:,i)*accumbins(min(numel(accumbins),i)))+1;
 end
 offSet = 1;
-Xf = [bsxfun(@times,Xf,exp(1i*angle(v(:,1))).');...
-    [zeros(offSet,1); v(1+offSet:end,1).*conj(v(1:end-offSet,1))./abs(v(1:end-offSet,1))].'];
+Xf = [bsxfun(@times,Xf,exp(1i*angle(v(:,1))).')];...
+%    [zeros(offSet,1); v(1+offSet:end,1).*conj(v(1:end-offSet,1))./abs(v(1:end-offSet,1))].'];
 %  Xf = [bsxfun(@times,Xf,v(:,1).');...
 %    [zeros(offSet,1); v(1+offSet:end,1).*conj(v(1:end-offSet,1))].'];
 inds = bwmorph(inds,'dilate',20);

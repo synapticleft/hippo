@@ -38,14 +38,14 @@ for i = 1:2
     veld(:,i) = floor(veld(:,i)*accumbins(min(numel(accumbins),i)))+1;
 end
 offSet = 1;
-Xf = [bsxfun(@times,Xf,exp(1i*angle(v(:,1))).');...
-    [zeros(offSet,1); v(1+offSet:end,1).*conj(v(1:end-offSet,1))./abs(v(1:end-offSet,1))].'];
+Xf = [bsxfun(@times,Xf,exp(1i*angle(v(:,1))).')];...
+%     [zeros(offSet,1); v(1+offSet:end,1).*conj(v(1:end-offSet,1))./abs(v(1:end-offSet,1))].'];
 %  Xf = [bsxfun(@times,Xf,v(:,1).');...
 %    [zeros(offSet,1); v(1+offSet:end,1).*conj(v(1:end-offSet,1))].'];
 %Xf = [real(Xf);imag(Xf)];
 inds = bwmorph(inds,'dilate',20);
 Xf = Xf(:,inds);posd = posd(inds,:);veld = veld(inds,:);vel = vel(inds);pos = pos(inds,:);
-Xf = bsxfun(@minus,Xf,mean(Xf,2));
+%Xf = bsxfun(@minus,Xf,mean(Xf,2));
 if ~exist('r1','var')
     r1 = pinv(r);%r';%
 end
@@ -56,10 +56,14 @@ end
 if exist('posInds','var') && ~isempty(posInds)
     r1 = r1(:,posInds);r = r(posInds,:); %% IS THIS RIGHT??
 end
-r = complex(r(:,1:end/2),r(:,end/2+1:end));r1 = complex(r1(1:end/2,:),r1(end/2+1:end,:));
-Xf = zscore([real(Xf);imag(Xf)],0,2);
-Xf = complex(Xf(1:end/2,:),Xf(end/2+1:end,:));
-t = conj(r)*Xf;%r1*bsxfun(@minus,Xf,mean(Xf,2));%
+% r = complex(r(:,1:end/2),r(:,end/2+1:end));r1 = complex(r1(1:end/2,:),r1(end/2+1:end,:));
+% Xf = zscore([real(Xf);imag(Xf)],0,2);
+% Xf = complex(Xf(1:end/2,:),Xf(end/2+1:end,:));
+%Xf = zscore(Xf,0,2);
+%     [V, D, U] = svd(Xf', 0);     % economy SVD of data matrix
+%     B = U*D/sqrt(size(Xf,2));            % PCA mixing-matrix estimate
+%     Xf = sqrt(size(Xf,2))*V';
+t = (r)*Xf;%r1*bsxfun(@minus,Xf,mean(Xf,2));%
 %t = abs(t);%[real(t);imag(t)];
 if 0
     [B M] = size(t);
@@ -133,9 +137,9 @@ w = watershed(b==0);
 w = w-1; 
 posd(mod(w,2) ==1 ,1) = posd(mod(w,2) ==1 ,1) + max(posd(:));
 pos(mod(w,2) ==1 ,1) = pos(mod(w,2) ==1 ,1) + max(pos(:));
-t1 = zeros(size(t,1),max(runs),accumbins(1)*2);
 runs1 = round(w/2);
 inds = runs1 > 0 & runs1 <= max(runs);
+t1 = zeros(size(t,1),max(runs),accumbins(1)*2);
 for j = 1:size(t,1)
          t1(j,:,:) = accumarray([runs1(inds); posd(inds,1)']',t(j,inds),[max(runs) 2*accumbins(1)] ,@mean);
 end
@@ -144,24 +148,29 @@ spatial = randn(size(t1,1),2*accumbins(1));
 for i = 1:size(t1,1)
     temp = reshape(t1(i,:),[max(runs) 2*accumbins(1)]);
     [u,s,v] = svds(temp,1);
-    v = exp(1i*angle(mean(u)))*s*v';% 
-    if -min(v) > max(v) 
-        v = -v; 
-    end
-    spatial(i,:) = s*v';
+    spatial(i,:) = exp(1i*angle(mean(u)))*s*v';% 
+%     if -min(v) > max(v) 
+%         v = -v; 
+%     end
 end
-figure;plot(abs(spatial)');
+
 if ~exist('posInds','var') || isempty(posInds)
-    posInds = find(max(spatial') > 0);
+    posInds = find(max(abs(spatial')) > 10);
 else
    posInds = 1:size(r,1);%
 end
+t = t(posInds,:);t1 = t1(posInds,:,:);
+t = reshape(zscore(t(:)),size(t));
+t1 = reshape(zscore(t1(:)),size(t1));
+figure;plot(abs(spatial)');
 spatial = spatial(posInds,:);
 [~,peakLoc] = max(abs(spatial)');
 [~,indLoc] = sort(peakLoc);
+peakLoc = peakLoc(indLoc);
 %posInds = posInds(indLoc);
 spatial = spatial(indLoc,:);
-figure;imagesc(complexIm(spatial,0,1));
+t = t(indLoc,:);
+
 h1 = figure;
 h2 = figure;
 xdim = ceil(sqrt(numel(posInds)));ydim = ceil(numel(posInds)/xdim);
@@ -170,25 +179,33 @@ tes = zeros(numel(posInds),max(runs),2*accumbins(1));
 if exist('probes','var') && ~isempty(probes)
     ups = zeros(numel(posInds),size(probes,1),size(probes,2)+1);
 else
-    ups = zeros(numel(posInds),8,(size(Xf,1)-1)/8);%/2
+    ups = zeros(numel(posInds),8,(size(Xf,1))/8);%/2
 end
-t = t(posInds,:);
-t1 = t1(posInds,:);
-t1 = reshape(zscore(t1(:)),size(t1));
+
+%t1 = reshape(zscore(t1(:)),size(t1));
 meanAng = zeros(1,size(t,1));
 for i = 1:size(t,1)
-    meanAng(i) = mean(t(i,posd(:,1) < peakLoc(i)+accumbins(1)/10 & posd(:,1) > peakLoc(i)-accumbins(1)/10));
+    meanAng(i) = mean(r1(1:size(Xf,1),posInds(i)));%
+    meanAng(i) = mean(t(i,posd(:,1) == peakLoc(i)));% < peakLoc(i)+accumbins(1)/10 & posd(:,1) > peakLoc(i)-accumbins(1)/10));
     meanAng(i) = angle(meanAng(i));
+%    meanAng(i) = circ_mean(angle(r1(1:size(Xf,1)-1,posInds(i))),abs(r1(1:size(Xf,1)-1,posInds(i))));
 end
+spatial = bsxfun(@times,spatial,exp(1i*(pi/2-meanAng')));
+figure;imagesc(complexIm(spatial,0,1));
+spsh = spatial;
+for i = 1:size(spsh,1)
+    spsh(i,:) = circshift(spsh(i,:),[0 -peakLoc(i)+accumbins(1)]);
+end
+figure;imagesc(complexIm(spsh,0,1));
 for i = 1:numel(posInds)
     te = reshape(t1(i,:),[max(runs) 2*accumbins(1)]);
 %     if skewness(te(:)) < 0
 %         te = -te;
 %         sk(i) = -1;
 %     end
-    figure(h1);subplot(xdim,ydim,i);imagesc(complexIm(imfilter(te.*exp(1i*-angle(spatial(i,peakLoc(i)))),fspecial('gaussian',5,1)),0,1,[],[],3));axis off;%s(temp(indLoc(i))),[0 max(te(:))]
+    figure(h1);subplot(xdim,ydim,i);imagesc(complexIm(imfilter(te.*exp(1i*(pi/2-meanAng(i))),fspecial('gaussian',5,1)),0,1,[],[],2.5));axis off;%s(temp(indLoc(i))),[0 max(te(:))]
     tes(i,:,:) = te;
-    u = r1(1:size(Xf,1)-1,posInds(i));
+    u = r1(1:size(Xf,1),posInds(i));%*exp(1i*(pi/2-meanAng(i)));
     if exist('probes','var') && ~isempty(probes)
         up1 = probes;
         for ii = 1:size(probes,1)
@@ -201,7 +218,7 @@ for i = 1:numel(posInds)
         up1 = [up1(:,1:8) zeros(size(up1,1),1) up1(:,9:16)];
     else
         %up1 = reshape(u,[8 ,(size(Xf,1)/2-1)/8]);
-        up1 = reshape(u,[8,(size(Xf,1)-1)/8]);
+        up1 = reshape(u,[8,(size(Xf,1))/8]);
     end
     ups(i,:,:) = up1;
     figure(h2);subplot(xdim,ydim,i);imagesc(complexIm(up1,0,1));axis off;
@@ -209,17 +226,17 @@ end
 
 %sPlot([bsxfun(@times,t,sk'); vel']);
 %figure;imagesc(complexIm(corr(ups(:,:)'),0,1));
-%superImpC(tes,[],1);
+superImpC(tes,[],1,prctile(abs(tes(:)),99.5));
 
-figure;
-for i = 1:max(runs1)
-    for j = 1:size(t,1)
-        indUse = runs1' == i & posd(:,1) < peakLoc(j)+accumbins(1)/10 & posd(:,1) > peakLoc(j)-accumbins(1)/10;
-%        plot(pos(indUse,1),posd(indUse,1));
-%        meanAng(j) = angle(mean(t(j,indUse)));
-        scatter(pos(indUse,1),angle(t(j,indUse)*exp(-1i*meanAng(j))),abs(t(j,indUse))*40,'filled');%angle(spatial(i,peakLoc(j)))
- %       plot(pos(indUse,1),angle(t(j,indUse)*exp(-1i*meanAng(j))),'k');%angle(spatial(i,peakLoc(j)))
-        hold all;
-    end
-    hold off;pause(2);
-end
+% figure;
+% for i = 1:max(runs1)
+%     for j = 1:size(t,1)
+%         indUse = runs1' == i & posd(:,1) < peakLoc(j)+accumbins(1)/10 & posd(:,1) > peakLoc(j)-accumbins(1)/10;
+% %        plot(pos(indUse,1),posd(indUse,1));
+% %        meanAng(j) = angle(mean(t(j,indUse)));
+%         scatter(pos(indUse,1),angle(t(j,indUse)*exp(-1i*meanAng(j))),abs(t(j,indUse))*40,'filled');%angle(spatial(i,peakLoc(j)))
+%  %       plot(pos(indUse,1),angle(t(j,indUse)*exp(-1i*meanAng(j))),'k');%angle(spatial(i,peakLoc(j)))
+%         hold all;
+%     end
+%     hold off;pause(2);
+% end

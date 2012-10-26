@@ -1,4 +1,4 @@
-function [posInds,t,vel] = runTriggerViewSp(pos,v,Xf,accumbins,thresh,posInds)
+function [posInds,t,tes] = runTriggerViewSp(pos,v,Xf,accumbins,thresh,posInds,shank)
 
 bounds = [.1 .9];
 pos(pos == -1) = nan;
@@ -24,7 +24,10 @@ for i = 1:2
 end
 veld = vel(:,1:2);
 vel = vel(:,1);
-vel = vel/max(vel);inds = vel > thresh;
+vel = vel/max(vel);
+nanInds = find(~isnan(vel));
+vel = interp1(nanInds,vel(nanInds),1:numel(vel));
+inds = vel > thresh;
 pos = bsxfun(@minus,pos,mean(pos));
 [a,~,~] = svd(pos(:,1:2),'econ');pos = a;
 for i = 1:2    
@@ -38,7 +41,7 @@ for i = 1:2
     veld(:,i) = floor(veld(:,i)*accumbins(min(numel(accumbins),i)))+1;
 end
 offSet = 1;
-Xf = bsxfun(@times,Xf,exp(1i*angle(v(:,1))).');
+%Xf = bsxfun(@times,Xf,exp(1i*angle(v(:,1))).');
 inds = bwmorph(inds,'dilate',20);
 Xf = Xf(:,inds);posd = posd(inds,:);veld = veld(inds,:);vel = vel(inds);pos = pos(inds,:);
 Xf = bsxfun(@minus,Xf,mean(Xf,2));
@@ -61,7 +64,7 @@ runs1 = round(w/2);
 inds = runs1 > 0 & runs1 <= max(runs);
 t1 = zeros(size(t,1),max(runs),accumbins(1)*2);
 for j = 1:size(t,1)
-         t1(j,:,:) = accumarray([runs1(inds); posd(inds,1)']',t(j,inds),[max(runs) 2*accumbins(1)] ,@mean);
+         t1(j,:,:) = accumarray([runs1(inds); posd(inds,1)']',t(j,inds),[max(runs) 2*accumbins(1)] ,@std);
 end
 spatial = randn(size(t1,1),2*accumbins(1));
 for i = 1:size(t1,1)
@@ -81,11 +84,11 @@ t1 = reshape(zscore(t1(:)),size(t1));
 figure;plot(abs(spatial)');
 spatial = spatial(posInds,:);
 [~,peakLoc] = max(abs(spatial)');
-[~,indLoc] = sort(peakLoc);
-%posInds = posInds(indLoc);
-spatial = spatial(indLoc,:);
-t = t(indLoc,:);t1 = t1(indLoc,:);
-peakLoc = peakLoc(indLoc);
+% [~,indLoc] = sort(peakLoc);
+% %posInds = posInds(indLoc);
+% spatial = spatial(indLoc,:);
+% t = t(indLoc,:);t1 = t1(indLoc,:);
+% peakLoc = peakLoc(indLoc);
 meanAng = zeros(1,size(t,1));
 for i = 1:size(t,1)
 %    meanAng(i) = mean(r1(1:size(Xf,1)-1,posInds(i)));%
@@ -112,6 +115,9 @@ for i = 1:numel(posInds)
     te = reshape(t1(i,:),[max(runs) 2*accumbins(1)]);
     subplot(xdim,ydim,i);imagesc(complexIm(imfilter(te.*exp(1i*(pi/2-meanAng(i))),fspecial('gaussian',5,1)),0,1,[],[],3));axis off;%s(temp(indLoc(i))),[0 max(te(:))]
     tes(i,:,:) = te;
+    if exist('shank','var')
+        title(shank(i));
+    end
 end
 
 %sPlot([bsxfun(@times,t,sk'); vel']);

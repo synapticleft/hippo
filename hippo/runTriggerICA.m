@@ -64,10 +64,9 @@ vel = vel/max(vel);inds = vel > thresh;
 %t = Xf(:,inds);
 %[r,~,t] = runica(Xf(:,inds),'pca',50);
 Xf = Xf(:,inds);
-Xf = [Xf];
-[A,W] = cfastica(Xf);%zscore(Xf,0,2)
-return
-Xf = [real(Xf);imag(Xf)];%[abs(Xf); angle(Xf)];
-rdim = size(Xf,1);
-[A,W,Z] = gfastica(zscore(Xf,0,2),'lastEig',rdim,'g','tanh','approach','symm','stabilization','on');%
+[A,W] =nonCircComplexFastICAsym(Xf,'log');%[A,W] = cfastica(Xf);
+ return
+% Xf = [real(Xf);imag(Xf)];%[abs(Xf); angle(Xf)];
+% rdim = size(Xf,1);
+% [A,W,Z] = gfastica(zscore(Xf,0,2),'lastEig',rdim,'g','tanh','approach','symm','stabilization','on');%
 %t = W*zscore(Xf,0,2);

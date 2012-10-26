@@ -102,9 +102,9 @@ rankTolerance = 1e-7;
 %maxLastEig = sum (diag (D) > rankTolerance); original
 d = flipud(diag(D));
 cumVar = sum(d);
-maxLastEig = sum(cumsum(d)/cumVar < .9999)
-maxLastEig = sum(d > .01)
-pause(2)
+%figure;plot(log(d));drawnow;
+maxLastEig = sum(cumsum(d)/cumVar < 1.999999)
+%maxLastEig = sum(d > .001)
 if maxLastEig == 0,
   fprintf (['Eigenvalues of the covariance matrix are' ...
 	    ' all smaller than tolerance [ %g ].\n' ...

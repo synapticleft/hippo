@@ -46,8 +46,10 @@ if dec > 1
     end
     X = X1;clear X1;
 else
-    X = double(h5varget([data_root fname],'/hReal',[0 rind],[nSamples(1) sz]));
-    X = X(elecs,:);
+    X = zeros(numel(elecs),sz);
+    for i = elecs
+        X(i-min(elecs)+1,:) = double(h5varget([data_root fname],'/hReal',[i-1 rind],[1 sz]));
+    end
 end
 X = bsxfun(@minus,X,mean(X,2));
 X = bsxfun(@rdivide,X,std(X,0,2));

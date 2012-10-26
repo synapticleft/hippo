@@ -48,7 +48,6 @@ Xf = Xf(:,inds);posd = posd(inds,:);veld = veld(inds,:);vel = vel(inds);pos = po
 %Xf = bsxfun(@minus,Xf,mean(Xf,2));
 if ~exist('r1','var')
     r1 = pinv(r);%r';%
-    r1 = r1(1:64,:);
 end
 %lambda = 1000;
 %    [E, D]=pcamat(Xf, 1, size(r,1), 'off','off');
@@ -61,7 +60,10 @@ end
 % Xf = zscore([real(Xf);imag(Xf)],0,2);
 % Xf = complex(Xf(1:end/2,:),Xf(end/2+1:end,:));
 %Xf = zscore(Xf,0,2);
-t = (r)*[Xf];%r1*bsxfun(@minus,Xf,mean(Xf,2));%
+%     [V, D, U] = svd(Xf', 0);     % economy SVD of data matrix
+%     B = U*D/sqrt(size(Xf,2));            % PCA mixing-matrix estimate
+%     Xf = sqrt(size(Xf,2))*V';
+t = (r)*Xf;%r1*bsxfun(@minus,Xf,mean(Xf,2));%
 %t = abs(t);%[real(t);imag(t)];
 if 0
     [B M] = size(t);

@@ -1,4 +1,4 @@
-function [spikeMat cellInfo] = hipSpikes(file,bin,subSet)%a b c badUnits
+function [spikeMat cellInfo shankInfo] = hipSpikes(file,bin,subSet)%a b c badUnits
 %% extract all spikes into matrix downsampled to match lfp and position files.
 %bin usually 32/1.25
 %%new way for Kenji's data
@@ -24,6 +24,7 @@ end
 b(a > subSet) = [];a(a > subSet) = [];
 spikeMat = zeros(max(b),max(a));
 cellInfo = -20*ones(1,max(b));
+shankInfo = c(:,2);
 for i = 1:max(b)
     temp = hist(a(b==i),1:(max(a)+1));
     spikeMat(i,:) = temp(1:(end-1));%a(b == i)) = 1;
