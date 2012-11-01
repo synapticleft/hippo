@@ -71,3 +71,25 @@ Wp = pinv(W);Wp = Wp(:,p2);
 spf = morFilter(sp,8,1250/32);clear sp;
 s1 =  [35    17    19     7    26    27    60     6    33    39    50    54    18    67    21    31 14    36    46    44    40     1    56    59  24];
 runTriggerViewSp(pos,v,spf(cellInfo == 1,:),[50 1],.05,s1(r(1:25)));
+%% correlate high freq ICA and spiking
+[sp cellInfo] = hipSpikes('ec014.468',32/1.25);
+[A,tes,td] = allHighFreq('ec014.468.h5',1:8,pos,1);
+tdf = morFilter(td,8,1250/32);
+spf = morFilter(sp,8,1250/32);clear sp;
+[~,~,teSp] = runTriggerViewSp(pos,v,spf(cellInfo >= 1,:),[50 1],.05);
+[~,~,tes1] = runTriggerViewC(pos,v,tdf,[50 1],.05,eye(size(tdf,1)));
+for i = 1:size(tes1,1)
+    tes1f(i,:,:) = imfilter(squeeze(tes1(i,:,:)),fspecial('gaussian',5,1));
+end
+for i = 1:85
+    teSpf(i,:,:) = imfilter(squeeze(teSp(i,:,:)),fspecial('gaussian',5,1));
+end
+ccf = abs(corr(tes1f(:,:)',teSpf(:,:)'));
+figure;ccfa = ccf1;
+for i = 1:18
+[fx(i),fy(i)] = find(ccfa == max(ccfa(:)));
+ccfa(fx(i),:) = 0;
+ccfa(:,fy(i)) = 0;
+subplot(6,6,2*i-1);imagesc(complexIm(imfilter(squeeze(tes1(fx(i),:,:)),fspecial('gaussian',5,1)),0,1));axis off;
+subplot(6,6,2*i);imagesc(complexIm(imfilter(squeeze(teSp(fy(i),:,:)),fspecial('gaussian',5,1)),0,1));axis off;
+end

@@ -1,4 +1,4 @@
-function [A,tes] = runHighFreq(X,pos,A,W)
+function [A,tes,td] = runHighFreq(X,pos,A,W)
 
 accumbins = [50 1];
 ratio = round(size(X,2)/size(pos,1));
@@ -36,12 +36,12 @@ vel = resample(vel,ratio,1);
 pos = resample(pos,ratio,1);
 pos = pos(1:size(X,2),:); vel = vel(1:size(X,2));
 inds = vel > thresh;
-X = X(:,inds);vel = vel(inds);pos = pos(inds,:);
+pos = pos(inds,:);
 for i= 1:2
     posd(:,i) = max(1,floor(pos(:,i)*accumbins(min(numel(accumbins),i)))+1);
 end
 if ~exist('A','var')
-    [A,W] = gfastica(zscore(X,0,2),'lastEig',size(X,1),'g','tanh','approach','symm','stabilization','on');
+    [A,W] = gfastica(zscore(X(:,inds),0,2),'lastEig',size(X,1),'g','tanh','approach','symm','stabilization','on');
 end
 %%
 b = nan*ones(size(pos,1),1);
@@ -52,7 +52,12 @@ b = [0 diff(b)];
 runs = bwlabel(b > 0);
 w = watershed(b==0);
 w = w-1; %w(w== max(w)) = 0;
-t = W*zscore(X,0,2);
+t = W*zscore(X,0,2);%
+td = zeros(size(X,1),ceil(size(X,2)/ratio));
+for i = 1:size(X,1)
+    td(i,:) = decimate(t(i,:).^2,ratio);
+end
+t = t(:,inds);
 vInterp = zeros(2,size(t,1),max(runs),accumbins(1));
 for k = 1:2
 %    runs1 = b*(-1^k)>0;runs1 = bwlabel(runs1);

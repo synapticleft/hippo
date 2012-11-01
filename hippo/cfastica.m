@@ -39,7 +39,7 @@ function [A W] = cfastica(mixedsig)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-eps = 0.1; % epsilon in G
+eps = 1; % epsilon in G
 % Whitening of x:
 
 [Ex, Dx] = eig(cov(mixedsig'));
@@ -53,9 +53,9 @@ noise_factors = ones(size(Dx,1),1);
 rolloff_ind = sum(cumsum(flipud(factors))/cumVar > .99999)
 noise_factors(1:rolloff_ind) = .5*(1+cos(linspace(pi-.01,0,rolloff_ind))); 
 Dx = diag(factors./noise_factors);
-whiteningMatrix = sqrt(inv(Dx)) * Ex';
+whiteningMatrix = sqrt(inv(Dx)) * Ex';%eye(size(mixedsig,1));%
 x = whiteningMatrix * mixedsig;
-dewhiteningMatrix = Ex * sqrt (Dx);
+dewhiteningMatrix = Ex * sqrt (Dx);%whiteningMatrix;%
 % verbose = 'on';
 % interactivePCA = 'off';
 % [E, D, cumVar]= gpcamat(mixedsig, 1, size(mixedsig,1), interactivePCA, verbose);
@@ -72,7 +72,7 @@ n = size(x,1);
   W = randn(n,n) + 1i*randn(n,n);
   WOld = zeros(size(W));
   minAbsCos = 1;
-  while counter < maxcounter && minAbsCos > .001
+  while counter < maxcounter && (abs(1-minAbsCos) > .0001 || counter == 0)
       WOld = W;
       Wx = W'*x;
       aWx2 = abs(Wx).^2;
@@ -106,15 +106,12 @@ n = size(x,1);
 %	maximum = max(absQAHW);
 %	SE = sum(absQAHW.^2) - maximum.^2 + (ones(1,n)-maximum).^2;
 
-function newMatrix = selcol(oldMatrix, maskVector);
-
+function newMatrix = selcol(oldMatrix, maskVector)
 % newMatrix = selcol(oldMatrix, maskVector);
 %
 % Selects the columns of the matrix that marked by one in the given vector.
 % The maskVector is a column vector.
-
 % 15.3.1998
-
 if size(maskVector, 1) ~= size(oldMatrix, 2),
   error ('The mask vector and matrix are of uncompatible size.');
 end

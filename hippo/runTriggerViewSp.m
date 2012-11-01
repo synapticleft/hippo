@@ -41,7 +41,7 @@ for i = 1:2
     veld(:,i) = floor(veld(:,i)*accumbins(min(numel(accumbins),i)))+1;
 end
 offSet = 1;
-%Xf = bsxfun(@times,Xf,exp(1i*angle(v(:,1))).');
+Xf = bsxfun(@times,Xf,exp(1i*angle(v(:,1))).');
 inds = bwmorph(inds,'dilate',20);
 Xf = Xf(:,inds);posd = posd(inds,:);veld = veld(inds,:);vel = vel(inds);pos = pos(inds,:);
 Xf = bsxfun(@minus,Xf,mean(Xf,2));
@@ -64,7 +64,7 @@ runs1 = round(w/2);
 inds = runs1 > 0 & runs1 <= max(runs);
 t1 = zeros(size(t,1),max(runs),accumbins(1)*2);
 for j = 1:size(t,1)
-         t1(j,:,:) = accumarray([runs1(inds); posd(inds,1)']',t(j,inds),[max(runs) 2*accumbins(1)] ,@std);
+         t1(j,:,:) = accumarray([runs1(inds); posd(inds,1)']',t(j,inds),[max(runs) 2*accumbins(1)] ,@mean);
 end
 spatial = randn(size(t1,1),2*accumbins(1));
 for i = 1:size(t1,1)

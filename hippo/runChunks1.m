@@ -1,6 +1,6 @@
 function [allX,samplePos,W,t] = runChunks1(X,v,pos,act,A,subSet)
 
-angCol = colormap('hsv');
+%angCol = colormap('hsv');
 ratio = round(size(X,2)/size(pos,1));
 dec = 32/ratio;
 peakToPeak = ceil(1250/dec/8);

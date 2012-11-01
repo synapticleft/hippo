@@ -1,4 +1,4 @@
-function [posInds,t,vel] = runTriggerViewC(pos,v,Xf,accumbins,thresh,r,probes,posInds,r1)
+function [posInds,t,tes] = runTriggerViewC(pos,v,Xf,accumbins,thresh,r,probes,posInds,r1)
 
 bounds = [.1 .9];
 pos(pos == -1) = nan;
@@ -155,7 +155,7 @@ for i = 1:size(t1,1)
 end
 
 if ~exist('posInds','var') || isempty(posInds)
-    posInds = find(max(abs(spatial')) > 10);
+    posInds = find(max(abs(spatial')) > 5);
 else
    posInds = 1:size(r,1);%
 end
@@ -191,19 +191,19 @@ for i = 1:size(t,1)
 %    meanAng(i) = circ_mean(angle(r1(1:size(Xf,1)-1,posInds(i))),abs(r1(1:size(Xf,1)-1,posInds(i))));
 end
 spatial = bsxfun(@times,spatial,exp(1i*(pi/2-meanAng')));
-figure;imagesc(complexIm(spatial,0,1));
-spsh = spatial;
-for i = 1:size(spsh,1)
-    spsh(i,:) = circshift(spsh(i,:),[0 -peakLoc(i)+accumbins(1)]);
-end
-figure;imagesc(complexIm(spsh,0,1));
+%figure;imagesc(complexIm(spatial,0,1));
+%spsh = spatial;
+%for i = 1:size(spsh,1)
+%    spsh(i,:) = circshift(spsh(i,:),[0 -peakLoc(i)+accumbins(1)]);
+%end
+%figure;imagesc(complexIm(spsh,0,1));
 for i = 1:numel(posInds)
     te = reshape(t1(i,:),[max(runs) 2*accumbins(1)]);
 %     if skewness(te(:)) < 0
 %         te = -te;
 %         sk(i) = -1;
 %     end
-    figure(h1);subplot(xdim,ydim,i);imagesc(complexIm(imfilter(te.*exp(1i*(pi/2-meanAng(i))),fspecial('gaussian',5,1)),0,1,[],[],2.5));axis off;%s(temp(indLoc(i))),[0 max(te(:))]
+    figure(h1);subplot(xdim,ydim,i);imagesc(complexIm(imfilter(te.*exp(1i*(pi/2-meanAng(i))),fspecial('gaussian',5,1)),0,1));axis off;%s(temp(indLoc(i))),[0 max(te(:))]
     tes(i,:,:) = te;
     u = r1(1:size(Xf,1),posInds(i));%*exp(1i*(pi/2-meanAng(i)));
     if exist('probes','var') && ~isempty(probes)
@@ -218,10 +218,10 @@ for i = 1:numel(posInds)
         up1 = [up1(:,1:8) zeros(size(up1,1),1) up1(:,9:16)];
     else
         %up1 = reshape(u,[8 ,(size(Xf,1)/2-1)/8]);
-        up1 = reshape(u,[8,(size(Xf,1))/8]);
+        %up1 = reshape(u,[8,(size(Xf,1))/8]);
     end
-    ups(i,:,:) = up1;
-    figure(h2);subplot(xdim,ydim,i);imagesc(complexIm(up1,0,1));axis off;
+    %ups(i,:,:) = up1;
+    %figure(h2);subplot(xdim,ydim,i);imagesc(complexIm(up1,0,1));axis off;
 end
 
 %sPlot([bsxfun(@times,t,sk'); vel']);
