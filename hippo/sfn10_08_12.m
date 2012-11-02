@@ -93,3 +93,25 @@ ccfa(:,fy(i)) = 0;
 subplot(6,6,2*i-1);imagesc(complexIm(imfilter(squeeze(tes1(fx(i),:,:)),fspecial('gaussian',5,1)),0,1));axis off;
 subplot(6,6,2*i);imagesc(complexIm(imfilter(squeeze(teSp(fy(i),:,:)),fspecial('gaussian',5,1)),0,1));axis off;
 end
+%% compare different layers in 512-electrode data
+ss = [];
+for i =1:32
+x = getData('AB3-58.h5',(i-1)*16+(1:16),1000000);
+x = filtHigh(x,1250,100,8);
+s = std(x,0,2);
+ss = [ss s];
+end
+ss1 = ss(:);
+probes1= probes(:,[1:12 14 13 16 15]);
+for i = 1:size(probes,1)
+for j = 1:size(probes,2)
+ssa(i,j) = ss1(probes1(i,j)+1);
+end
+end
+r = roipoly;
+f = probes1(ssa < .11 & r)+1;
+[A,W] = runTriggerICA(pos,v,Xf(f,:),.05);
+r1 = roipoly;
+f1 = probes1(ssa > .12 & r1)+1;
+[A1,W1] = runTriggerICA(pos,v,Xf(f1,:),.05);
+[A2,W2] = runTriggerICA(pos,v,Xf([f; f1],:),.05);

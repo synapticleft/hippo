@@ -155,6 +155,8 @@ for i = 1:size(Wp,2)-1
     S = 0;
     for j = 1:numel(highResp)
         convInd = mod(((highResp(j)-5+1)*range(win)+1:(highResp(j)+5)*range(win))-1,size(allX1,2))+1;
+        numel(convInd)
+        size(Wp)
         t = allX1(:,convInd);
         co = zeros(1,size(t,2)-range(win)+1);
         for k = 1:size(t,2)-range(win)+1
@@ -173,8 +175,8 @@ for i = 1:size(Wp,2)-1
     axis tight;
         set(gca,'xtick',[],'ytick',[]);
     figure(f4);subplot(xdim,ydim,i);imagesc(complexIm(reshape(A(:,i),[8 8]),0,1));axis off;
-    figure(f5);
     if exist('subSet','var')
+        figure(f5);
         f = find(i == subSet);
         if ~isempty(f)
             subplot(numel(subSet),4,(f-1)*4+1);imagesc(complexIm(reshape(A(:,i),[8 8]),0,1));axis off;

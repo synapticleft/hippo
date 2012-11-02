@@ -38,33 +38,17 @@ for i = 1:2
     veld(:,i) = floor(veld(:,i)*accumbins(min(numel(accumbins),i)))+1;
 end
 offSet = 1;
-Xf = [bsxfun(@times,Xf,exp(1i*angle(v(:,1))).')];...
-%     [zeros(offSet,1); v(1+offSet:end,1).*conj(v(1:end-offSet,1))./abs(v(1:end-offSet,1))].'];
-%  Xf = [bsxfun(@times,Xf,v(:,1).');...
-%    [zeros(offSet,1); v(1+offSet:end,1).*conj(v(1:end-offSet,1))].'];
-%Xf = [real(Xf);imag(Xf)];
+Xf = [bsxfun(@times,Xf,exp(1i*angle(v(:,1))).')];
 inds = bwmorph(inds,'dilate',20);
 Xf = Xf(:,inds);posd = posd(inds,:);veld = veld(inds,:);vel = vel(inds);pos = pos(inds,:);
-%Xf = bsxfun(@minus,Xf,mean(Xf,2));
 if ~exist('r1','var')
-    r1 = pinv(r);%r';%
+    r1 = pinv(r);
 end
 %lambda = 1000;
-%    [E, D]=pcamat(Xf, 1, size(r,1), 'off','off');
-%    dD = flipud(diag(D));
-%    r1 = E*inv(sqrt (D) + lambda*eye(size(D)))*E'*r1;%
 if exist('posInds','var') && ~isempty(posInds)
     r1 = r1(:,posInds);r = r(posInds,:); %% IS THIS RIGHT??
 end
-% r = complex(r(:,1:end/2),r(:,end/2+1:end));r1 = complex(r1(1:end/2,:),r1(end/2+1:end,:));
-% Xf = zscore([real(Xf);imag(Xf)],0,2);
-% Xf = complex(Xf(1:end/2,:),Xf(end/2+1:end,:));
-%Xf = zscore(Xf,0,2);
-%     [V, D, U] = svd(Xf', 0);     % economy SVD of data matrix
-%     B = U*D/sqrt(size(Xf,2));            % PCA mixing-matrix estimate
-%     Xf = sqrt(size(Xf,2))*V';
-t = (r)*Xf;%r1*bsxfun(@minus,Xf,mean(Xf,2));%
-%t = abs(t);%[real(t);imag(t)];
+t = r*Xf;
 if 0
     [B M] = size(t);
     opts = lbfgs_options('iprint', -1, 'maxits', 20, ...
@@ -132,7 +116,6 @@ nanInds = find(~isnan(b));
 b = interp1(nanInds,b(nanInds),1:size(pos,1));
 b = [0 diff(b)];
 runs = bwlabel(b > 0);
-vInterp = zeros(2,size(t,1),max(runs),accumbins(1));
 w = watershed(b==0);
 w = w-1; 
 posd(mod(w,2) ==1 ,1) = posd(mod(w,2) ==1 ,1) + max(posd(:));
@@ -155,7 +138,7 @@ for i = 1:size(t1,1)
 end
 
 if ~exist('posInds','var') || isempty(posInds)
-    posInds = find(max(abs(spatial')) > 5);
+    posInds = find(max(abs(spatial')) > 8);
 else
    posInds = 1:size(r,1);%
 end
@@ -218,12 +201,16 @@ for i = 1:numel(posInds)
         up1 = [up1(:,1:8) zeros(size(up1,1),1) up1(:,9:16)];
     else
         %up1 = reshape(u,[8 ,(size(Xf,1)/2-1)/8]);
-        %up1 = reshape(u,[8,(size(Xf,1))/8]);
+%        up1 = reshape(u,[8,(size(Xf,1))/8]);
     end
-    %ups(i,:,:) = up1;
-    %figure(h2);subplot(xdim,ydim,i);imagesc(complexIm(up1,0,1));axis off;
+%    ups(i,:,:) = up1;
+%    figure(h2);subplot(xdim,ydim,i);imagesc(complexIm(up1,0,1));axis off;
 end
 
+% h3 = figure;subplot(311);imagesc(reshape(std(r),[8 size(Xf,1)/8]));
+% subplot(312);imagesc(reshape(std(r(posInds,:)),[8 size(Xf,1)/8]));
+% subplot(313);imagesc(reshape(mean(abs(r(posInds,:))),[8 size(Xf,1)/8]));
+% freezeColors(h3);
 %sPlot([bsxfun(@times,t,sk'); vel']);
 %figure;imagesc(complexIm(corr(ups(:,:)'),0,1));
 superImpC(tes,[],1,prctile(abs(tes(:)),99.5));

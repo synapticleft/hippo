@@ -79,8 +79,18 @@ spf = morFilter(sp,8,1250/32);clear sp;
 [~,~,teSp] = runTriggerViewSp(pos,v,spf(cellInfo >= 1,:),[50 1],.05);
 [~,~,tes1] = runTriggerViewC(pos,v,tdf,[50 1],.05,eye(size(tdf,1)));
 for i = 1:size(tes1,1)
-teSpf(i,:,:) = imfilter(squeeze(teSp(i,:,:)),fspecial('gaussian',5,1));
+    tes1f(i,:,:) = imfilter(squeeze(tes1(i,:,:)),fspecial('gaussian',5,1));
 end
 for i = 1:85
-teSpf(i,:,:) = imfilter(squeeze(teSp(i,:,:)),fspecial('gaussian',5,1));
+    teSpf(i,:,:) = imfilter(squeeze(teSp(i,:,:)),fspecial('gaussian',5,1));
 end
+ccf = abs(corr(tes1f(:,:)',teSpf(:,:)'));
+figure;ccfa = ccf1;
+for i = 1:18
+[fx(i),fy(i)] = find(ccfa == max(ccfa(:)));
+ccfa(fx(i),:) = 0;
+ccfa(:,fy(i)) = 0;
+subplot(6,6,2*i-1);imagesc(complexIm(imfilter(squeeze(tes1(fx(i),:,:)),fspecial('gaussian',5,1)),0,1));axis off;
+subplot(6,6,2*i);imagesc(complexIm(imfilter(squeeze(teSp(fy(i),:,:)),fspecial('gaussian',5,1)),0,1));axis off;
+end
+%% compare different lay
