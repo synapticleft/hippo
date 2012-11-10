@@ -13,8 +13,8 @@ function im = superImpC(x,frames,rad,maxVal,meanAng)
 % end
 vs = zeros(size(x,1),size(x,3));
 for i = 1:size(x,1)
-    [~,s,v] = svds(squeeze(x(i,:,:)),1);
-    vs(i,:) = s*v';
+    [u,s,v] = svds(squeeze(x(i,:,:)),1);
+    vs(i,:) = -mean(u)/abs(mean(u))*s*v';
     if exist('rad','var') && rad
         x(i,:,:) = imfilter(squeeze(x(i,:,:)),fspecial('gaussian',5,rad));
     end
@@ -34,7 +34,7 @@ scale = 4;angCol = colormap('hsv');
 figure;
 if ~exist('meanAng','var')
     for i = 1:size(vs,1)
-        meanAng(i) = angle(vs(i,peakLoc(i)));
+        meanAng(i) = 0;%angle(vs(i,peakLoc(i)));
     end
 end
 c = mod(peakLoc*scale/size(x,3),1);

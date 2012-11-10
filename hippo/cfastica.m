@@ -1,4 +1,4 @@
-function [A W] = cfastica(mixedsig)
+function [A W Z] = cfastica(mixedsig)
 
 % Complex FastICA
 % Ella Bingham 1999
@@ -56,6 +56,9 @@ Dx = diag(factors./noise_factors);
 whiteningMatrix = sqrt(inv(Dx)) * Ex';%eye(size(mixedsig,1));%
 x = whiteningMatrix * mixedsig;
 dewhiteningMatrix = Ex * sqrt (Dx);%whiteningMatrix;%
+rolloff_ind = 2;
+noise_factors(1:rolloff_ind) = .5*(1+cos(linspace(pi-.01,0,rolloff_ind))); 
+zerophaseMatrix = Ex*sqrt(diag(flipud(noise_factors)))*Ex';%inv (sqrt (D))*E';
 % verbose = 'on';
 % interactivePCA = 'off';
 % [E, D, cumVar]= gpcamat(mixedsig, 1, size(mixedsig,1), interactivePCA, verbose);
@@ -98,6 +101,7 @@ n = size(x,1);
   end
 	A = dewhiteningMatrix * W;  
   	W = W' * whiteningMatrix;
+Z = zerophaseMatrix*A;
 
 
 % abs((Q*A)'*W) should be a permutation matrix; Figure 1 in the IJNS paper

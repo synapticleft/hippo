@@ -10,7 +10,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-function [A, W1, Z] = nonCircComplexFastICAsym(xold,typeStr)
+function [A, W1] = nonCircComplexFastICAsym(xold,typeStr)
 type = 0;
 if strcmp(typeStr,'log') == 1
     type = 1;
@@ -23,7 +23,7 @@ elseif strcmp(typeStr,'pow') == 1
 end
 
 tol = 1e-3;
-a2= .001;
+a2= .01;
 maxcounter = 100;
 % Whitening of s:
 % yyy = zeros(1,m);
@@ -45,13 +45,11 @@ Dx = diag(factors./noise_factors);
 whiteningMatrix = sqrt(inv(Dx)) * Ex';
 x = whiteningMatrix * xold;
 dewhiteningMatrix = Ex * sqrt (Dx);
-rolloff_ind = 2;
-%noise_factors(1:rolloff_ind) = .5*(1+cos(linspace(pi-.01,0,rolloff_ind))); 
-%D = diag(flipud(1./noise_factors));
-%zerophaseMatrix = E*inv (sqrt (D))*E';
+noise_factors(:) = 1;
+rolloff_ind = 1;
 noise_factors(1:rolloff_ind) = .5*(1+cos(linspace(pi-.01,0,rolloff_ind))); 
-%D = diag(flipud(1./noise_factors));
-zerophaseMatrix = Ex*sqrt(diag(flipud(noise_factors)))*Ex';%inv (sqrt (D))*E';
+D = diag(flipud(1./noise_factors));
+zerophaseMatrix = E*inv (sqrt (D))*E';
 
 [n,m] = size(x);
 %Pseudo-covariance
@@ -126,7 +124,6 @@ end; %Loop thru sources
 
 %shat = W1'*x; %Estimated sources
 A = dewhiteningMatrix*W1;
-Z = zerophaseMatrix*A;
 W1 = W1' * whiteningMatrix;
 
 %Ahat = inv(Q)*W1;

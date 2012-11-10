@@ -1,4 +1,4 @@
-function [A,W] = runTriggerICA(pos,v,Xf,thresh)
+function [A,W,Z] = runTriggerICA(pos,v,Xf,thresh)
 %% convert demodulated complex data to real valued w/ 2x dimensionality, 
 %% run fastICA, then bin and render activations.
 warning off all;
@@ -39,7 +39,7 @@ for i = 1:2
     pos(:,i) = min(pos(:,i),.9999);
 end
 offSet = 1;
-%Xf = [bsxfun(@times,Xf,exp(1i*angle(v(:,1))).')];...
+%Xf = [bsxfun(@times,Xf,exp(1i*angle(v(:,1))).')];%...
 %      [zeros(offSet,1); v(1+offSet:end,1).*conj(v(1:end-offSet,1))./abs(v(1:end-offSet,1))].'];
 % Xf = [bsxfun(@times,Xf,v(:,1).');...
 %     [zeros(offSet,1); v(1+offSet:end,1).*conj(v(1:end-offSet,1))].'];
@@ -64,7 +64,7 @@ vel = vel/max(vel);inds = vel > thresh;
 %t = Xf(:,inds);
 %[r,~,t] = runica(Xf(:,inds),'pca',50);
 Xf = Xf(:,inds);
-[A,W] =cfastica(Xf);%nonCircComplexFastICAsym(Xf,'log');%
+[A,W,Z] = ACMNsym(Xf,'mle_circ');%nonCircComplexFastICAsym(Xf,'pow');%cfastica(Xf);c%complex_ICA_EBM(Xf);%%zscore(Xf,0,2));%zscore(Xf,0,2)n
 return
  Xf = [real(Xf);imag(Xf)];%[abs(Xf); angle(Xf)];
  rdim = size(Xf,1);
