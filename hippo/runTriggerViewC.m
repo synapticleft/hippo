@@ -40,7 +40,7 @@ end
 offSet = 1;
 Xf = [bsxfun(@times,Xf,exp(1i*angle(v(:,1))).')];
 inds = bwmorph(inds,'dilate',20);
-Xf = Xf(:,inds);posd = posd(inds,:);veld = veld(inds,:);vel = vel(inds);pos = pos(inds,:);
+Xf = Xf(:,inds);posd = posd(inds,:);veld = veld(inds,:);vel = vel(inds);pos = pos(inds,:);v = v(inds,:);
 r1 = pinv(r);
 if ~exist('r2','var')
     r2 = r1;
@@ -129,8 +129,8 @@ end
 spatial = randn(size(t1,1),2*accumbins(1));
 for i = 1:size(t1,1)
     temp = reshape(t1(i,:),[max(runs) 2*accumbins(1)]);
-    [u,s,v] = svds(temp,1);
-    spatial(i,:) = exp(1i*angle(mean(u)))*s*v';% 
+    [u,s,v1] = svds(temp,1);
+    spatial(i,:) = exp(1i*angle(mean(u)))*s*v1';% 
 %     if -min(v) > max(v) 
 %         v = -v; 
 %     end
@@ -152,7 +152,9 @@ spatial = spatial(posInds,:);
 posInds = posInds(indLoc);
 spatial = spatial(indLoc,:);
 t = t(posInds,:);t1 = t1(posInds,:,:);
+t = bsxfun(@times,t,exp(1i*-angle(v(:,1))).');
 sPlot(t);
+sPlot(morFilter(t,1250/32,8));
 sPlot(abs(t));
 h1 = figure;
 h2 = figure;
@@ -202,11 +204,10 @@ for i = 1:numel(posInds)
         up1 = up1(:,[1:12 14 13 16 15]);
         up1 = [up1(:,1:8) zeros(size(up1,1),1) up1(:,9:16)];
     else
-        %up1 = reshape(u,[8 ,(size(Xf,1)/2-1)/8]);
-%        up1 = reshape(u,[8,(size(Xf,1))/8]);
+        up1 = reshape(u,[8,(size(Xf,1))/8]);
     end
 %    ups(i,:,:) = up1;
-%    figure(h2);subplot(xdim,ydim,i);imagesc(complexIm(up1,0,1));axis off;
+    figure(h2);subplot(xdim,ydim,i);imagesc(complexIm(up1,0,1));axis off;
 end
 % h3 = figure;subplot(311);imagesc(reshape(std(r),[8 size(Xf,1)/8]));
 % subplot(312);imagesc(reshape(std(r(posInds,:)),[8 size(Xf,1)/8]));

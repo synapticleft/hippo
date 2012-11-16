@@ -35,20 +35,20 @@ end
 
 if dec > 1
     X1 = zeros(numel(elecs),round(sz/dec));
-    for i = elecs
+    for i = 1:numel(elecs)
         tic;
-        temp = double(h5varget([data_root fname],'/hReal',[i-1 rind],[1 sz]));%nSamples(1)
+        temp = double(h5varget([data_root fname],'/hReal',[elecs(i)-1 rind],[1 sz]));%nSamples(1)
         toc
         tic;
-        X1(i-min(elecs)+1,:) = decimate(temp,dec);%X(i,:),dec);
+        X1(i,:) = decimate(temp,dec);%X(i,:),dec);
         toc
-        fprintf([num2str(i-min(elecs)+1) ' ']);
+        fprintf([num2str(i) ' ']);
     end
     X = X1;clear X1;
 else
     X = zeros(numel(elecs),sz);
-    for i = elecs
-        X(i-min(elecs)+1,:) = double(h5varget([data_root fname],'/hReal',[i-1 rind],[1 sz]));
+    for i = 1:numel(elecs)
+        X(i,:) = double(h5varget([data_root fname],'/hReal',[elecs(i)-1 rind],[1 sz]));
     end
 end
 X = bsxfun(@minus,X,mean(X,2));

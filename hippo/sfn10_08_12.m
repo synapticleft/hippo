@@ -115,3 +115,9 @@ r1 = roipoly;
 f1 = probes1(ssa > .12 & r1)+1;
 [A1,W1] = runTriggerICA(pos,v,Xf(f1,:),.05);
 [A2,W2] = runTriggerICA(pos,v,Xf([f; f1],:),.05);
+%% ica on anterior, posterior, and both shanks (AB3-58AP.mat)
+[A2,W2,Z2] = runTriggerICA(pos,v,Xf(:,:),.05);
+[A,W,Z] = runTriggerICA(pos,v,Xf(probes1(:) > 255,:),.05);
+[A1,W1,Z1] = runTriggerICA(pos,v,Xf(probes1(:) <= 255,:),.05);
+runTriggerViewC(pos,v,Xf(probes1(:) <= 255,:),[50 1],.05,W1);
+runTriggerViewC(pos,v,Xf(probes1(:) > 255,:),[50 1],.05,W);
