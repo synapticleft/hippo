@@ -9,7 +9,7 @@ pos(pos == -1) = nan;
 %plot([0; diff(pos(:,1))]);
 %plot(flipud([0; diff(flipud(pos(:,1)))]));
 reject = 0;
-for i = 1:4
+for i = 1:size(pos,2)
     reject = reject | min([0; diff(pos(:,i))],flipud([0; diff(flipud(pos(:,i)))])) < -20;
 end
 pos(reject,:) = nan;
@@ -17,11 +17,14 @@ pos(reject,:) = nan;
 if size(v,1) < size(pos,1)
     pos = pos(1:size(v,1),:);
 end
-for i = 1:4
+for i = 1:size(pos,2)
     nanInds = find(~isnan(pos(:,i)));
     pos(:,i) = interp1(nanInds,pos(nanInds,i),1:size(pos,1));
 end
-nanInds = isnan(pos(:,1)) | isnan(pos(:,3));
+nanInds = isnan(pos(:,1));
+if size(pos,2) > 2
+    nanInds = nanInds | isnan(pos(:,3));
+end
 pos = pos(~nanInds,:);v = v(~nanInds,:);Xf = Xf(:,~nanInds);%sp = sp(:,~nanInds);
 if dec > 1
     for i = 1:4
@@ -29,8 +32,6 @@ if dec > 1
     end
     pos = posd;clear posd;
 end
-vel = angVel(pos);%vel = filtLow(vel(:,1),1250/32,1);
-vel = [0; vel(:,1)];
 pos = bsxfun(@minus,pos,mean(pos));
 [a,~,~] = svd(pos(:,1:2),'econ');pos = a;
 for i = 1:2    
@@ -51,20 +52,15 @@ end
 Xf = Xfd;clear Xfd;
 end
 
-%Xf = filtLow(Xf,1250/32/dec,2);
+if 0
+vel = angVel(pos);%vel = filtLow(vel(:,1),1250/32,1);
+vel = [0; vel(:,1)];
 vel = filtLow(vel,1250/32/dec,1);
-%aV = decimate(abs(v(:,1)),dec);
-%aV = filtLow(aV,1250/32/dec,1);
-%aV = aV/prctile(aV,99.3);
-%figure;plot(vel(:,1));hold all;plot(aV);return
-%inds = aV > thresh & aV < 1;
-vel = vel/max(vel);inds = vel > thresh;
-%inds = inds & pos(:,1)< bounds(2) & pos(:,1) > bounds(1);
-%sum(inds)
-%t = Xf(:,inds);
-%[r,~,t] = runica(Xf(:,inds),'pca',50);
+vel = vel/max(vel);
+inds = vel > thresh;
 Xf = Xf(:,inds);
-[A,W,Z] = ACMNsym(Xf,'mle_circ');%nonCircComplexFastICAsym(Xf,'pow');%cfastica(Xf);c%complex_ICA_EBM(Xf);%%zscore(Xf,0,2));%zscore(Xf,0,2)n
+end
+[A,W,Z] = cfpa2(Xf);%ACMNsym(Xf,'mle_circ');%%nonCircComplexFastICAsym(Xf,'pow');%cfastica(Xf);c%complex_ICA_EBM(Xf);%%zscore(Xf,0,2));%zscore(Xf,0,2)n
 return
  Xf = [real(Xf);imag(Xf)];%[abs(Xf); angle(Xf)];
  rdim = size(Xf,1);

@@ -50,7 +50,7 @@ dewhiteningMatrix = Ex * sqrt (Dx);
 %D = diag(flipud(1./noise_factors));
 %zerophaseMatrix = E*inv (sqrt (D))*E';
 rolloff_ind = 2;
-noise_factors(1:rolloff_ind) = .5*(1+cos(linspace(pi-.01,0,rolloff_ind))); 
+noise_factors(1:rolloff_ind) = .5*(1+cos(linspace(pi-.01,0,rolloff_ind)));
 %D = diag(flipud(1./noise_factors));
 zerophaseMatrix = Ex*sqrt(diag(flipud(noise_factors)))*Ex';%inv (sqrt (D))*E';
 

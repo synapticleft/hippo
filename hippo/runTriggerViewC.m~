@@ -14,22 +14,15 @@ for i = 1:size(pos,2)
     nanInds = find(~isnan(pos(:,i)));
     pos(:,i) = interp1(nanInds,pos(nanInds,i),1:size(pos,1));
 end
-nanInds = isnan(pos(:,1));
-if size(pos,2) > 2
-    nanInds = nanInds | isnan(pos(:,3));
-end
+nanInds = isnan(pos(:,1)) | isnan(pos(:,3));
 pos = pos(~nanInds,:);v = v(~nanInds,:);Xf = Xf(:,~nanInds);%sp = sp(:,~nanInds);
-if 0
-    vel = angVel(pos);
-else
-    vel = diff(pos);
-    vel = sqrt(sum(vel.^2,2));
-end
-vel = [zeros(1,size(vel,2)); vel];
-for i = 1:size(vel,2)
+vel = angVel(pos);
+%vel = diff(pos);
+vel = [zeros(1,2); vel(:,1:2)];
+for i = 1:size(v
     vel(:,i) = filtLow(vel(:,i),1250/32,1);
 end
-%veld = vel;
+veld = vel;
 vel = vel(:,1);
 vel = vel/max(vel);inds = vel > thresh;
 pos = bsxfun(@minus,pos,mean(pos));
@@ -38,17 +31,16 @@ for i = 1:2
     pos(:,i) = pos(:,i) - min(pos(:,i));
     pos(:,i) = pos(:,i)/(max(pos(:,i)));
     pos(:,i) = min(pos(:,i),.9999);
-%    veld(:,i) = veld(:,i) - min(veld(:,i));
-%    veld(:,i) = veld(:,i)/max(veld(:,i));
-%    veld(:,i) = min(veld(:,i),.9999);
+    veld(:,i) = veld(:,i) - min(veld(:,i));
+    veld(:,i) = veld(:,i)/max(veld(:,i));
+    veld(:,i) = min(veld(:,i),.9999);
     posd(:,i) = floor(pos(:,i)*accumbins(min(numel(accumbins),i)))+1;
-%    veld(:,i) = floor(veld(:,i)*accumbins(min(numel(accumbins),i)))+1;
+    veld(:,i) = floor(veld(:,i)*accumbins(min(numel(accumbins),i)))+1;
 end
 offSet = 1;
 Xf = [bsxfun(@times,Xf,exp(1i*angle(v(:,1))).')];
 inds = bwmorph(inds,'dilate',20);
-Xf = Xf(:,inds);posd = posd(inds,:);%veld = veld(inds,:);
-vel = vel(inds);pos = pos(inds,:);v = v(inds,:);
+Xf = Xf(:,inds);posd = posd(inds,:);veld = veld(inds,:);vel = vel(inds);pos = pos(inds,:);v = v(inds,:);
 r1 = pinv(r);
 if ~exist('r2','var')
     r2 = r1;
@@ -109,14 +101,12 @@ for i = 1:numel(posInds)
         %up1 = diff(up1);
         up1 = [up1(:,1:8) zeros(size(up1,1),1) up1(:,9:16)];
     else
-        up1 = reshape(u,[16 6]);%[8 size(Xf,1)/8]);
+        up1 = reshape(u,[8 size(Xf,1)/8]);
     end
     figure(f1);subplot(xdim,ydim,i);imagesc(complexIm(up1,0,1));axis off;
-    ac = accumarray(posd,t(i,:),accumbins,@mean,0);
-    figure(f2);subplot(xdim,ydim,i);imagesc(complexIm(imfilter(ac,fspecial('gaussian',5,1),'replicate'),0,1));axis off;
-    %title(kurtosis(abs(ac(:))))
+    figure(f2);subplot(xdim,ydim,i);imagesc(complexIm(imfilter(accumarray(posd,t(i,:),accumbins,@mean,0),fspecial('gaussian',5,1),'replicate'),0,1));axis off;
 end
-sPlot(t);%[10*vel';t]);
+sPlot([10*vel';t]);
 return
 % %%FOR 1D TRACK
 b = nan*ones(size(pos,1),1);
