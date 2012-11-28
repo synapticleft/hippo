@@ -33,13 +33,13 @@ if dec > 1
     pos = posd;clear posd;
 end
 pos = bsxfun(@minus,pos,mean(pos));
-[a,~,~] = svd(pos(:,1:2),'econ');pos = a;
-for i = 1:2    
-    pos(:,i) = pos(:,i) - min(pos(:,i));
-    pos(:,i) = pos(:,i)/(max(pos(:,i)));
-    pos(:,i) = min(pos(:,i),.9999);
-end
-offSet = 1;
+% [a,~,~] = svd(pos(:,1:2),'econ');pos = a;
+% for i = 1:2    
+%     pos(:,i) = pos(:,i) - min(pos(:,i));
+%     pos(:,i) = pos(:,i)/(max(pos(:,i)));
+%     pos(:,i) = min(pos(:,i),.9999);
+% end
+% offSet = 1;
 %Xf = [bsxfun(@times,Xf,exp(1i*angle(v(:,1))).')];%...
 %      [zeros(offSet,1); v(1+offSet:end,1).*conj(v(1:end-offSet,1))./abs(v(1:end-offSet,1))].'];
 % Xf = [bsxfun(@times,Xf,v(:,1).');...
@@ -52,15 +52,13 @@ end
 Xf = Xfd;clear Xfd;
 end
 
-if 0
 vel = angVel(pos);%vel = filtLow(vel(:,1),1250/32,1);
 vel = [0; vel(:,1)];
 vel = filtLow(vel,1250/32/dec,1);
 vel = vel/max(vel);
 inds = vel > thresh;
 Xf = Xf(:,inds);
-end
-[A,W,Z] = cfpa2(Xf);%ACMNsym(Xf,'mle_circ');%%nonCircComplexFastICAsym(Xf,'pow');%cfastica(Xf);c%complex_ICA_EBM(Xf);%%zscore(Xf,0,2));%zscore(Xf,0,2)n
+[A,W,Z] = ACMNsym(Xf,'mle_circ');%cfpa2(Xf);%%nonCircComplexFastICAsym(Xf,'pow');%cfastica(Xf);c%complex_ICA_EBM(Xf);%%zscore(Xf,0,2));%zscore(Xf,0,2)n
 return
  Xf = [real(Xf);imag(Xf)];%[abs(Xf); angle(Xf)];
  rdim = size(Xf,1);

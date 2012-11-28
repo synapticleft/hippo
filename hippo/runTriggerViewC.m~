@@ -14,15 +14,22 @@ for i = 1:size(pos,2)
     nanInds = find(~isnan(pos(:,i)));
     pos(:,i) = interp1(nanInds,pos(nanInds,i),1:size(pos,1));
 end
-nanInds = isnan(pos(:,1)) | isnan(pos(:,3));
+nanInds = isnan(pos(:,1));
+if size(pos,2) > 2
+    nanInds = nanInds | isnan(pos(:,3));
+end
 pos = pos(~nanInds,:);v = v(~nanInds,:);Xf = Xf(:,~nanInds);%sp = sp(:,~nanInds);
-vel = angVel(pos);
-%vel = diff(pos);
-vel = [zeros(1,2); vel(:,1:2)];
-for i = 1:size(v
+if 0
+    vel = angVel(pos);
+else
+    vel = diff(pos);
+    vel = sqrt(sum(vel.^2,2));
+end
+vel = [zeros(1,size(vel,2)); vel];
+for i = 1:size(vel,2)
     vel(:,i) = filtLow(vel(:,i),1250/32,1);
 end
-veld = vel;
+%veld = vel;
 vel = vel(:,1);
 vel = vel/max(vel);inds = vel > thresh;
 pos = bsxfun(@minus,pos,mean(pos));
@@ -31,16 +38,17 @@ for i = 1:2
     pos(:,i) = pos(:,i) - min(pos(:,i));
     pos(:,i) = pos(:,i)/(max(pos(:,i)));
     pos(:,i) = min(pos(:,i),.9999);
-    veld(:,i) = veld(:,i) - min(veld(:,i));
-    veld(:,i) = veld(:,i)/max(veld(:,i));
-    veld(:,i) = min(veld(:,i),.9999);
+%    veld(:,i) = veld(:,i) - min(veld(:,i));
+%    veld(:,i) = veld(:,i)/max(veld(:,i));
+%    veld(:,i) = min(veld(:,i),.9999);
     posd(:,i) = floor(pos(:,i)*accumbins(min(numel(accumbins),i)))+1;
-    veld(:,i) = floor(veld(:,i)*accumbins(min(numel(accumbins),i)))+1;
+%    veld(:,i) = floor(veld(:,i)*accumbins(min(numel(accumbins),i)))+1;
 end
 offSet = 1;
 Xf = [bsxfun(@times,Xf,exp(1i*angle(v(:,1))).')];
 inds = bwmorph(inds,'dilate',20);
-Xf = Xf(:,inds);posd = posd(inds,:);veld = veld(inds,:);vel = vel(inds);pos = pos(inds,:);v = v(inds,:);
+Xf = Xf(:,inds);posd = posd(inds,:);%veld = veld(inds,:);
+vel = vel(inds);pos = pos(inds,:);v = v(inds,:);
 r1 = pinv(r);
 if ~exist('r2','var')
     r2 = r1;
@@ -87,8 +95,9 @@ xdim = ceil(sqrt(numel(posInds)));ydim = ceil(numel(posInds)/xdim);
 f1 = figure;f2 = figure;
 %[sk,si] = sort(abs(skewness(t,0,2)),'descend');
 %r1 = r1(:,si);t = t(si,:);
+tes = zeros(numel(posInds),accumbins(1),accumbins(2));
 for i = 1:numel(posInds)
-    u = r1(:,i);%r1(1:size(Xf,1)-1,posInds(i));%
+    u = r2(:,i);%r1(1:size(Xf,1)-1,posInds(i));%
     if exist('probes','var') && ~isempty(probes)
         up1 = probes;
         for ii = 1:size(probes,1)
@@ -101,12 +110,17 @@ for i = 1:numel(posInds)
         %up1 = diff(up1);
         up1 = [up1(:,1:8) zeros(size(up1,1),1) up1(:,9:16)];
     else
-        up1 = reshape(u,[8 size(Xf,1)/8]);
+        up1 = reshape(u*exp(-1i*angle(mean(r1(:,i)))),[16 6]);%[8 size(Xf,1)/8]);
     end
     figure(f1);subplot(xdim,ydim,i);imagesc(complexIm(up1,0,1));axis off;
-    figure(f2);subplot(xdim,ydim,i);imagesc(complexIm(imfilter(accumarray(posd,t(i,:),accumbins,@mean,0),fspecial('gaussian',5,1),'replicate'),0,1));axis off;
+    ac = imfilter(accumarray(posd,t(i,:),accumbins,@mean,0),fspecial('gaussian',5,1),'replicate');
+    tes(i,:,:) = ac;
+    figure(f2);subplot(xdim,ydim,i);imagesc(complexIm(ac,0,1,[],[],2));axis off;
+    %title(kurtosis(abs(ac(:))))
 end
-sPlot([10*vel';t]);
+find(max(tes(:,:),[],2) > 1.4)
+superImpC(tes,max(tes(:,:),[],2) > 1.4,1,prctile(abs(tes(:)),99.9));
+%sPlot(t);%[10*vel';t]);
 return
 % %%FOR 1D TRACK
 b = nan*ones(size(pos,1),1);

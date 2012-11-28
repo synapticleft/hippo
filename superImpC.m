@@ -11,6 +11,9 @@ function im = superImpC(x,frames,rad,maxVal,meanAng)
 % else
 %     x = x(randperm(size(x,1)),:,:);
 % end
+if exist('frames','var') && ~isempty(frames)
+    x = x(frames,:,:);
+end
 vs = zeros(size(x,1),size(x,3));
 for i = 1:size(x,1)
     [u,s,v] = svds(squeeze(x(i,:,:)),1);
