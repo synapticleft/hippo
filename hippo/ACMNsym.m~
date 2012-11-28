@@ -159,8 +159,8 @@ a2 = .01;
     [E,D] = eig(W'*W);
     W = W * E * inv(sqrt(D)) * E';
   end; %While
-  figure;plot(alphas);
-  [mean(alphas) median(alphas)]
+  figure;plot(alphas1);
+  [mean(alphas1) median(alphas1)]
 A = dewhiteningMatrix*W;
 Z = zerophaseMatrix*A;
 W = W' * whiteningMatrix;
@@ -222,18 +222,15 @@ delt = 10;
     xRxC = 0;
     dirXRX = 0;
     dirXRX2 = 0;
-    temp = conj(X).*(inv(R)*X);
-    lt = log(temp);
-    temp = temp.^c;
-    xRxC = sum(real(temp));
-    dirXRX = sum(real(lt.*temp));
-    dirXRX2 = sum(real(lt.^2.*temp));
-%    for n = 1:N
-%        temp = (X(:,n)'*inv(R)* X(:,n));
-%        xRxC = xRxC +   real(temp^(c));
-%        dirXRX = dirXRX + real(log(temp)*temp^(c));
-%        dirXRX2 = dirXRX2 + real(log(temp)^2*temp^(c));
-%    end
+    temp = (X'*inv(R)*X);
+    xRxC = sum(real(temp.^c));
+    dirXRX = sum(log(temp).*
+    for n = 1:N
+        temp = (X(:,n)'*inv(R)* X(:,n));
+        xRxC = xRxC +   real(temp^(c));
+        dirXRX = dirXRX + real(log(temp)*temp^(c));
+        dirXRX2 = dirXRX2 + real(log(temp)^2*temp^(c));
+    end
 
     c2 = gamma(2/c)/(2*gamma(1/c));
     c2p = log(c2) - inv(c)*(2*psi(2/c)-psi(1/c));
