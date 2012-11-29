@@ -2,7 +2,7 @@ function Xf = morFilter(X,Fc,Fs,norm)
 if ~exist('norm','var')
     norm = 0;
 end
-win = 1;%/5;
+win = 1;
 Fb = 1/500;
 %Fc = 8.4 for hippocampus
 %Fb = 1/500, win = 1 for hippocampal LFP
