@@ -33,7 +33,7 @@ end
 vel = vel(:,1);
 vel = vel/max(vel);inds = vel > thresh;
 pos = bsxfun(@minus,pos,mean(pos));
-%[a,~,~] = svd(pos(:,1:2),'econ');pos = a;
+[a,~,~] = svd(pos(:,1:2),'econ');pos = a;
 for i = 1:2    
     pos(:,i) = pos(:,i) - min(pos(:,i));
     pos(:,i) = pos(:,i)/(max(pos(:,i)));
@@ -44,9 +44,10 @@ for i = 1:2
     posd(:,i) = floor(pos(:,i)*accumbins(min(numel(accumbins),i)))+1;
 %    veld(:,i) = floor(veld(:,i)*accumbins(min(numel(accumbins),i)))+1;
 end
-offSet = 1;
 Xf = [bsxfun(@times,Xf,exp(1i*angle(v(:,1))).')];
+%Xf = filtLow(Xf,1250/32,2);
 inds = bwmorph(inds,'dilate',20);
+%inds = abs(zscore(abs(v(:,1)))) < 2;
 Xf = Xf(:,inds);posd = posd(inds,:);%veld = veld(inds,:);
 vel = vel(inds);pos = pos(inds,:);v = v(inds,:);
 r1 = pinv(r);
@@ -76,7 +77,7 @@ if 0
         t(:,ind) = reshape(lbfgs(@objfun_a,temp(:),lb,ub,nb,opts,pinv(r),zscore(Xf(:,ind),0,2),2),B,M);
     end
 end
-% %2d stuff
+% % %2d stuff
 % %
 % % for i = 1:size(t,1)
 % %    cc(i,:) = xcorr(t(i,:),vel,1000);
@@ -120,11 +121,12 @@ end
 % end
 % [s,f] = sort(max(abs(tes(:,:)),[],2),'descend');
 % figure;plot(s);
-% s = input('cutoff?: ');
-% f = f(1:s);
+% s1 = input('cutoff low?: ');
+% s2 = input('cutoff high?: ');
+% f = f(s1:s2);
 % %f = find(max(abs(tes(:,:)),[],2) > 2)
 % superImpC(tes,f,1,prctile(abs(tes(:)),99.9));
-% sPlot(t);%[10*vel';t]);
+% sPlot(abs(t));%[10*vel';t]);
 % return
 % %%FOR 1D TRACK
 b = nan*ones(size(pos,1),1);

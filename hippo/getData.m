@@ -4,7 +4,7 @@ function [X whiteningMatrix dewhiteningMatrix] = getData(fname,elecs,sz,rind,dec
 % information. You will need to change data_root to match the folder where
 % you store the data files.
 
-data_root = '/media/Expansion Drive/redwood/';%'/media/work/hippocampus/';%
+data_root = '/media/work/hippocampus/';%'/media/Expansion Drive/redwood/';%
 %fname = 'hippo.h5';%'96elec.h5';%
 padding = 0;%20000;
 info = hdf5info([data_root fname]);
