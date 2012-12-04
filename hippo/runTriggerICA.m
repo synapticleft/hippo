@@ -56,10 +56,10 @@ vel = [0; vel(:,1)];
 vel = filtLow(vel,1250/32/dec,1);
 vel = vel/max(vel);
 inds = vel > thresh;
-inds = abs(zscore(abs(v(:,1)))) < 1;
+%inds = abs(zscore(abs(v(:,1)))) < 1;
 sum(inds)
 Xf = Xf(:,inds);
-[A,W,Z] = cfpa2(Xf);%ACMNsym(Xf,'mle_circ');%%%nonCircComplexFastICAsym(Xf,'pow');%cfastica(Xf);c%complex_ICA_EBM(Xf);%%zscore(Xf,0,2));%zscore(Xf,0,2)n
+[A,W,Z] = ACMNsym(Xf,'mle_circ');%cfpa2(Xf);%%%nonCircComplexFastICAsym(Xf,'pow');%cfastica(Xf);c%complex_ICA_EBM(Xf);%%zscore(Xf,0,2));%zscore(Xf,0,2)n
 return
  Xf = [real(Xf);imag(Xf)];%[abs(Xf); angle(Xf)];
  rdim = size(Xf,1);

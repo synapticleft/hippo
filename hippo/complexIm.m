@@ -13,7 +13,7 @@ if sub
 end
 
 if ~exist('setMax','var')
-    setMax = prctile(abs(in(:)),99);
+    setMax = prctile(abs(in(:)),99.9);
 end
 if ~exist('h','var') || isempty(h)
     %im(:,:,1) = min(1,max(0,(angle(in)*scale)/(2*pi)+.5));
