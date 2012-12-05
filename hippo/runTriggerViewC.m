@@ -77,18 +77,18 @@ if 0
         t(:,ind) = reshape(lbfgs(@objfun_a,temp(:),lb,ub,nb,opts,pinv(r),zscore(Xf(:,ind),0,2),2),B,M);
     end
 end
-% % %2d stuff
-% %
-% % for i = 1:size(t,1)
-% %    cc(i,:) = xcorr(t(i,:),vel,1000);
-% % end
-% % sPlot(cc);
-% %figure;plot(cc');
-% %xdim = ceil(sqrt(size(cc,1)));ydim= ceil(size(cc,1)/xdim);
-% %posd = posd(inds,:);veld = veld(inds,:);
-% %figure;for i = 1:size(cc,1)
-% %    subplot(xdim,ydim,i);imagesc(imfilter(accumarray(veld,t(i,:),accumbins,@mean,0),fspecial('gaussian',5,1)));
-% %end
+% %2d stuff
+%
+% for i = 1:size(t,1)
+%    cc(i,:) = xcorr(t(i,:),vel,1000);
+% end
+% sPlot(cc);
+%figure;plot(cc');
+%xdim = ceil(sqrt(size(cc,1)));ydim= ceil(size(cc,1)/xdim);
+%posd = posd(inds,:);veld = veld(inds,:);
+%figure;for i = 1:size(cc,1)
+%    subplot(xdim,ydim,i);imagesc(imfilter(accumarray(veld,t(i,:),accumbins,@mean,0),fspecial('gaussian',5,1)));
+%end
 if ~exist('posInds','var') || isempty(posInds)
     posInds = 1:size(r1,2);
 end

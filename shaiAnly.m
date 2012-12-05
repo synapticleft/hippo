@@ -22,8 +22,8 @@ numFrames = s(1).lsm.DimensionTime;
 useInds{2} = sum(s(1).data{1}) > 0;
 useInds{1} = sum(s(1).data{1},2) > 0;
 tempIm = zeros(sum(useInds{1}),sum(useInds{2}),3); %get rid of black regions
-im = imfilter(s(1).data{2}(useInds{1},useInds{2}),fspecial('gaussian',5,.5)); %smooth
-figure;imagesc((im));
+im = imfilter(double(s(1).data{2}(useInds{1},useInds{2})),fspecial('gaussian',5,0.5)); %smooth
+figure;imagesc(im);
 axis image off;colormap gray;
 for i = 1:numRois
     r{i} = roipoly;
@@ -57,14 +57,14 @@ subplot(211);sPlot(vol,[],0);title('Original');
 vol = filtHigh(vol,Fs,.001);
 subplot(212);sPlot(vol,[],0);title('Bleach-corrected (high-pass filter .001 Hz)');
 %vol = bsxfun(@rdivide,vol,vol(end,:));
-hist = 200;
+his = 200;
 figure;hold all;
 title('transfer function');
 %% xfer calculates the regression between ca and vol. 
 for i = 1:size(fs,1)
     cai = zscore(ca(i,:));voli = zscore(vol(i,:));
-    caT = toeplitz(zeros(hist,1),cai);
-    caT = caT(:,hist+1:end);voli = voli(hist+1:end);
+    caT = toeplitz(zeros(his,1),cai);
+    caT = caT(:,his+1:end);voli = voli(his+1:end);
     xfer = (caT*caT'/size(caT,2) + eye(size(caT,1))*2)\caT*voli'/size(caT,2);
     y(i,:) = voli;
     yHat(i,:) = xfer'*caT;

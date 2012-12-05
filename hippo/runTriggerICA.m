@@ -58,8 +58,8 @@ vel = vel/max(vel);
 inds = vel > thresh;
 %inds = abs(zscore(abs(v(:,1)))) < 1;
 sum(inds)
-Xf = Xf(:,inds);
-[A,W,Z] = ACMNsym(Xf,'mle_circ');%cfpa2(Xf);%%%nonCircComplexFastICAsym(Xf,'pow');%cfastica(Xf);c%complex_ICA_EBM(Xf);%%zscore(Xf,0,2));%zscore(Xf,0,2)n
+%Xf = Xf(:,inds);
+[A,W,Z] = ACMNsym(Xf(:,inds),'mle_circ');%cfpa2(Xf);%%%nonCircComplexFastICAsym(Xf,'pow');%cfastica(Xf);c%complex_ICA_EBM(Xf);%%zscore(Xf,0,2));%zscore(Xf,0,2)n
 return
  Xf = [real(Xf);imag(Xf)];%[abs(Xf); angle(Xf)];
  rdim = size(Xf,1);
