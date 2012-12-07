@@ -1,4 +1,4 @@
-function [spikeMat cellInfo shankInfo] = hipSpikes(file,bin,subSet)%a b c badUnits
+function spk = hipSpikes(file,bin,subSet)%[spikeMat cellInfo shankInfo]%a b c badUnits
 %% extract all spikes into matrix downsampled to match lfp and position files.
 %bin usually 32/1.25
 %%new way for Kenji's data
@@ -10,6 +10,10 @@ d = ['/media/Kenji_data/' Beh{whichDay,3} '/' Beh{whichDay,1} '/' file '/'];
 someShanks = unique(PyrIntMap.Map(dayCells,3));
 %%old way
 %d = ['/media/work/hippocampus/' file '/'];%['/media/Expansion Drive/KenjiMizuseki/'];%
+for i = 1:8
+spk{i} = LoadSpk([d file '.spk.' num2str(i)],8);
+end
+return
 if exist('someShanks','var') && ~isempty(someShanks)
     [a,b,c,d] = LoadCluRes([d file],someShanks);
 else

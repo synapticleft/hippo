@@ -133,6 +133,3 @@ sp = sp(cellInfo >= 1,:);
 td(2:2:36,:) = sp(fx,:);
 A1(:,2:2:36) = A(:,fy);
 A1(:,1:2:35) = A(:,fy);
-for i = 1:16
-subplot(6,6,2*i);title(sh(fx(i)));
-end
