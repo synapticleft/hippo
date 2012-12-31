@@ -39,13 +39,13 @@ for i = 1:20
     rid1 = bwmorph(rid,'dilate',1);
     m = mean(lastIm(xor(rid1,rid)));
     rid = rid1;
-    if m < gt*1.5
-        dil = i;
+    if m < gt
+        dil = i-1;
         break
     end
 end
 %figure;imagesc(double(watershed(lastIm,1,.1)));
-figure;imagesc(lastIm);%removeDen(lastIm,rid,dil));
+figure;imagesc(lastIm);
 axis image;colormap gray;
 %keepGoing = 1;i = 0;
 [xs ys] = ginput;
@@ -61,7 +61,8 @@ for i = 1:numel(xs)
         %[~,ind] = max(temp(:));
         %ind2sub(size(temp),ind);
 %        temp = regionprops(r{i},'Centroid');
-        cents(i,1,:) = localMax(lastIm,fil,xs(i),ys(i));%%temp.Centroid;
+        [cents(i,1,2) cents(i,1,1)] = getMax(lastIm,fil,xs(i),y(i));%%temp.Centroid;
+    end
 end
 %% junk
 %cents = round(cents);
@@ -94,15 +95,13 @@ for i = 1:ceil(numFrames/chunkSize)
         tempIm = tempIm/2^16;
         rid = getRidge(lastIm,fr);
         f = findshift(squeeze(tempIm(:,:,1)),lastIm);%'iter'
- %       tempIm = min(max(0,double(shift(tempIm,[f; 0]))),1);
+        tempIm = min(max(0,double(shift(tempIm,[f; 0]))),1);
         lastIm = mem*lastIm + (1-mem)*squeeze(tempIm(:,:,1));
-        lastImDen = removeDen(lastIm,rid,dil+1);
-        subplot(121);imagesc(lastImDen);hold all;axis image;colormap gray;
+        subplot(121);imagesc(removeDen(lastIm,rid,dil));hold all;axis image;colormap gray;
         subplot(122);imagesc(rid);axis image;colormap gray;
         %subplot(133);imagesc(tempIm);
         subplot(121);
-         for k = 1:size(cents,1)
-             cents(k,ind,:) = localMax(lastImDen,fil,cents(k,ind-1,1),cents(k,ind-1,2));
+%         for k = 1:numel(r)
 %             sh = round(squeeze(cents(k,ind-1,:))'-fliplr((size(r{1})+1)/2));
 %             temp = lastIm.*circshift(fil,[sh(2) sh(1)]);%squeeze(tempIm(:,:,1))
 %             [~,maxInd] = max(temp(:));
@@ -114,8 +113,8 @@ for i = 1:ceil(numFrames/chunkSize)
 % %                squeeze(lastIm(bounds(1):bounds(2),bounds(3):bounds(4),1)),'integer');
 % %            cents(k,ind,:) = [min(max(rad+1,cents(k,1,1)+f(2)),size(tempIm,1)-rad) ...ind-1
 % %                min(max(rad+1,cents(k,1,2)+f(1)),size(tempIm,2)-rad)];%ind-1
-             scatter(cents(k,ind,1),cents(k,ind,2),'filled');
-        end
+%             scatter(cents(k,ind,1),cents(k,ind,2),'filled');
+%        end
         hold off;
         drawnow;
         end
@@ -156,15 +155,12 @@ f = zeros(sz);
 f([1 sz(1)],:) = 1;
 f(:,[1 sz(2)]) = 1;
 
-function xy = localMax(im,fil,x,y)
-    sh = round([x y] - (size(im')+1)/2);
-    %        sh = round(squeeze(cents(k,ind-1,:))'-fliplr((size(r{1})+1)/2));
-    %subplot(211);imagesc(im);colormap('gray');
-    im = im.*circshift(fil,[sh(2) sh(1)]);
-    %subplot(212);
-    %imagesc(im);pause(.5);colormap('gray');
-    [~,maxInd] = max(im(:));
-    [xy(2) xy(1)] = ind2sub(size(im),maxInd);
+    function xy = localMax(im,x,y,fil)
+        sh = round([x y] - (size(im)+1)/2);
+%        sh = round(squeeze(cents(k,ind-1,:))'-fliplr((size(r{1})+1)/2));
+             im = im.*circshift(fil,[sh(2) sh(1)]);%squeeze(tempIm(:,:,1))
+             [~,maxInd] = max(im(:));
+             xy = ind2sub(size(im),maxInd);
 
 function lastIm = removeDen(lastIm,rid,dil)
 rid = imfilter(double(bwmorph(rid,'dilate',dil)),fspecial('gaussian',5,2),'replicate');
