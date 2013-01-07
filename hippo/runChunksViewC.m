@@ -1,4 +1,5 @@
-function [allX,samplePos,W,t] = runChunksView(X,v,pos,act,A,subSet)
+function [allX,samplePos,W,t] = runChunksViewC(X,v,pos,act,A,subSet)
+% act and A need to be phase-centered.
 
 ratio = round(size(X,2)/size(pos,1));
 dec = 32/ratio;
@@ -26,7 +27,7 @@ for i = 1:size(pos,2)
     pos(:,i) = pos(:,i)/(max(pos(:,i)));
     pos(:,i) = min(pos(:,i),.9999);
 end
-pos(nanInds,:) = 0;
+pos(nanInds) = 0;
 %%THE filtLow function requires some functions from the signal processing
 %%toolbox, but is not particularly necessary.
 vel = filtLow(vel,1250/32,1);
@@ -60,7 +61,7 @@ for k = 1:2
         d = find(d < -pi);
         newTheta = newTheta(d(1):d(end)-1);
         newX = interp1(oldTheta,X(:,runInds)',newTheta)';
-        newY = interp1(oldTheta,act(:,runInds)',newTheta)';
+        newY = interp1(oldTheta,act(:,runInds).',newTheta).';
         newInds = interp1(oldTheta,inds(runInds),newTheta);
         %newX = newX(:,d(1):d(end)-1);
         for j = 1:numel(newTheta)/range(win)
@@ -86,12 +87,6 @@ samplePos(:,1) = min(.999,samplePos(:,1)/prctile(samplePos(:,1),99));
 samplePos(ind:end,1) = samplePos(ind:end,1)+1;samplePos(:,1) = samplePos(:,1)/2;
 allX(:,counter:end) = [];ys(:,counter:end) = [];
 allX1(:,counter1+1:end) = [];ys1(:,counter1+1:end) = [];
-complexAct =0;
-if ~complexAct
-sk = skewness(ys,0,2);
-ys = bsxfun(@times,ys,sk);act = bsxfun(@times,act,sk);
-%A = bsxfun(@times,A,sk');
-end
 % figure;
 % for i = 1:size(ys,1)
 % %     subplot(211);plot(act(i,:));hold all;scatter(samplePos(:,3),ys(i,:));hold off;

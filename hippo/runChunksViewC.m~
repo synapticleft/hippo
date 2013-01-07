@@ -1,4 +1,4 @@
-function [allX,samplePos,W,t] = runChunksView(X,v,pos,act,A,subSet)
+function [allX,samplePos,W,t] = runChunksViewC(X,v,pos,act,A,subSet)
 
 ratio = round(size(X,2)/size(pos,1));
 dec = 32/ratio;
@@ -26,7 +26,7 @@ for i = 1:size(pos,2)
     pos(:,i) = pos(:,i)/(max(pos(:,i)));
     pos(:,i) = min(pos(:,i),.9999);
 end
-pos(nanInds,:) = 0;
+pos(nanInds) = 0;
 %%THE filtLow function requires some functions from the signal processing
 %%toolbox, but is not particularly necessary.
 vel = filtLow(vel,1250/32,1);
@@ -60,7 +60,7 @@ for k = 1:2
         d = find(d < -pi);
         newTheta = newTheta(d(1):d(end)-1);
         newX = interp1(oldTheta,X(:,runInds)',newTheta)';
-        newY = interp1(oldTheta,act(:,runInds)',newTheta)';
+        newY = interp1(oldTheta,act(:,runInds).',newTheta).';
         newInds = interp1(oldTheta,inds(runInds),newTheta);
         %newX = newX(:,d(1):d(end)-1);
         for j = 1:numel(newTheta)/range(win)

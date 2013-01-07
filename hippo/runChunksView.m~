@@ -1,6 +1,5 @@
 function [allX,samplePos,W,t] = runChunksView(X,v,pos,act,A,subSet)
 
-%angCol = colormap('hsv');
 ratio = round(size(X,2)/size(pos,1));
 dec = 32/ratio;
 peakToPeak = ceil(1250/dec/8);
@@ -41,10 +40,9 @@ b(pos(:,1) < bounds(1)) = -1;b(pos(:,1) > bounds(2)) = 1;
 nanInds = find(~isnan(b));
 b = interp1(nanInds,b(nanInds),1:size(pos,1));
 b = [0 diff(b)];
-runs = bwlabel(b > 0);
-w = watershed(b==0);
-w = w-1; %w(w== max(w)) = 0;
-%allX = zeros(size(X,1)*(range(win)+1),ceil(size(X,2)/peakToPeak/2));
+%runs = bwlabel(b > 0);
+%w = watershed(b==0);
+%w = w-1; %w(w== max(w)) = 0;
 allX = zeros(size(X,1)*range(win),ceil(size(X,2)/peakToPeak/2));
 allX1 = zeros(size(X,1),range(win)*ceil(size(X,2)/peakToPeak/2));
 ys1 = zeros(size(act,1),size(allX1,2));
@@ -55,14 +53,7 @@ for k = 1:2
 %    runs1 = bwlabel(w>0 & mod(w,2) == k-1 & w <=2*max(runs));
     for i = 1:max(runs1)
         runInds = find(runs1 == i);
-        %aV = -angle(v(runInds));
-        %[h,pk] = findpeaks(aV,'minpeakheight',pi*.8);
-        %oldTheta = angle(-v(runInds));
-        oldTheta = angle(-v(runInds)*exp(1i*-1*pi/6));%*-pi/6)
-        %[h,pk] = findpeaks(-abs(oldTheta),'minpeakheight',-.3);
-        %newTheta = linspace(min(oldTheta),max(oldTheta)
-        %h(~inds(runInds(pk))) = [];
-        %pk(~inds(runInds(pk))) = [];
+        oldTheta = angle(-v(runInds)*exp(1i*-1*pi/6));
         oldTheta = unwrap(oldTheta);
         newTheta = linspace(oldTheta(1),oldTheta(end),round((oldTheta(end)-oldTheta(1))/2/pi*range(win))+1);
         d = [0 diff(mod(newTheta,2*pi))];

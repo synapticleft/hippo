@@ -1,4 +1,4 @@
-function [posInds,t,tes] = runTriggerDist(pos,v,Xf,accumbins,thresh,r,probes,posInds,r2,alphas)
+ function [posInds,t,tes] = runTriggerDist(pos,v,Xf,accumbins,thresh,r,probes,posInds,r2,alphas)
 
 bounds = [.1 .9];
 pos(pos == -1) = nan;
@@ -82,8 +82,8 @@ h = hist(thresh,0:max(thresh));h(1) = [];
 thresh(ismember(thresh,find(h < 10))) =0;
 thresh = thresh > 0;
 XfAcc = bsxfun(@minus,XfAcc,mean(XfAcc,2));
-[~,~,XfAcc] = svds(XfAcc,3);XfAcc = Xf
-XfAcc = filtfilt(gausswin(5),1,XfAcc')';
+%[~,~,XfAcc] = svds(XfAcc,3);XfAcc = XfAcc';
+XfAcc = filtfilt(gausswin(10),1,XfAcc')';
 d = sqrt(sum(abs(diff(XfAcc,1,2)).^2));
 figure;plot(d);
 %figure;plot(bound);hold all;plot(abs(mean(XfAcc)));plot(thresh);
