@@ -114,7 +114,7 @@ end
 %         up1 = reshape(u*exp(-1i*angle(mean(r1(:,i)))),[8 size(Xf,1)/8]);%[16 6]);%
 %     end
 %     figure(f1);subplot(xdim,ydim,i);imagesc(complexIm(up1,0,1));axis off;
-%     ac = imfilter(accumarray(posd,t(i,:),accumbins,@mean,0),fspecial('gaussian',5,1),'replicate');
+%     ac = imfilter(accumarray(posd,t(i,:)*exp(1i*angle(mean(r1(:,i)))),accumbins,@mean,0),fspecial('gaussian',5,1),'replicate');
 %     tes(i,:,:) = ac;
 %     figure(f2);subplot(xdim,ydim,i);imagesc(complexIm(ac,0,1,[],[]));axis off;
 %     %title(kurtosis(abs(ac(:))))
@@ -171,7 +171,7 @@ spatial = spatial(posInds,:);
 %peakLoc = peakLoc(indLoc);
 posInds = posInds(indLoc);
 spatial = spatial(indLoc,:);
-t = t(posInds,:);t1 = t1(posInds,:,:);
+t = t(posInds,:);t1 = t1(posInds,:,:);r1 = r1(:,posInds);r2 = r2(:,posInds);
 t = bsxfun(@times,t,exp(1i*-angle(v(:,1))).');
 % sPlot(t);
 % sPlot(morFilter(t,1250/32,8));
@@ -208,11 +208,11 @@ for i = 1:numel(posInds)
 %         te = -te;
 %         sk(i) = -1;
 %     end
-    u = r1(:,posInds(i));%*exp(1i*(pi/2-meanAng(i)));
+    u = r1(:,i);%r1(:,posInds(i));%*exp(1i*(pi/2-meanAng(i)));
     tes(i,:,:) = te*exp(1i*angle(mean(u)));
     figure(h1);subplot(xdim,ydim,i);imagesc(complexIm(imfilter(squeeze(tes(i,:,:)),fspecial('gaussian',5,1)),0,1));axis off;%s(temp(indLoc(i))),[0 max(te(:))].*exp(1i*(pi/2-meanAng(i)))
     %meanAng1(i) = ;
-    u = r2(:,posInds(i))*exp(-1i*angle(mean(u)));
+    u = r2(:,i)*exp(-1i*angle(mean(u)));
     if exist('probes','var') && ~isempty(probes)
         up1 = probes;
         for ii = 1:size(probes,1)
@@ -229,6 +229,11 @@ for i = 1:numel(posInds)
 %    ups(i,:,:) = up1;
     figure(h2);subplot(xdim,ydim,i);imagesc(complexIm(up1,0,1));axis off;
 end
+r1 = bsxfun(@times,r1,exp(-1i*angle(mean(r1))));
+ceuc = @(XI,XJ)(abs(XI-XJ));%sqrt(bsxfun(@minus,XI,XJ).^2 * W'));
+temp = mdscale(abs(pdist(r1')),2);
+figure;plot(temp(:,1),temp(:,2));
+figure;imagesc(complexIm(r1,0,1));
 % h3 = figure;subplot(311);imagesc(reshape(std(r),[8 size(Xf,1)/8]));
 % subplot(312);imagesc(reshape(std(r(posInds,:)),[8 size(Xf,1)/8]));
 % subplot(313);imagesc(reshape(mean(abs(r(posInds,:))),[8 size(Xf,1)/8]));

@@ -43,7 +43,7 @@ end
 c = mod(peakLoc*scale/size(x,3),1);
 cc = angCol(max(1,ceil(c*64)),:);
 subplot(5,1,3);set(gca,'nextPlot','add','ColorOrder',cc,'Color',[0 0 0],'xticklabel',[],'yticklabel',[],'fontsize',16);
-plot(abs(vs)');axis tight;
+plot(abs(vs)');axis tight;%+abs(circshift(vs,[0 size(vs,2)/2]))'
 subplot(5,1,[4 5]);hold on;
 for i = 1:size(x,1);
     im(1,b == i) = c(i);%i/size(x,1);
