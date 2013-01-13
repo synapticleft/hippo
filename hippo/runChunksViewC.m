@@ -1,11 +1,11 @@
-function [allX,samplePos,W,t] = runChunksViewC(X,v,pos,act,A,subSet)
+function phi = runChunksViewC(X,v,pos,act,A,subSet)
 % act and A need to be phase-centered.
-
+inter = 0;
 ratio = round(size(X,2)/size(pos,1));
 dec = 32/ratio;
 peakToPeak = ceil(1250/dec/8);
 %%Processing of position information
-thresh = .05;bounds = [.1 .9];win = [-1 1]*ceil(1250/dec/8);
+thresh = .05;bounds = [.1 .9];win = [-1 1]*ceil(1250/dec/8/2);
 pos(pos == -1) = nan;
 reject = 0;
 for i = 1:4
@@ -45,9 +45,9 @@ b = [0 diff(b)];
 %runs = bwlabel(b > 0);
 %w = watershed(b==0);
 %w = w-1; %w(w== max(w)) = 0;
-allX = zeros(size(X,1)*range(win),ceil(size(X,2)/peakToPeak/2));
-allX1 = zeros(size(X,1),range(win)*ceil(size(X,2)/peakToPeak/2));
-ys1 = zeros(size(act,1),size(allX1,2));
+allX = zeros(size(X,1)*(range(win)+(1-inter)),ceil(size(X,2)/peakToPeak/2));
+%allX1 = zeros(size(X,1),range(win)*ceil(size(X,2)/peakToPeak/2));
+%ys1 = zeros(size(act,1),size(allX1,2));
 counter = 1;counter1 = 0;
 samplePos = zeros(ceil(size(X,2)/peakToPeak/2),2);ys = zeros(size(act,1),size(allX,2));
 for k = 1:2
@@ -57,6 +57,7 @@ for k = 1:2
     for i = 1:max(runs1)
         runInds = find(runs1 == i);
         oldTheta = angle(-v(runInds)*exp(1i*-1*pi/6));
+        if inter    
         oldTheta = unwrap(oldTheta);
         newTheta = linspace(oldTheta(1),oldTheta(end),round((oldTheta(end)-oldTheta(1))/2/pi*range(win))+1);
         d = [0 diff(mod(newTheta,2*pi))];
@@ -65,7 +66,6 @@ for k = 1:2
         newX = interp1(oldTheta,X(:,runInds)',newTheta)';
         newY = interp1(oldTheta,act(:,runInds).',newTheta).';
         newInds = interp1(oldTheta,inds(runInds),newTheta);
-        %newX = newX(:,d(1):d(end)-1);
         for j = 1:numel(newTheta)/range(win)
             if mean(newInds((j-1)*range(win)+(1:range(win)))) > .5
                 temp = newX(:,(j-1)*range(win)+(1:range(win)))';
@@ -73,14 +73,28 @@ for k = 1:2
                 ys(:,counter) = abs(mean(newY(:,(j-1)*range(win)+(1:range(win))),2));
                 samplePos(counter,2) = i;
                 counter = counter + 1;
-                allX1(:,counter1+(1:range(win))) = temp';
-                ys1(:,counter1+(1:range(win))) = newY(:,(j-1)*range(win)+(1:range(win)));
-                counter1 = counter1+range(win);
+                %allX1(:,counter1+(1:range(win))) = temp';
+                %ys1(:,counter1+(1:range(win))) = newY(:,(j-1)*range(win)+(1:range(win)));
+                %counter1 = counter1+range(win);
             end
         end
-        pk = -range(win)/2+range(win)*(1:numel(newTheta)/range(win));
-        pk = runInds(1)+pk-1;
-        %samplePos = [samplePos; [pos(pk) i*ones(j,1) pk']];
+        else
+            newX = X(:,runInds);
+            newY = act(:,runInds);
+            newInds = inds(runInds);
+            d = find([0 diff(oldTheta)] < -pi & 1:numel(oldTheta) < numel(oldTheta)-win(2) & ...
+                 1:numel(oldTheta) > -win(1));
+            for j = 1:numel(d)
+                if mean(newInds(d(j)+(win(1):win(2))))
+                temp = newX(:,d(j)+(win(1):win(2)))';
+                allX(:,counter) = temp(:);
+                ys(:,counter) = abs(mean(newY(:,d(j) + (win(1):win(2))),2));
+                samplePos(counter,2) = i;
+                counter = counter + 1;
+                end
+            end
+        end
+        %newX = newX(:,d(1):d(end)-1);
     end
 end
 %[~,ind] = min(diff(samplePos(:,2)));
@@ -89,7 +103,7 @@ end
 %samplePos(:,1) = min(.999,samplePos(:,1)/prctile(samplePos(:,1),99));
 %samplePos(ind:end,1) = samplePos(ind:end,1)+1;samplePos(:,1) = samplePos(:,1)/2;
 allX(:,counter:end) = [];ys(:,counter:end) = [];samplePos(counter:end,:) = [];
-allX1(:,counter1+1:end) = [];ys1(:,counter1+1:end) = [];
+%allX1(:,counter1+1:end) = [];ys1(:,counter1+1:end) = [];
 % figure;
 % for i = 1:size(ys,1)
 % %     subplot(211);plot(act(i,:));hold all;scatter(samplePos(:,3),ys(i,:));hold off;
@@ -103,7 +117,7 @@ allXm = mean(allX,2);
 allX = allX - allXm*(allXm\allX);
 %[allX allXm] = remmean(allX);
 params.Fs = 1250/8;params.tapers = [3 5];
-allX1 = allX1-repmat(reshape(allXm,numel(allXm)/size(X,1),size(X,1))',[1 size(allX1,2)/range(win)]);
+%allX1 = allX1-repmat(reshape(allXm,numel(allXm)/size(X,1),size(X,1))',[1 size(allX1,2)/range(win)]);
 %[cc,~,W] = pipeLine1(ys,allX',3,1);
 %W = squeeze(mean(W));
 %yHat = W'*allX;
@@ -122,6 +136,7 @@ f1 = figure;f2 = figure;f3 = figure;%f4 = figure;f5 = figure;
 % (ys1(:,(inds(1)-1)*range(win)+1:inds(2)*range(win)));
 params.Fs = range(win);params.tapers = [1 1];
 params.fpass = [0 5];params.pad = 2;
+phi = zeros(size(X,1),size(A,2),range(win)+(1-inter));
 for i = 1:size(A,2)%size(Wp,2)-1
     %temp = reshape(Wp(:,i)*yp(i)+Wp(:,end)*yp(end),[size(allX,1)/size(X,1) size(X,1)]);
        % highResp = yHat(i,:) > prctile(yHat(i,:),98);
@@ -131,7 +146,9 @@ for i = 1:size(A,2)%size(Wp,2)-1
             temp = yTemp;%ys(mod(i+j,size(ys,1))+1,:);%
             temp(samplePos(:,2) ~= j) = 0;
             %t = temp(samplePos(:,2) == j);
-            %temp(samplePos(:,2) == j) = t(randperm(numel(t)));
+            %r = randperm(numel(t));
+            %temp(samplePos(:,2) == j) = t(r);
+            %zTemp(samplePos(:,2) == j) = t(r);
             [maxRun(j,1) maxRun(j,2)] = max(temp);
         end
         maxRun = maxRun(zTemp(maxRun(:,2)) > 2,:);%.5*max(maxRun(:,1)),:);
@@ -141,7 +158,7 @@ for i = 1:size(A,2)%size(Wp,2)-1
         highResp = maxRun(:,2);%find(samplePos(:,2) == i);
         temp = [];
         for j = 0%-1:1%,allX(:,highResp)
-            temp = [temp; reshape(allX(:,max(1,min(highResp+j,size(allX,2)))),[size(allX,1)/size(X,1) size(X,1) numel(highResp)])];
+            temp = [temp; reshape(allXOr(:,max(1,min(highResp+j,size(allX,2)))),[size(allX,1)/size(X,1) size(X,1) numel(highResp)])];
         end
         temp = bsxfun(@times,temp,reshape(maxRun(:,1),[1 1 numel(highResp)]));
 %    temp = reshape(mean(bsxfun(@times,allXOr(:,highResp),yHat(i,highResp)),2),[size(allX,1)/size(X,1) size(X,1)]);
@@ -149,6 +166,7 @@ for i = 1:size(A,2)%size(Wp,2)-1
     set(gca,'nextPlot','add','ColorOrder',squeeze(complexIm(A(:,i),0,1)));
     numSamps = size(temp,3);
     temp = squeeze(mean(temp,3));
+    phi(:,i,:) = temp';
     plot(temp);axis tight;title(numSamps);
 %     figure(f2);subplot(xdim,ydim,i);
 %     for j = 1:size(temp,2)

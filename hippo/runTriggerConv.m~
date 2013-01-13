@@ -1,4 +1,4 @@
-function [dewhiteningMatrix] = runTriggerConv(X,pos,thresh)
+function whiteningMatrix = runTriggerConv(X,pos,thresh,dewhiteningMatrix,phi)
 %% run convolutional sparse coding, then bin and render activations.
 
 ratio = round(size(X,2)/size(pos,1));
@@ -41,10 +41,11 @@ inds = vel > thresh(1);
 %inds(pos < bounds(1) | pos > bounds(2)) = 0;
 reg = bwlabel(inds);
 h = hist(reg,0:max(reg));
-f = find(h(2:end) < 1250/dec*thresh(2));
+a = accumarray(reg'+1,pos,[],@mean);
+f = find(h(2:end) < 1250/dec*thresh(2) | a(2:end)' < bounds(1) | a(2:end)' > bounds(2));
 inds(ismember(reg,f)) = 0;
 reg = bwlabel(inds);
-%plot(vel);hold all;plot(inds);return
+% figure;plot(vel);hold all;plot(inds);return
 % figure;
 % params.tapers = [3 5]; params.Fs = 1250/32;
 % for i = 1:max(r)
@@ -63,22 +64,26 @@ reg = bwlabel(inds);
 %% whiten X
 X = bsxfun(@minus,X,mean(X,2));
 if 1
-numSamples = 50000;
-indsSub = rand(numel(inds),1) < numSamples/sum(inds);
-[Ex, Dx] = eig(cov(X(:,indsSub)'));
-d = flipud(diag(Dx));
-cumVar = sum(d);
-maxLastEig = sum(cumsum(d)/cumVar < .9999999)
-Dx = Dx(end-maxLastEig+1:end,end-maxLastEig+1:end);
-Ex = Ex(:,end-maxLastEig+1:end);
-factors = diag(Dx);
-noise_factors = ones(size(Dx,1),1);
-rolloff_ind = sum(cumsum(flipud(factors))/cumVar > .999999)
-noise_factors(1:rolloff_ind) = .5*(1+cos(linspace(pi-.01,0,rolloff_ind))); 
-Dx = diag(factors./noise_factors);
-whiteningMatrix = sqrt(inv(Dx)) * Ex';
-X = whiteningMatrix * X;
-dewhiteningMatrix = Ex * sqrt (Dx);
+    if ~exist('dewhiteningMatrix','var') || isempty(dewhiteningMatrix)
+        numSamples = 50000;
+        indsSub = rand(numel(inds),1) < numSamples/sum(inds);
+        [Ex, Dx] = eig(cov(X(:,indsSub' & inds)'));
+        d = flipud(diag(Dx));
+        cumVar = sum(d);
+        maxLastEig = sum(cumsum(d)/cumVar < .9999999)
+        Dx = Dx(end-maxLastEig+1:end,end-maxLastEig+1:end);
+        Ex = Ex(:,end-maxLastEig+1:end);
+        factors = diag(Dx);
+        noise_factors = ones(size(Dx,1),1);
+        rolloff_ind = sum(cumsum(flipud(factors))/cumVar > .999999)
+        noise_factors(1:rolloff_ind) = .5*(1+cos(linspace(pi-.01,0,rolloff_ind)));
+        Dx = diag(factors./noise_factors);
+        whiteningMatrix = sqrt(inv(Dx)) * Ex';
+        dewhiteningMatrix = Ex * sqrt (Dx);
+    else
+        whiteningMatrix = pinv(dewhiteningMatrix);
+    end
+        X = whiteningMatrix * X;
 else
     X = bsxfun(@rdivide,X,std(X,0,2));
 end
@@ -86,7 +91,7 @@ randn('seed',1);
 rand('seed',1);
 N = size(X,1);		% number of sources
 %S = 64;		% time points in original sources 
-J = 32;		% number of basis functions for source generation
+J = 64;		% number of basis functions for source generation
 R = 20;		% number of time points in basis functions generating sources
 
 %P = S+R-1;	% number of selection locations for source generation
@@ -109,7 +114,7 @@ mintype_inf = 'lbfgsb';
 %lrn_searches = 3;
 mintype_lrn = 'gd';
 opts_lbfgs_a = lbfgs_options('iprint', -1, 'maxits', 20,'factr', 0.01, 'cb', @cb_a);
-lambda = 1.4;%0.7;
+lambda = 1;%0.7;
 %gamma = 0.001;
 %gamma = 0;
 eta = 0.0001;
@@ -120,23 +125,28 @@ target_angle = .01;%0.000001;
 
 paramstr = sprintf('%s_J=%03d_R=%03d_N=%03d_%s', 'hippo', J, R, N, datestr(now,30));
 update = 1;
+if ~exist('phi','var') || isempty(phi)
 phi = randn(N,J,R);
+else
+    phi1 = phi;
+    [~,J,R] = size(phi);
+    phi = zeros(N,J,R);
+    for j = 1:J
+        phi(:,j,:) =  whiteningMatrix * squeeze(phi1(:,j,:));
+    end
+end
 % renormalize
 for j = 1:J
     phi(:,j,:) = phi(:,j,:) / sqrt(sum(sum(phi(:,j,:).^2)));
 end
 
-num_trials = 1000;
-
-for q = 1:20
-    sparsenet
-%    phi = timeshift_phi(phi);
-end
-
+num_trials = 200;
+lambda = [.1 3/50];
 for q = 1:20
     sparsenet
     phi = timeshift_phi(phi);
-    target_angle = target_angle * 0.9;
+    lambda(1) = min(.5,lambda(1) + .1);
+%    target_angle = target_angle * 0.9;
 end
 
 sparsenet

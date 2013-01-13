@@ -55,7 +55,7 @@ if 1
     if ~exist('dewhiteningMatrix','var')
         numSamples = 50000;
         indsSub = rand(numel(inds),1) < numSamples/sum(inds);
-        [Ex, Dx] = eig(cov(X(:,indsSub)'));
+        [Ex, Dx] = eig(cov(X(:,indsSub' & inds)'));
         d = flipud(diag(Dx));
         cumVar = sum(d);
         maxLastEig = sum(cumsum(d)/cumVar < .9999999)
@@ -72,6 +72,12 @@ if 1
         whiteningMatrix = pinv(dewhiteningMatrix);
     end
         X = whiteningMatrix * X;
+%          phi1 = phi;
+%     [~,J,R] = size(phi);
+%     phi = zeros(size(whiteningMatrix,1),J,R);
+%     for j = 1:J
+%         phi(:,j,:) =  whiteningMatrix * squeeze(phi1(:,j,:));
+%     end
 else
     X = bsxfun(@rdivide,X,std(X,0,2));
 end
@@ -79,7 +85,7 @@ end
 opts_lbfgs_a = lbfgs_options('iprint', -1, 'maxits', 20,'factr', 0.01, 'cb', @cb_a);
 [N,J,R] = size(phi);
 ac =0;numSamps = 0;
-lambda = 3.4;
+lambda = [.5 3/50];%2.5;
 for j = 1:max(reg)
 Xsamp = X(:,reg == j);
     %% compute the map estimate

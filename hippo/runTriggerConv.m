@@ -1,4 +1,4 @@
-function reg = runTriggerConv(X,pos,thresh,dewhiteningMatrix)
+function whiteningMatrix = runTriggerConv(X,pos,thresh,dewhiteningMatrix,phi)
 %% run convolutional sparse coding, then bin and render activations.
 
 ratio = round(size(X,2)/size(pos,1));
@@ -64,10 +64,10 @@ reg = bwlabel(inds);
 %% whiten X
 X = bsxfun(@minus,X,mean(X,2));
 if 1
-    if ~exist('dewhiteningMatrix','var')
+    if ~exist('dewhiteningMatrix','var') || isempty(dewhiteningMatrix)
         numSamples = 50000;
         indsSub = rand(numel(inds),1) < numSamples/sum(inds);
-        [Ex, Dx] = eig(cov(X(:,indsSub)'));
+        [Ex, Dx] = eig(cov(X(:,indsSub' & inds)'));
         d = flipud(diag(Dx));
         cumVar = sum(d);
         maxLastEig = sum(cumsum(d)/cumVar < .9999999)
@@ -92,7 +92,7 @@ rand('seed',1);
 N = size(X,1);		% number of sources
 %S = 64;		% time points in original sources 
 J = 64;		% number of basis functions for source generation
-R = 50;		% number of time points in basis functions generating sources
+R = 20;		% number of time points in basis functions generating sources
 
 %P = S+R-1;	% number of selection locations for source generation
 %Jrows = 48;
@@ -114,7 +114,7 @@ mintype_inf = 'lbfgsb';
 %lrn_searches = 3;
 mintype_lrn = 'gd';
 opts_lbfgs_a = lbfgs_options('iprint', -1, 'maxits', 20,'factr', 0.01, 'cb', @cb_a);
-lambda = 1.4;%0.7;
+lambda = 1;%0.7;
 %gamma = 0.001;
 %gamma = 0;
 eta = 0.0001;
@@ -125,24 +125,29 @@ target_angle = .01;%0.000001;
 
 paramstr = sprintf('%s_J=%03d_R=%03d_N=%03d_%s', 'hippo', J, R, N, datestr(now,30));
 update = 1;
+if ~exist('phi','var') || isempty(phi)
 phi = randn(N,J,R);
+else
+    phi1 = phi;
+    [~,J,R] = size(phi);
+    phi = zeros(N,J,R);
+    for j = 1:J
+        phi(:,j,:) =  whiteningMatrix * squeeze(phi1(:,j,:));
+    end
+end
 % renormalize
 for j = 1:J
     phi(:,j,:) = phi(:,j,:) / sqrt(sum(sum(phi(:,j,:).^2)));
 end
 
-num_trials = 100;
-
-%for q = 1:20
-%    sparsenet
-%    phi = timeshift_phi(phi);
-%end
-
+num_trials = 200;
+lambda = [.1 3/50];
 for q = 1:20
+    totResp = zeros(J,1);
     sparsenet
-%    phi = timeshift_phi(phi);
-lambda = lambda + .1;
-    target_angle = target_angle * 0.9;
+    phi = timeshift_phi(phi);
+    lambda(1) = min(.5,lambda(1) + .1);
+%    target_angle = target_angle * 0.9;
 end
 
 sparsenet

@@ -72,6 +72,7 @@ if 1
         whiteningMatrix = pinv(dewhiteningMatrix);
     end
         X = whiteningMatrix * X;
+        for j = 1:
 else
     X = bsxfun(@rdivide,X,std(X,0,2));
 end
@@ -80,7 +81,7 @@ opts_lbfgs_a = lbfgs_options('iprint', -1, 'maxits', 20,'factr', 0.01, 'cb', @cb
 [N,J,R] = size(phi);
 ac =0;numSamps = 0;
 lambda = 3.4;
-for j = 10:20%1:max(reg)
+for j = 1:max(reg)
 Xsamp = X(:,reg == j);
     %% compute the map estimate
     tic
@@ -93,10 +94,10 @@ Xsamp = X(:,reg == j);
     nb  = zeros(1,J*P); % bound type (none)
     [a1,fx,exitflag,userdata] = lbfgs(@objfun_a_conv, a0(:), lb, ub, nb, opts_lbfgs_a, Xsamp, phi, lambda);
     a1 = reshape(a1, J, P);
-    [a1,id] = meshgrid(1:S,1:J);id = id';
-    [max(id(:
-    aTemp = a1(:,1:S);
+    [~,id] = meshgrid(1:S,1:J);id = id';
+    aTemp = a1(:,1:S);aTemp = aTemp';
     rpos = repmat(posd(reg == j),[J 1]);
+    %plot(id(:));hold all;plot(rpos);plot(aTemp(:));return
     %[size(id) size(id(:)) size(rpos) size(rpos(:))]
     ac = ac + accumarray([id(:) rpos],aTemp(:),[J max(posd)],@sum);
     numSamps = numSamps + accumarray(posd(reg == j),ones(1,sum(reg == j)),[max(posd) 1],@sum);
