@@ -1,4 +1,4 @@
-function [posInds,t,tes] = runTriggerViewC(pos,v,Xf,accumbins,thresh,r,probes,posInds,r2)
+function [posInds,tes] = runTriggerViewC(pos,v,Xf,accumbins,thresh,r,probes,posInds,r2)
 
 bounds = [.1 .9];
 pos(pos == -1) = nan;
