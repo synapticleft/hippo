@@ -169,7 +169,7 @@ end
 j = 1;
 sPlot(squeeze(complex(numAll(j,:,:)/100,timeAll(j,:,:)./(max(1,numAll(j,:,:))))))
 tempMag = squeeze(magAll(j,:,:));
-[~,mx] = max(tempMag,[],2);
+[~,mx] = max(abs(tempMag),[],2);
 tempTime = squeeze(timeAll(j,:,:)./max(1,numAll(j,:,:)));
 for i = 1:size(tempMag,1)
 tM(i,:) = circshift(tempMag(i,:),[0 50-mx(i)]);
