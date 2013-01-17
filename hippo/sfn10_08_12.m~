@@ -133,3 +133,46 @@ sp = sp(cellInfo >= 1,:);
 td(2:2:36,:) = sp(fx,:);
 A1(:,2:2:36) = A(:,fy);
 A1(:,1:2:35) = A(:,fy);
+for i = 1:16
+subplot(6,6,2*i);title(sh(fx(i)));
+end
+%% cross frequency
+[a b c d] = runTriggerViewBoth(X,Xf,v,pos,[.05 1],50,whiteningMatrix,phi,W);
+ c2 = c;for i = 1:size(c,1)
+c2(i,:,:) = imfilter(squeeze(c(i,:,:))./max(d,1),fspecial('gaussian',5,1));
+c2(i,:,:) = c2(i,:,:)/max(c2(i,:));
+end
+a2 = a;for i = 1:size(a,1)
+a2(i,:,:) = imfilter(squeeze(a(i,:,:))./max(b,1),fspecial('gaussian',5,1));
+a2(i,:,:) = a2(i,:,:)/max(abs(a2(i,:)));
+end
+f1 = figure;f2 = figure;
+for i = 1:64
+figure(f1);subplot(8,8,i);plot((dewhiteningMatrix*squeeze(phi(:,i,:)))');
+figure(f2);subplot(8,8,i);imagesc(squeeze(c2(i,:,:)));
+end
+cc = corr(abs(a2(:,:))',abs(c2(:,:))');
+params.Fs = 1250/8;params.tapers = [1 1];params.pad = 2;
+f1 = figure;f2 = figure;f3 = figure;cc1 = cc;for i = 1:20
+[fx fy] = find(cc1 == max(cc1(:)));
+cc1(fx,:) = 0;cc1(:,fy) = 0;
+figure(f1);subplot(4,5,i);imagesc(abs([squeeze(c2(fy,:,:))/max(squeeze(c2(fy,:))); squeeze(a2(fx,:,:))/max(squeeze(a2(fx,:)))]));
+figure(f2);subplot(4,5,i);set(gca,'nextPlot','add','ColorOrder',squeeze(complexIm(Z(:,fx),0,1)));
+phiT = (dewhiteningMatrix*squeeze(phi(:,fy,:)));
+plot(phiT');axis tight;
+figure(f3);subplot(4,5,i);set(gca,'nextPlot','add','ColorOrder',squeeze(complexIm(Z(:,fx),0,1)));
+[S,f] = mtspectrumc(phiT',params);
+plot(f,S);axis tight;
+end
+%%
+[magAll timeAll numAll numSamps] = runConvAct(X,pos);
+j = 1;
+sPlot(squeeze(complex(numAll(j,:,:)/100,timeAll(j,:,:)./(max(1,numAll(j,:,:))))))
+tempMag = squeeze(magAll(j,:,:));
+[~,mx] = max(tempMag,[],2);
+tempTime = squeeze(timeAll(j,:,:)./max(1,numAll(j,:,:)));
+for i = 1:size(tempMag,1)
+tM(i,:) = circshift(tempMag(i,:),[0 50-mx(i)]);
+tT(i,:) = circshift(tempTime(i,:),[0 50-mx(i)]);
+end
+plot(tT')

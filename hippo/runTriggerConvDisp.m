@@ -86,7 +86,20 @@ opts_lbfgs_a = lbfgs_options('iprint', -1, 'maxits', 20,'factr', 0.01, 'cb', @cb
 [N,J,R] = size(phi);
 ac =0;numSamps = 0;
 lambda = [.5 3/50];%2.5;
-for j = 1:max(reg)
+%la = linspace(-3,2,10);%[.1 .5 1 2 5];
+%laa = linspace(-5,2,10);%[.005 .01 .02 .05 1];
+%la = linspace(la(5),la(7),10);
+%laa = linspace(laa(6),laa(8),10);
+%la = linspace(-.5,.2,8);
+%laa = linspace(-1.1,.1,8);
+la = linspace(.1,1,8);
+laa = linspace(.005,.05,8);
+%la = .5;laa = 3/50;
+la = .8; laa = .25;
+figure;
+for k = 1:numel(la)
+    for l = 1:numel(laa)
+for j = 40%1:max(reg)
 Xsamp = X(:,reg == j);
     %% compute the map estimate
     tic
@@ -96,19 +109,20 @@ Xsamp = X(:,reg == j);
     %% no bounds
     lb  = zeros(1,J*P); % lower bound
     ub  = zeros(1,J*P); % upper bound
-    nb  = zeros(1,J*P); % bound type (none)
-    [a1,fx,exitflag,userdata] = lbfgs(@objfun_a_conv, a0(:), lb, ub, nb, opts_lbfgs_a, Xsamp, phi, lambda);
+    nb  = ones(1,J*P); % bound type (none)
+    [a1,fx,exitflag,userdata] = lbfgs(@objfun_a_conv, a0(:), lb, ub, nb, opts_lbfgs_a, Xsamp, phi, [la(k) laa(l)]);
     a1 = reshape(a1, J, P);
-    [~,id] = meshgrid(1:S,1:J);id = id';
-    aTemp = a1(:,1:S);aTemp = aTemp';
-    rpos = repmat(posd(reg == j),[J 1]);
+    %[~,id] = meshgrid(1:S,1:J);id = id';
+    %aTemp = a1(:,1:S);aTemp = aTemp';
+    %rpos = repmat(posd(reg == j),[J 1]);
     %plot(id(:));hold all;plot(rpos);plot(aTemp(:));return
     %[size(id) size(id(:)) size(rpos) size(rpos(:))]
-    ac = ac + accumarray([id(:) rpos],aTemp(:),[J max(posd)],@sum);
-    numSamps = numSamps + accumarray(posd(reg == j),ones(1,sum(reg == j)),[max(posd) 1],@sum);
-
-    subplot(211);imagesc(a1);
-    subplot(212);imagesc(bsxfun(@rdivide,ac,numSamps'));
+    %ac = ac + accumarray([id(:) rpos],aTemp(:),[J max(posd)],@sum);
+    %numSamps = numSamps + accumarray(posd(reg == j),ones(1,sum(reg == j)),[max(posd) 1],@sum);
+    %sPlot(a1,[],0);
+subplot(numel(la),numel(laa),(k-1)*numel(laa)+l);imagesc(a1);axis off tight;
+    %subplot(211);imagesc(a1);
+    %subplot(212);imagesc(bsxfun(@rdivide,ac,numSamps'));
     drawnow;
     time_inf = toc;
 
@@ -120,4 +134,6 @@ Xsamp = X(:,reg == j);
 %         fin = R+S-r;
 %         EI = EI + EIr(:,srt:fin);
 %     end
+end
+    end
 end

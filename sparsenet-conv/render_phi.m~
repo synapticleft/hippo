@@ -20,7 +20,7 @@ for i = 1:m
 
         k = k+1;
         if k > size(phi,2)
-            return
+            break
         end
     end
 end

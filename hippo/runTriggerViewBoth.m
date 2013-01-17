@@ -1,4 +1,4 @@
-function [ac numSamps ac1 numSamps1] = runTriggerViewBoth(X,Xf,v,pos,thresh,accumbins,whiteningMatrix,phi,W,Z)
+function [ac numSamps ac1 numSamps1] = runTriggerViewBoth(X,Xf,v,pos,thresh,accumbins,whiteningMatrix,phi,W)
 
 ratio = round(size(X,2)/size(pos,1));
 dec = 32/ratio;
@@ -44,12 +44,6 @@ runs(f) = runs(f-1);
 %     end
 % end
 dPos = [0; diff(pos)];
-a = accumarray(runs'+1,dPos,[],@mean);
-f = find(a(2:end) > 0);
-pos(ismember(runs,f)) = 2-pos(ismember(runs,f));pos = pos/2;
-runs = ceil(runs/2);
-runs1 = round(resample([runs runs(end)*ones(1,100)],ratio,1));runs1 = runs1(1:size(X,2));
-posd = floor(pos*accumbins*2)+1;posd = min(2*accumbins,max(1,posd));
 %vel = resample(vel,ratio,1);    
 %posd(mod(w,2) ==1 ,1) = posd(mod(w,2) ==1 ,1) + max(posd(:));
 %inds(pos < bounds(1) | pos > bounds(2)) = 0;
@@ -61,6 +55,11 @@ f = find(h(2:end) < 1250/dec*thresh(2) | a(2:end) < bounds(1) | a(2:end) > bound
 inds(ismember(chunk,f)) = 0;
 %chunk = bwlabel(inds);
 chunk1 = bwlabel(round(resample(double(inds),ratio,1)));chunk1 = chunk1(1:size(X,2));
+a = accumarray(runs'+1,dPos,[],@mean);f = find(a(2:end) > 0);
+pos(ismember(runs,f)) = 2-pos(ismember(runs,f));pos = pos/2;
+runs = ceil(runs/2);
+runs1 = round(resample([runs runs(end)*ones(1,100)],ratio,1));runs1 = runs1(1:size(X,2));
+posd = floor(pos*accumbins*2)+1;posd = min(2*accumbins,max(1,posd));
 pos = resample(pos,ratio,1);
 pos = pos(1:size(X,2)); 
 posd1 = floor(pos*accumbins*2)+1;posd1 = min(accumbins*2,max(1,posd1));
@@ -98,8 +97,8 @@ Xf = W*Xf;Xf = bsxfun(@times,Xf,exp(1i*angle(v(:,1)).'));
 opts_lbfgs_a = lbfgs_options('iprint', -1, 'maxits', 20,'factr', 0.01, 'cb', @cb_a);
 [N,J,R] = size(phi);
 ac1 =0;numSamps1 = 0;
-lambda = [.5 3/50];%2.5;
-for j = 1:max(chunk)
+lambda = [.8 .25];%[.5 3/50];%2.5;
+for j = 1:max(chunk1)
     Xsamp = X(:,chunk1 == j);
     %% compute the map estimate
     S = size(Xsamp,2);
@@ -108,7 +107,7 @@ for j = 1:max(chunk)
     %% no bounds
     lb  = zeros(1,J*P); % lower bound
     ub  = zeros(1,J*P); % upper bound
-    nb  = zeros(1,J*P); % bound type (none)
+    nb  = ones(1,J*P); % bound type (none)
     a1 = lbfgs(@objfun_a_conv, a0(:), lb, ub, nb, opts_lbfgs_a, Xsamp, phi, lambda);
     a1 = reshape(a1, J, P);
     [~,id] = meshgrid(1:S,1:J);id = id';

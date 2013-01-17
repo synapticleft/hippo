@@ -13,7 +13,7 @@ for t = 1:num_trials
     %% no bounds
     lb  = zeros(1,J*P); % lower bound
     ub  = zeros(1,J*P); % upper bound
-    nb  = zeros(1,J*P); % bound type (none)
+    nb  = ones(1,J*P); % bound type (none)
     
     [a1,fx,exitflag,userdata] = lbfgs(@objfun_a_conv, a0(:), lb, ub, nb, opts_lbfgs_a, Xsamp, phi, lambda);
     a1 = reshape(a1, J, P);
@@ -98,7 +98,7 @@ for t = 1:num_trials
         subplot(3,1,3); imagesc(E, [mn mx]); %axis image off; colorbar;
 
         %% display coefficients
-        figure(6); imagesc(a1);
+        figure(6); if min(size(a1)) == 1 plot(a1); else imagesc(a1); end
 
         %% display basis functions
         array = render_phi(phi, Jrows,dewhiteningMatrix); %render_phi_2d(phi,Jrows);
@@ -113,7 +113,7 @@ for t = 1:num_trials
     end
 
     
-    if (save_every == 1 || mod(update,save_every) == 1)
+    if (update == 1 || t == num_trials)%(save_every == 1 || mod(update,save_every) == 1)
 
         %% make the output directory
         [sucess,msg,msgid] = mkdir(sprintf('state/%s', paramstr));

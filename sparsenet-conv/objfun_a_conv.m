@@ -16,7 +16,6 @@ for t = 1:R
     EI = EI + phi(:,:,R-t+1)*a(:,t:t+S-1);
 end
 %figure;plot(EI');return
-
 E = I - EI;
 
 f_residual = 0.5*sum(E(:).^2);

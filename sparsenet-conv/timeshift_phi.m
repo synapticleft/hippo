@@ -7,7 +7,7 @@ function phi = timeshift_phi(phi,totResp)
 %mid = ceil(R/2);
 
 %new_phi = zeros(size(phi));
-third = round(R/3);
+frac = round(R*.4);
 for j = 1:J
 %     switch center
 %         case 'mass'
@@ -20,8 +20,8 @@ for j = 1:J
 %         new_phi(:,j,1+delta:end) = phi(:,j,1:end-delta);
 %     end
 %         case 'max'
-            phi(:,j,:) = sign(totResp)*phi(:,j,:);
+            %phi(:,j,:) = sign(totResp(j))*phi(:,j,:);
             [~,mx] = max(phi(end,j,:));
-            phi(:,j,:) = circshift(phi(:,j,:),[0 0 third-mx]);     
+            phi(:,j,:) = circshift(phi(:,j,:),[0 0 frac-mx]);    
             %    end
 end
