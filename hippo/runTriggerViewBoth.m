@@ -97,7 +97,7 @@ Xf = W*Xf;Xf = bsxfun(@times,Xf,exp(1i*angle(v(:,1)).'));
 opts_lbfgs_a = lbfgs_options('iprint', -1, 'maxits', 20,'factr', 0.01, 'cb', @cb_a);
 [N,J,R] = size(phi);
 ac1 =0;numSamps1 = 0;
-lambda = [.8 .25];%[.5 3/50];%2.5;
+lambda = [.5 3/50];%[.8 .25];%2.5;
 for j = 1:max(chunk1)
     Xsamp = X(:,chunk1 == j);
     %% compute the map estimate
@@ -107,13 +107,13 @@ for j = 1:max(chunk1)
     %% no bounds
     lb  = zeros(1,J*P); % lower bound
     ub  = zeros(1,J*P); % upper bound
-    nb  = ones(1,J*P); % bound type (none)
+    nb  = 0*ones(1,J*P); % bound type (none)
     a1 = lbfgs(@objfun_a_conv, a0(:), lb, ub, nb, opts_lbfgs_a, Xsamp, phi, lambda);
     a1 = reshape(a1, J, P);
     [~,id] = meshgrid(1:S,1:J);id = id';
     aTemp = a1(:,1:S);aTemp = aTemp';
     ac1 = ac1 + accumarray([id(:) repmat(runs1(chunk1 == j)',[J 1]) ...
-        repmat(posd1(chunk1 == j),[J 1])],aTemp(:),[J max(runs1) max(posd)],@sum);
+        repmat(posd1(chunk1 == j),[J 1])],abs(aTemp(:)),[J max(runs1) max(posd)],@sum);
     numSamps1 = numSamps1 + accumarray([runs1(chunk1 == j)' posd1(chunk1 == j)],ones(1,sum(chunk1 == j)),[max(runs1) max(posd)],@sum);
 %     subplot(211);imagesc(a1);
 %     subplot(212);imagesc(bsxfun(@rdivide,ac,numSamps'));

@@ -20,7 +20,7 @@ for j = 1:J
 %         new_phi(:,j,1+delta:end) = phi(:,j,1:end-delta);
 %     end
 %         case 'max'
-            %phi(:,j,:) = sign(totResp(j))*phi(:,j,:);
+            phi(:,j,:) = sign(totResp(j))*phi(:,j,:);
             [~,mx] = max(phi(end,j,:));
             phi(:,j,:) = circshift(phi(:,j,:),[0 0 frac-mx]);    
             %    end

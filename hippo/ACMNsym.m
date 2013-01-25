@@ -10,7 +10,7 @@
 % mle_circ assumes circular and runs mutch faster
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [A,W,Z] = ACMNsym(Xin,typeStr)
+function [A,W,Z,alphas] = ACMNsym(Xin,typeStr)
 inVal = 2.5;
  type = 2;
  if strcmp(typeStr,'mle_noncirc') == 1
@@ -159,8 +159,8 @@ a2 = .01;
     [E,D] = eig(W'*W);
     W = W * E * inv(sqrt(D)) * E';
   end; %While
-  figure;plot(alphas);
-  [mean(alphas) median(alphas)]
+%  figure;plot(alphas);
+%  [mean(alphas) median(alphas)]
 A = dewhiteningMatrix*W;
 Z = zerophaseMatrix*A;
 W = W' * whiteningMatrix;

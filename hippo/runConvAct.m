@@ -1,4 +1,4 @@
-function [magAll timeAll numSamps] = runConvAct(X,pos,phi1)%numAll 
+function [magAll timeAll numSamps] = runConvAct(X,pos,accumbins)%numAll 
 
 load('phi1.mat','c','d');
 spatial = zeros(size(c,1),size(c,3));
@@ -17,7 +17,7 @@ spatial = spatial(indLoc,:);
 %plot(spatial');
 %superImp(c2,posInds,1);
 %% position processing
-thresh = [.05 1];accumbins = 50;
+thresh = [.05 1];
 ratio = round(size(X,2)/size(pos,1));
 dec = 32/ratio;
 %%Processing of position information
@@ -84,7 +84,7 @@ load('params.mat','lambda','whiteningMatrix','dewhiteningMatrix');
 load('phi.mat','phi');
 opts_lbfgs_a = lbfgs_options('iprint', -1, 'maxits', 20,'factr', 0.01, 'cb', @cb_a);
 [~,J,R] = size(phi);%J1 = size(phi1,2);
-Jp = numel(posInds);
+Jp = numel(posInds);%
 %la = linspace(.1,1,8);
 %laa = linspace(.005,.05,8);
 magAll = zeros(2,Jp,2*accumbins);timeAll = magAll;numSamps = 0;
@@ -92,7 +92,7 @@ magAll = zeros(2,Jp,2*accumbins);timeAll = magAll;numSamps = 0;
 figure;
 %for k = 1:numel(la)
 %    for l = 1:numel(laa)
-for j = 1:max(chunk1)
+for j = 39%1:max(chunk1)
     %% for single
 %    Xsamp = wh1*X(:,chunk1 == j);%
     %% for multi
@@ -114,7 +114,7 @@ for j = 1:max(chunk1)
     magAll(1,:,:) = squeeze(magAll(1,:,:)) + accumarray([id(:) posTemp(:)],max(0,aMult(:)),[Jp max(posd1)],@sum);
     timeAll(1,:,:) = squeeze(timeAll(1,:,:)) + accumarray([id(:) posTemp(:)],peakTimes(:).*max(0,aMult(:)),[Jp max(posd1)],@sum);
     magAll(2,:,:) = squeeze(magAll(2,:,:)) + accumarray([id(:) posTemp(:)],max(0,-aMult(:)),[Jp max(posd1)],@sum);
-    timeAll(2,:,:) = squeeze(timeAll(2,:,:)) + accumarray([id(:) posTemp(:)],peakTimes(:).*max(0,-aMult(:)),[Jp max(posd1)],@sum);
+    timeAll(2,:,:) = squeeze(timeAll(2,:,:)) + accumarray([id(:) posTemp(:)],peakTimes(:).*min(0,aMult(:)),[Jp max(posd1)],@sum);
 %     f = find(aMult(:) > mag);
 %     posTemp = repmat(posd1(chunk1 == j),[Jp 1]);
 %     magAll(1,:,:) = squeeze(magAll(1,:,:)) + accumarray([id(f) posTemp(f)],aMult(f),[Jp max(posd1)],@sum);

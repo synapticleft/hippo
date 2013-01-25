@@ -65,7 +65,7 @@ reg = bwlabel(inds);
 %X = bsxfun(@minus,X,mean(X,2));
 %S = 64;		% time points in original sources 
 J = 64;		% number of basis functions for source generation
-R = 15;%20;		% number of time points in basis functions generating sources
+R = 20;%20;		% number of time points in basis functions generating sources
 if J >= 1
     if ~exist('dewhiteningMatrix','var') || isempty(dewhiteningMatrix)
         numSamples = 50000;
@@ -140,24 +140,28 @@ for j = 1:J
 end
 
 num_trials = 200;
-if J >= 1
-    lambda = [.2 .25];
-else
-    lambda = [.1 3/50];
-end
+% if J == 1
+%     lambda = [.2 .25];
+% else
+%     lambda = [.1 3/50];
+% end
+lambda = 1;
 for q = 1:20
     totResp = zeros(J,1);
     sparsenet
-%    phi = timeshift_phi(phi,totResp);
-    if J >= 1
-        if lambda(1) < .8
-            lambda(1) = lambda(1) + .2;
-        end
-    else
-    if lambda(1) < .5
-        lambda(1) = lambda(1) + .1;
+    phi = timeshift_phi(phi,totResp);
+    if lambda < 3
+        lambda = lambda + .5;
+    end
+%     if J == 1
+%         if lambda(1) < .8
+%             lambda(1) = lambda(1) + .2;
+%         end
 %     else
-%         target_angle = target_angle * 0.9;
-    end
-    end
+%     if lambda(1) < .5
+%         lambda(1) = lambda(1) + .1;
+% %     else
+% %         target_angle = target_angle * 0.9;
+%     end
+%     end
 end

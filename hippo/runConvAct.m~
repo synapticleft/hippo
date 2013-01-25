@@ -1,4 +1,4 @@
-function [magAll timeAll numSamps] = runConvAct(X,pos,phi1)%numAll 
+function [magAll timeAll numSamps] = runConvAct(X,pos,accumbins)%numAll 
 
 load('phi1.mat','c','d');
 spatial = zeros(size(c,1),size(c,3));
@@ -17,7 +17,7 @@ spatial = spatial(indLoc,:);
 %plot(spatial');
 %superImp(c2,posInds,1);
 %% position processing
-thresh = [.05 1];accumbins = 50;
+thresh = [.05 1];
 ratio = round(size(X,2)/size(pos,1));
 dec = 32/ratio;
 %%Processing of position information
@@ -83,21 +83,22 @@ runs1 = round(resample([runs runs(end)*ones(1,100)],ratio,1));runs1 = runs1(1:si
 load('params.mat','lambda','whiteningMatrix','dewhiteningMatrix');
 load('phi.mat','phi');
 opts_lbfgs_a = lbfgs_options('iprint', -1, 'maxits', 20,'factr', 0.01, 'cb', @cb_a);
-[N,J,R] = size(phi);J1 = size(phi1,2);Jp = numel(posInds)
+[~,J,R] = size(phi);%J1 = size(phi1,2);
+Jp = numel(posInds);%J;%
 %la = linspace(.1,1,8);
 %laa = linspace(.005,.05,8);
 magAll = zeros(2,Jp,2*accumbins);timeAll = magAll;numSamps = 0;
 %mag = .5;
 figure;
-for k = 1:numel(la)
-    for l = 1:numel(laa)
-for j = 1:max(chunk1)
+%for k = 1:numel(la)
+%    for l = 1:numel(laa)
+for j = 38%1:max(chunk1)
     %% for single
-    Xsamp = wh1*X(:,chunk1 == j);%
-    S = size(Xsamp,2);
-    P = S+R-1;	% number of selection locations for source generation
+%    Xsamp = wh1*X(:,chunk1 == j);%
     %% for multi
     Xsamp = whiteningMatrix*X(:,chunk1 == j);%
+    S = size(Xsamp,2);
+    P = S+R-1;	% number of selection locations for source generation
     xComp = angle(morFilter(Xsamp(end,:),8,1250/dec,1,.2));
     lb  = zeros(1,J*P); % lower bound
     ub  = zeros(1,J*P); % upper bound
@@ -113,7 +114,7 @@ for j = 1:max(chunk1)
     magAll(1,:,:) = squeeze(magAll(1,:,:)) + accumarray([id(:) posTemp(:)],max(0,aMult(:)),[Jp max(posd1)],@sum);
     timeAll(1,:,:) = squeeze(timeAll(1,:,:)) + accumarray([id(:) posTemp(:)],peakTimes(:).*max(0,aMult(:)),[Jp max(posd1)],@sum);
     magAll(2,:,:) = squeeze(magAll(2,:,:)) + accumarray([id(:) posTemp(:)],max(0,-aMult(:)),[Jp max(posd1)],@sum);
-    timeAll(2,:,:) = squeeze(timeAll(2,:,:)) + accumarray([id(:) posTemp(:)],peakTimes(:).*max(0,-aMult(:)),[Jp max(posd1)],@sum);
+    timeAll(2,:,:) = squeeze(timeAll(2,:,:)) + accumarray([id(:) posTemp(:)],peakTimes(:).*min(0,aMult(:)),[Jp max(posd1)],@sum);
 %     f = find(aMult(:) > mag);
 %     posTemp = repmat(posd1(chunk1 == j),[Jp 1]);
 %     magAll(1,:,:) = squeeze(magAll(1,:,:)) + accumarray([id(f) posTemp(f)],aMult(f),[Jp max(posd1)],@sum);
@@ -128,8 +129,8 @@ for j = 1:max(chunk1)
     subplot(312);imagesc(complexIm([squeeze(timeAll(1,:,:)) squeeze(timeAll(2,:,:))],0,1));drawnow; 
     subplot(313);plot(aMult);axis tight;
 end
-    end
-end
+%    end
+%end
 
 function EI = reCon(phi,a1,S,de)
 [N,J,R] = size(phi);

@@ -13,7 +13,7 @@ for t = 1:num_trials
     %% no bounds
     lb  = zeros(1,J*P); % lower bound
     ub  = zeros(1,J*P); % upper bound
-    nb  = ones(1,J*P); % bound type (none)
+    nb  = 0*ones(1,J*P); % bound type (none)
     
     [a1,fx,exitflag,userdata] = lbfgs(@objfun_a_conv, a0(:), lb, ub, nb, opts_lbfgs_a, Xsamp, phi, lambda);
     a1 = reshape(a1, J, P);

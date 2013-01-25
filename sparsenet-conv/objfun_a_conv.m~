@@ -1,5 +1,5 @@
 function [f,g] = objfun_a_conv(a0,I,phi,lambda)
-
+lambda = %10;
 prior = 'cauchy';%'gaussian';%'laplace';%
 [N J R] = size(phi);
  
