@@ -1,4 +1,5 @@
 function im = complexIm(in,sub,pow,scale,h,setMax)
+in = squeeze(in);
 if ~exist('scale','var') || isempty(scale)
     scale = 1;
 end

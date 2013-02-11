@@ -93,10 +93,11 @@ figure;
 %for k = 1:numel(la)
 %    for l = 1:numel(laa)
 for j = 39%1:max(chunk1)
+    thisRun = chunk1 == j;%min(find(chunk1 == j-1)):max(find(chunk1 == j));% 
     %% for single
 %    Xsamp = wh1*X(:,chunk1 == j);%
     %% for multi
-    Xsamp = whiteningMatrix*X(:,chunk1 == j);%
+    Xsamp = whiteningMatrix*X(:,thisRun);%
     S = size(Xsamp,2);
     P = S+R-1;	% number of selection locations for source generation
     xComp = angle(morFilter(Xsamp(end,:),8,1250/dec,1,.2));
@@ -110,7 +111,7 @@ for j = 39%1:max(chunk1)
     peakTimes = repmat(exp(1i*xComp),[Jp 1])';
     [~,id] = meshgrid(1:S,1:Jp);id = id';
     aMult = aMult(:,1:S)';
-    posTemp = repmat(posd1(chunk1 == j),[Jp 1]);
+    posTemp = repmat(posd1(thisRun),[Jp 1]);
     magAll(1,:,:) = squeeze(magAll(1,:,:)) + accumarray([id(:) posTemp(:)],max(0,aMult(:)),[Jp max(posd1)],@sum);
     timeAll(1,:,:) = squeeze(timeAll(1,:,:)) + accumarray([id(:) posTemp(:)],peakTimes(:).*max(0,aMult(:)),[Jp max(posd1)],@sum);
     magAll(2,:,:) = squeeze(magAll(2,:,:)) + accumarray([id(:) posTemp(:)],max(0,-aMult(:)),[Jp max(posd1)],@sum);
@@ -125,9 +126,10 @@ for j = 39%1:max(chunk1)
 %     timeAll(2,:,:) = squeeze(timeAll(2,:,:)) + accumarray([id(f) posTemp(f)],peakTimes(f),[Jp max(posd1)],@sum);
     %numAll(2,:,:) = squeeze(numAll(2,:,:)) + accumarray([id(f) posTemp(f)],ones(numel(f),1),[Jp max(posd1)],@sum);
     numSamps = numSamps + accumarray([ones(numel(posTemp),1) posTemp(:)],ones(numel(posTemp),1),[1 max(posd1)],@sum);
-    subplot(311);imagesc([squeeze(magAll(1,:,:)) squeeze(magAll(2,:,:))]);
-    subplot(312);imagesc(complexIm([squeeze(timeAll(1,:,:)) squeeze(timeAll(2,:,:))],0,1));drawnow; 
-    subplot(313);plot(aMult);axis tight;
+    %subplot(311);imagesc([squeeze(magAll(1,:,:)) squeeze(magAll(2,:,:))]);
+    %subplot(312);imagesc(complexIm([squeeze(timeAll(1,:,:)) squeeze(timeAll(2,:,:))],0,1));drawnow; 
+    %subplot(313);plot(aMult);axis tight;
+    %sPlot(aMult',[],0);title(j);
 end
 %    end
 %end

@@ -164,12 +164,34 @@ figure(f3);subplot(4,5,i);set(gca,'nextPlot','add','ColorOrder',squeeze(complexI
 [S,f] = mtspectrumc(phiT',params);
 plot(f,S);axis tight;
 end
+%% sort positional indices
+c = squeeze(mean(c,2));
+posInds = find(max(abs(c),[],2) > 2);
+[~,m] = max(abs(c(posInds,:)),[],2);
+[~,s] = sort(m,'ascend');
+posInds = posInds(s);
+%% cross frequency 1
+ u = u(:,1);
+uc = angle(u);
+uc = uc - min(uc);
+uc = uc / (max(uc)+eps);
+uc = 64-floor(uc*64);
+cm = colormap;
+cc = corr(abs(a2(:,:))',abs(c2(posInds,:))');
+f1 = figure;f2 = figure;
+for i = 1:numel(posInds)
+    figure(f1);subplot(4,5,i);set(gca,'nextPlot','add','ColorOrder',cm(uc,:));
+    plot((dewhiteningMatrix*squeeze(phi(:,posInds(i),:)))');axis tight;
+    figure(f2);subplot(4,5,i);set(gca,'nextPlot','add','ColorOrder',cm(uc,:));
+    [~,m] = max(cc(:,i));
+    plot(real(A(:,m)*exp(1i*linspace(0,2*pi,size(phi,3)))
+end
 %%
 [magAll timeAll numAll numSamps] = runConvAct(X,pos);
 j = 1;
 sPlot(squeeze(complex(numAll(j,:,:)/100,timeAll(j,:,:)./(max(1,numAll(j,:,:))))))
 tempMag = squeeze(magAll(j,:,:));
-[~,mx] = max(tempMag,[],2);
+[~,mx] = max(abs(tempMag),[],2);
 tempTime = squeeze(timeAll(j,:,:)./max(1,numAll(j,:,:)));
 for i = 1:size(tempMag,1)
 tM(i,:) = circshift(tempMag(i,:),[0 50-mx(i)]);

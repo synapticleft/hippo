@@ -53,7 +53,7 @@ for i = 1:size(x,1);
 %         abs(vs(i,:))*100/max(abs(vs(i,:))),cc(i,:),'filled');
 inds = [max(1,peakLoc(i)-10):min(size(x,3),peakLoc(i)+10) find(abs(vs(i,:)) > .3*max(abs(vs(i,:))))];
     if ~exist('maxVal','var')
-        s = abs(vs(i,inds))*100/max(abs(vs(i,:)));
+        s = abs(vs(i,inds))*50/max(abs(vs(i,:)));
     else
         s =  abs(vs(i,inds))*10/maxVal;
     end

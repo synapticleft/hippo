@@ -1,7 +1,9 @@
-function sPlot(data,xaxis,newFig,norm)
+function sPlot(data,xaxis,newFig,norm,spread)
 %spaced out plot of 2-d data
 data = squeeze(data);
-
+if ~exist('spread','var')
+    spread = 5;
+end
 if ~exist('newFig','var') || isempty(newFig)
     newFig = 1;
 end
@@ -16,7 +18,7 @@ if ~iscell(data)
     if ~exist('xaxis','var') || isempty(xaxis)
         xaxis = 1:size(data,2);
     end
-    spacing = 5*std(data(:));%5*
+    spacing = spread*nanstd(data(:));%5*
     if isreal(data)
         plot(xaxis,data'-repmat(spacing*(1:size(data,1))',[1 size(data,2)])','linewidth',2);
     else
@@ -35,4 +37,4 @@ else
         offSet = offSet + spacing*size(data{i},1);
     end
 end
-axis tight;
+axis tight;drawnow;
