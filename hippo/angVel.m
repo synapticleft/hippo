@@ -12,6 +12,11 @@ v(:,3) = sum(pos(:,3:4).*or,2);
 or(:,2) = -or(:,2);or = or(:,[2 1]);
 v(:,2) = sum(pos(:,1:2).*or,2);
 v(:,4) = sum(pos(:,3:4).*or,2);
-or(:,2) = -or(:,2);or = or(:,[2 1]);
+
+for i = 1:size(v,2)
+    nanInds = find(~isnan(v(:,i)));
+    v(:,i) = interp1(nanInds,v(nanInds,i),1:size(v,1));
+end
+%or(:,2) = -or(:,2);or = or(:,[2 1]);
 
 %figure;plot(v(:,[1 2]));

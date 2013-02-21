@@ -32,7 +32,7 @@ if dec > 1
     end
     pos = posd;clear posd;
 end
-pos = bsxfun(@minus,pos,mean(pos));
+% pos = bsxfun(@minus,pos,mean(pos));
 % [a,~,~] = svd(pos(:,1:2),'econ');pos = a;
 % for i = 1:2    
 %     pos(:,i) = pos(:,i) - min(pos(:,i));
@@ -63,8 +63,9 @@ inds = vel > thresh;
 %W = zeros(100,63,64);
 %Z = zeros(100,64,63);
 %for i = 1:100
-%[A(i,:,:),W(i,:,:),Z(i,:,:)] = ACMNsym(Xf(:,inds),'mle_circ');%cfpa2(Xf);%%%nonCircComplexFastICAsym(Xf,'pow');%cfastica(Xf);c%complex_ICA_EBM(Xf);%%zscore(Xf,0,2));%zscore(Xf,0,2)n
+%[A(i,:,:),W(i,:,:),Z(i,:,:)] = ACMNsym(Xf(:,inds),'mle_circ');%%%%nonCircComplexFastICAsym(Xf,'pow');%c%complex_ICA_EBM(Xf);%%zscore(Xf,0,2));%zscore(Xf,0,2)n
 %end
+%[A W Z] = cfpa2(Xf);%cfastica(Xf);
 [A W Z] = ACMNsym(Xf(:,inds),'mle_circ');
 return
  Xf = [real(Xf);imag(Xf)];%[abs(Xf); angle(Xf)];

@@ -1,87 +1,97 @@
-% showbfs.m - function to show basis functions
-%
-% function hout=showGrid(A,bg,h)
-%
-% A = bf matrix
-% bg = 'black' or 'white' (default='black')
+function array=showGrid(A,grid,ratio,in,clim)
 
-function [hout array]=showGrid(A,gridsize,ratio,bg,h,clim)
-
-if ~exist('bg','var') || isempty(bg)
-  bg='black';
-end
 if ~exist('ratio','var') || isempty(ratio)
     ratio = [1 1];
 end
 
-[L M]=size(A);
 buf=1;
-% sz=sqrt(L);
-% 
-% if floor(sqrt(M))^2 ~= M
-%   n=sqrt(M/2);
-%   m=M/n;
-% else
-%   m=sqrt(M);
-%   n=m;
-% end
-
-%if size(A,2) == prod(gridsize)
-%    n = gridsize(1);m = gridsize(2);
-%else
-    n = ceil(sqrt(size(A,2)));
-    m = ceil(size(A,2)/n);
-%end
-sz = gridsize;
-
-if bg=='black'
-  array=-ones(buf+n*(sz(1)+buf),buf+m*(sz(2)+buf));
+if ndims(A) == 2
+    A = A.';
+end
+n = ceil(sqrt(size(A,1)));
+m = ceil(size(A,1)/n);
+if ndims(A) == 2
+if numel(grid) == 2
+    sz = grid;
+    grid = reshape(1:prod(grid),sz);
 else
-  array=ones(buf+n*(sz(1)+buf),buf+m*(sz(2)+buf));
+    sz = size(grid);
+    grid = grid-min(grid(:)) + 1;
+end
+A1 = zeros(size(A,1),sz(1),sz(2));
+A1(:,:) = A(:,grid(:));
+else
+    A1 = A;
+    sz = size(A1);sz = sz(2:3);
+end
+if exist('in','var') && in
+    [xout yout] = meshgrid(ratio(2):ratio(2)*sz(2),ratio(1):ratio(1)*sz(1));
+    [xin yin] = meshgrid((1:sz(2))*ratio(2),(1:sz(1))*ratio(1));
+    sz = size(xout);
 end
 
-k=1;
-quivDat = zeros(size(A,2),4);
+array=-ones(buf+m*(sz(1)+buf),buf+n*(sz(2)+buf));
+if ~isreal(A)
+    array = array*nan;
+end
+
+%k=1;
+%quivDat = zeros(size(A,2),4);
 for j=1:m
   for i=1:n
-    if k > size(A,2)
+      k = (j-1)*n+i;
+    if k > size(A,1)
         break
     end
     if ~exist('clim','var') 
-        clima=max(abs(A(:,k)));
+        clima=max(abs(A(k,:)));
     else
         clima = clim;
     end
-    temp = reshape(A(:,k),sz(1),sz(2))/clima;
-    indsx = buf+(i-1)*(sz(1)+buf)+[1:sz(1)];
-    indsy = buf+(j-1)*(sz(2)+buf)+[1:sz(2)];
-    [fx fy] = gradient(temp);
-    array(indsx,indsy) = temp;
-    quivDat(k,:) = [mean(indsx) mean(indsy) mean(fx(:)) mean(fy(:))];
-    k=k+1;
+    %temp = reshape(A(:,k),sz(1),sz(2))/clima;
+    indsx = buf+(j-1)*(sz(1)+buf)+[1:sz(1)];
+    indsy = buf+(i-1)*(sz(2)+buf)+[1:sz(2)];
+%    [fx fy] = gradient(temp);
+    if exist('in','var') && in
+        temp = interp2(xin,yin,squeeze(A1(k,:,:))/clima,xout,yout,'cubic');
+        array(indsx,indsy) = temp;
+    else
+        array(indsx,indsy) = squeeze(A1(k,:,:)/clima);%temp;
+    end
+%    quivDat(k,:) = [mean(indsx) mean(indsy) mean(fx(:)) mean(fy(:))];
+%    k=k+1;
   end
 end
 %array = imfilter(array,fspecial('gaussian',5,.01));
-scale = 10;
-colormap gray
+%scale = 10;
+%colormap gray
 %subplot(211)
+array = array(2:end-1,2:end-1);
 x = 1:size(array,2);
 y = 1:size(array,1);
+if ~exist('in','var') || ~in
 x = x*ratio(1);y = y*ratio(2);
-if ~exist('h','var') || isempty(h)
-    if nargout>0
-        hout=imagesc(x,y,array,[-1 1]);
-    else
-        imagesc(x,y,array,[-1 1])
-    end
+end
+%if ~exist('h','var') || isempty(h)
+%    if nargout>0
+%        hout=imagesc(x,y,array,[-1 1]);
+%    else
+if isreal(array)
+    imagesc(x,y,array);%,[0 1]
+else
+    array = complexIm(array);
+    imagesc(x,y,array);
+end
+%axis image
+%    end
 %    hold on;
 %    quiver(quivDat(:,2),quivDat(:,1),quivDat(:,3),quivDat(:,4),'r','linewidth',3);
 %    hold off;
-    axis off
-else
-    set(h,'CData',array)
-end
-% 
+%    axis off
+%else
+%    set(h,'CData',array)
+%end
+% s
 % subplot(212)
 % 
 % normA=sqrt(sum(A.*A));

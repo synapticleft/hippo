@@ -22,7 +22,7 @@ inVal = 2.5;
  insIndex = 1;
  tol = 1e-5;
  eps = 0.001; % epsilon in G
- maxcounter = 100;
+ maxcounter =100;
 
 % Whitening of s:
 %yyy = zeros(1,m);
@@ -31,29 +31,30 @@ inVal = 2.5;
 % Q = mtimes(sqrt(inv(Dx)),Ex');
 % 
 % x = Q * Xin;
-
-[Ex, Dx] = eig(cov(Xin'));
-d = flipud(diag(Dx));
-cumVar = sum(d);
-maxLastEig = sum(cumsum(d)/cumVar < .9999999)
-Dx = Dx(end-maxLastEig+1:end,end-maxLastEig+1:end);
-Ex = Ex(:,end-maxLastEig+1:end);
-factors = diag(Dx);
-noise_factors = ones(size(Dx,1),1);
-rolloff_ind = sum(cumsum(flipud(factors))/cumVar > .999999)
-noise_factors(1:rolloff_ind) = .5*(1+cos(linspace(pi-.01,0,rolloff_ind))); 
-Dx = diag(factors./noise_factors);
-whiteningMatrix = sqrt(inv(Dx)) * Ex';
-x = whiteningMatrix * Xin;
-dewhiteningMatrix = Ex * sqrt (Dx);
-%noise_factors(1:rolloff_ind) = .5*(1+cos(linspace(pi-.01,0,rolloff_ind))); 
-%D = diag(flipud(1./noise_factors));
-%zerophaseMatrix = E*inv (sqrt (D))*E';
-rolloff_ind = 2;
-noise_factors(1:rolloff_ind) = .5*(1+cos(linspace(pi-.01,0,rolloff_ind)));
-%D = diag(flipud(1./noise_factors));
-zerophaseMatrix = Ex*sqrt(diag(flipud(noise_factors)))*Ex';%inv (sqrt (D))*E';
-
+%%%%%%%%%%%%%%%%%%%
+% [Ex, Dx] = eig(cov(Xin'));
+% d = flipud(diag(Dx));
+% cumVar = sum(d);
+% maxLastEig = sum(cumsum(d)/cumVar < .9999999)
+% Dx = Dx(end-maxLastEig+1:end,end-maxLastEig+1:end);
+% Ex = Ex(:,end-maxLastEig+1:end);
+% factors = diag(Dx);
+% noise_factors = ones(size(Dx,1),1);
+% rolloff_ind = sum(cumsum(flipud(factors))/cumVar > .999999)
+% noise_factors(1:rolloff_ind) = .5*(1+cos(linspace(pi-.01,0,rolloff_ind))); 
+% Dx = diag(factors./noise_factors);
+% whiteningMatrix = sqrt(inv(Dx)) * Ex';
+% x = whiteningMatrix * Xin;
+% dewhiteningMatrix = Ex * sqrt (Dx);
+% %noise_factors(1:rolloff_ind) = .5*(1+cos(linspace(pi-.01,0,rolloff_ind))); 
+% %D = diag(flipud(1./noise_factors));
+% %zerophaseMatrix = E*inv (sqrt (D))*E';
+% rolloff_ind = 2;
+% noise_factors(1:rolloff_ind) = .5*(1+cos(linspace(pi-.01,0,rolloff_ind)));
+% %D = diag(flipud(1./noise_factors));
+% zerophaseMatrix = Ex*sqrt(diag(flipud(noise_factors)))*Ex';%inv (sqrt (D))*E';
+%%%%%%%%%%%%
+[x,whiteningMatrix,dewhiteningMatrix,zerophaseMatrix] = whiten(Xin);
   [n,m] = size(x);
  pC = (x*transpose(x))/m;
 
@@ -65,6 +66,8 @@ alphas = ones(n,1)*inVal;
   Wold = zeros(n);
   k=0;
 a2 = .01;
+eta = 1;
+alphaHist = zeros(maxcounter,n);
    while (norm(abs(Wold'*W)-eye(n),'fro')>(n*1e-4) && k < maxcounter)%&& k < 15*n)
        minAbsCos = min(abs(diag(W' * Wold)));
     meanAbsCos = mean(abs(diag(W' * Wold)));
@@ -113,7 +116,7 @@ a2 = .01;
          gRad =  x*(u1.*conj(yy)).'/size(x,2); %%double-check
          ggg = mean(u2.*absy + u1,2);
          B = pC*bsxfun(@times,conj(Wold),mean(u2 .* conj(yy).^2,2).');%mean(u2.*(conj(yy).^2),2);%
-         W = bsxfun(@times,Wold,ggg.')-gRad + B;%B.'*conj(Wold);
+         W = (bsxfun(@times,Wold,ggg.')-gRad + B);%B.'*conj(Wold);
          p = alphas;
          absy = abs(yy);
          u = absy+a2;
@@ -126,7 +129,10 @@ a2 = .01;
              mean(bsxfun(@times,up.*bsxfun(@plus,(u.^2 - bsxfun(@times,u,2./p)-bsxfun(@times,u,2*log(sigP))),...
              2*(p.^-2) + 2*log(sigP)./p + log(sigP).^2),1./(p.*sigP.^p)),2);
          p = p - gp./ggp;
-         alphas = min(max(p,.2),4);
+         thisEta = min(1,max(0,eta-(k-100)/100));
+         alphas = min(max(alphas*(1-thisEta) + thisEta*p,.2),4);
+         alphaHist(k,:) = alphas;
+          %scatter(k*ones(numel(alphas),1),alphas);hold all;drawnow;
 %           localAlpha = alphas(kk)*.5; %Because |y|^p, not (yy*)^p
 %          absy = abs(yy).^2;
 %         u = (absy + a2);
@@ -158,6 +164,8 @@ a2 = .01;
       end
     [E,D] = eig(W'*W);
     W = W * E * inv(sqrt(D)) * E';
+         subplot(211);imagesc(alphaHist(1:k,:)');
+         %subplot(212);imagesc(showGrid(dewhiteningMatrix*W,[8 4]));drawnow;
   end; %While
 %  figure;plot(alphas);
 %  [mean(alphas) median(alphas)]

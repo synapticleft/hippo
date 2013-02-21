@@ -119,11 +119,9 @@ posd = floor(pos*accumbins*2)+1;posd = min(2*accumbins,max(1,posd));
 % %     drawnow;
 % end
 if ~exist('W','var')
-    [W,s] = svd(Xf(:,inds),'econ');
+    [W,s] = svds(Xf(:,inds),min(size(Xf,1),64));
     L2=s.^2;
     dsum=diag(L2)/trace(L2);
-    figure;imagesc(flipud(reshape(-angle(W(:,1)),[8 8])));
-    figure;plot(dsum);
     Xf = pinv(W)*Xf;
 else
     if exist('posInds','var')

@@ -42,23 +42,23 @@ function [A W Z] = cfastica(mixedsig)
 eps = 1; % epsilon in G
 % Whitening of x:
 
-[Ex, Dx] = eig(cov(mixedsig'));
-d = flipud(diag(Dx));
-cumVar = sum(d);
-maxLastEig = sum(cumsum(d)/cumVar < .9999999)
-Dx = Dx(end-maxLastEig+1:end,end-maxLastEig+1:end);
-Ex = Ex(:,end-maxLastEig+1:end);
-factors = diag(Dx);
-noise_factors = ones(size(Dx,1),1);
-rolloff_ind = sum(cumsum(flipud(factors))/cumVar > .999999)
-noise_factors(1:rolloff_ind) = .5*(1+cos(linspace(pi-.01,0,rolloff_ind))); 
-Dx = diag(factors./noise_factors);
-whiteningMatrix = sqrt(inv(Dx)) * Ex';%eye(size(mixedsig,1));%
-x = whiteningMatrix * mixedsig;
-dewhiteningMatrix = Ex * sqrt (Dx);%whiteningMatrix;%
-rolloff_ind = 2;
-noise_factors(1:rolloff_ind) = .5*(1+cos(linspace(pi-.01,0,rolloff_ind))); 
-zerophaseMatrix = Ex*sqrt(diag(flipud(noise_factors)))*Ex';%inv (sqrt (D))*E';
+% [Ex, Dx] = eig(cov(mixedsig'));
+% d = flipud(diag(Dx));
+% cumVar = sum(d);
+% maxLastEig = sum(cumsum(d)/cumVar < .9999999)
+% Dx = Dx(end-maxLastEig+1:end,end-maxLastEig+1:end);
+% Ex = Ex(:,end-maxLastEig+1:end);
+% factors = diag(Dx);
+% noise_factors = ones(size(Dx,1),1);
+% rolloff_ind = sum(cumsum(flipud(factors))/cumVar > .999999)
+% noise_factors(1:rolloff_ind) = .5*(1+cos(linspace(pi-.01,0,rolloff_ind))); 
+% Dx = diag(factors./noise_factors);
+% whiteningMatrix = sqrt(inv(Dx)) * Ex';%eye(size(mixedsig,1));%
+% x = whiteningMatrix * mixedsig;
+% dewhiteningMatrix = Ex * sqrt (Dx);%whiteningMatrix;%
+% rolloff_ind = 2;
+% noise_factors(1:rolloff_ind) = .5*(1+cos(linspace(pi-.01,0,rolloff_ind))); 
+% zerophaseMatrix = Ex*sqrt(diag(flipud(noise_factors)))*Ex';%inv (sqrt (D))*E';
 % verbose = 'on';
 % interactivePCA = 'off';
 % [E, D, cumVar]= gpcamat(mixedsig, 1, size(mixedsig,1), interactivePCA, verbose);
@@ -67,7 +67,7 @@ zerophaseMatrix = Ex*sqrt(diag(flipud(noise_factors)))*Ex';%inv (sqrt (D))*E';
 
 % Condition in Theorem 1 should be < 0 when maximising and > 0 when 
 % minimising E{G(|w^Hx|^2)}. 
-
+[x,whiteningMatrix,dewhiteningMatrix,zerophaseMatrix] = whiten(mixedsig);
 n = size(x,1);
 %  C = cov(x');
   maxcounter = 100;
@@ -98,6 +98,7 @@ n = size(x,1);
     meanAbsCos = mean(abs(diag(W' * WOld)));
     fprintf('Step no. %d, change in value of estimate: %.3g %.3g\n', counter, 1 - minAbsCos,1-meanAbsCos);
     counter = counter + 1;
+    imagesc(dewhiteningMatrix*W,[8 4]));drawnow;
   end
 	A = dewhiteningMatrix * W;  
   	W = W' * whiteningMatrix;
