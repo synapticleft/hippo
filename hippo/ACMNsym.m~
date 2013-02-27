@@ -10,7 +10,7 @@
 % mle_circ assumes circular and runs mutch faster
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [A,W,Z,alphas] = ACMNsym(Xin,typeStr)
+function [A,W,Z,alphaHist] = ACMNsym(Xin,typeStr)
 inVal = 2.5;
  type = 2;
  if strcmp(typeStr,'mle_noncirc') == 1
@@ -22,7 +22,7 @@ inVal = 2.5;
  insIndex = 1;
  tol = 1e-5;
  eps = 0.001; % epsilon in G
- maxcounter =100;
+ maxcounter =200;
 
 % Whitening of s:
 %yyy = zeros(1,m);
@@ -164,8 +164,8 @@ alphaHist = zeros(maxcounter,n);
       end
     [E,D] = eig(W'*W);
     W = W * E * inv(sqrt(D)) * E';
-         subplot(211);imagesc(alphaHist(1:k,:)');
-         %subplot(212);imagesc(showGrid(dewhiteningMatrix*W,[8 4]));drawnow;
+         plot(alphaHist(1:k,:));
+         %subplot(211);subplot(212);imagesc(showGrid(dewhiteningMatrix*W,[8 4]));drawnow;
   end; %While
 %  figure;plot(alphas);
 %  [mean(alphas) median(alphas)]

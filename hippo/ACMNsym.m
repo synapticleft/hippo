@@ -10,7 +10,7 @@
 % mle_circ assumes circular and runs mutch faster
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [A,W,Z,alphas] = ACMNsym(Xin,typeStr)
+function [A,W,Z,alphaHist] = ACMNsym(Xin,typeStr)
 inVal = 2.5;
  type = 2;
  if strcmp(typeStr,'mle_noncirc') == 1
@@ -129,7 +129,7 @@ alphaHist = zeros(maxcounter,n);
              mean(bsxfun(@times,up.*bsxfun(@plus,(u.^2 - bsxfun(@times,u,2./p)-bsxfun(@times,u,2*log(sigP))),...
              2*(p.^-2) + 2*log(sigP)./p + log(sigP).^2),1./(p.*sigP.^p)),2);
          p = p - gp./ggp;
-         thisEta = min(1,max(0,eta-(k-100)/100));
+         thisEta = 1;%min(1,max(0,eta-(k-100)/100));
          alphas = min(max(alphas*(1-thisEta) + thisEta*p,.2),4);
          alphaHist(k,:) = alphas;
           %scatter(k*ones(numel(alphas),1),alphas);hold all;drawnow;
@@ -163,8 +163,8 @@ alphaHist = zeros(maxcounter,n);
 %          alphas(kk) = alpha;
       end
     [E,D] = eig(W'*W);
-    W = W * E * inv(sqrt(D)) * E';
-         plot(alphaHist(1:k,:));
+    W = W * E /sqrt(D)*E';%* inv(sqrt(D)) * E';
+         plot(alphaHist(1:k,:));drawnow;
          %subplot(211);subplot(212);imagesc(showGrid(dewhiteningMatrix*W,[8 4]));drawnow;
   end; %While
 %  figure;plot(alphas);

@@ -24,7 +24,7 @@ f1 = fdesign.bandpass('N,F3dB1,F3dB2',order,cutoffhighpass,cutofflowpass,sampler
 %f1 = fdesign.highpass('n,f3dB',order,cutoffhighpass,samplerate);
 d1 = design(f1,'butter');
 [B,A]= sos2tf(d1.sosMatrix,d1.ScaleValues);
-numSamps = numel(a.data)/allchan;
+numSamps = floor(numel(a.data)/allchan)
 ripChans = [];
 for i = 1:ceil(numSamps/sz)
     inds = (i-1)*sz+[1 sz];
@@ -49,7 +49,9 @@ for i = 1:ceil(numSamps/sz)
         ind2 = (inds(1)+ind+ripWin)*allchan;
         dataChunk = reshape(a.data(ind1:ind2),[allchan 2*ripWin+1]);
         dataChunk = filtfilt(B,A,double(dataChunk'))';
-        plot(dataChunk');hold all;plot(power(ind+(-ripWin:ripWin))*10,'r','linewidth',2);hold off;drawnow;
+        powInd = ind+(-ripWin:ripWin);
+        powInd(powInd > numel(power)) = [];powInd(powInd <1) = [];
+        plot(dataChunk');hold all;plot(power(powInd)*10,'r','linewidth',2);hold off;drawnow;
         ripChans = [ripChans mean(dataChunk.^2,2)];
     end
 end

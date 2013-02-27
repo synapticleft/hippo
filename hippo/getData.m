@@ -5,7 +5,7 @@ function [X whiteningMatrix dewhiteningMatrix] = getData(fname,dec,elecs,sz,rind
 % you store the data files.
 
 %data_root = '/media/Expansion Drive/redwood/';%'/media/work/hippocampus/';%
-data_root1 = '/media/Expansion Drive/KenjiMizuseki/';
+data_root1 = '/media/Expansion Drive/redwood/';%KenjiMizuseki/';
 %fname = 'hippo.h5';%'96elec.h5';%
 %padding = 0;%20000;
 %info = hdf5info([data_root fname '.h5']);
@@ -15,8 +15,10 @@ a = memmapfile([data_root1 fname '.eeg'],'Format','int16');
 %if exist('numChans','var')
 %    [~,~,nSamples,numChans] = LoadBinary(input,1,numChans,[],[],[],[1 2]);
 %else
-[~,~,nSamples,numChans] = LoadBinary([data_root1 fname '.eeg'],1,[],[],[],[],[1 2]);
-nSamples = [numChans nSamples];
+%[~,~,nSamples,numChans] = LoadBinary([data_root1 fname '.eeg'],1,[],[],[],[],[1 2]);
+Par = LoadPar([data_root1 fname]);
+nSamples = [Par.nChannels numel(a.data)/Par.nChannels]
+%nSamples = [numChans nSamples];
 %end
 if ~exist('dec','var') || isempty(dec)
     dec = 1;
@@ -38,7 +40,7 @@ end
 %X = double(h5varget([data_root fname],'/hReal',[0 rind],[nSamples(1) sz]));%-1
 
 %if dec > 1
-    X = zeros(numel(elecs),round(sz/dec));
+    X = zeros(numel(elecs),ceil(sz/dec));
     for i = 1:numel(elecs)
         %tic;
         %temp = double(h5varget([data_root fname '.h5'],'/hReal',[elecs(i)-1 rind],[1 sz]));%nSamples(1)

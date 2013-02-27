@@ -6,11 +6,11 @@ function im = superImpC(x,frames,rad,maxVal,meanAng)
 %%          frames = which components to combine in image (choose ones with well-defined features)
 %%          rad = width of gaussian smoothing kernel
 %%          maxVal = if you want to normalize all components by a fixed value (default: normalize maximum of each component to 1)
-% if exist('frames','var') && ~isempty(frames)
-%     x = x(frames(randperm(numel(frames))),:,:);
-% else
-%     x = x(randperm(size(x,1)),:,:);
-% end
+%  if exist('frames','var') && ~isempty(frames)
+%      x = x(frames(randperm(numel(frames))),:,:);
+%  else
+%      x = x(randperm(size(x,1)),:,:);
+%  end
 if exist('frames','var') && ~isempty(frames)
     x = x(frames,:,:);
 end
@@ -40,7 +40,7 @@ if ~exist('meanAng','var')
         meanAng(i) = 0;%angle(vs(i,peakLoc(i)));
     end
 end
-c = mod(peakLoc*scale/size(x,3),1);
+c = rand(1,numel(peakLoc));%mod(peakLoc*scale/size(x,3),1);
 cc = angCol(max(1,ceil(c*64)),:);
 subplot(5,1,3);set(gca,'nextPlot','add','ColorOrder',cc,'Color',[0 0 0],'xticklabel',[],'yticklabel',[],'fontsize',16);
 plot(abs(vs)');axis tight;%+abs(circshift(vs,[0 size(vs,2)/2]))'

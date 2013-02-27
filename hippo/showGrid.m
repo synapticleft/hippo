@@ -1,4 +1,4 @@
-function array=showGrid(A,grid,ratio,in,clim)
+function array=showGrid(A,grid,rad,ratio,in,clim)
 
 if ~exist('ratio','var') || isempty(ratio)
     ratio = [1 1];
@@ -43,21 +43,25 @@ for j=1:m
     if k > size(A,1)
         break
     end
-    if ~exist('clim','var') 
-        clima=max(abs(A(k,:)));
-    else
-        clima = clim;
-    end
     %temp = reshape(A(:,k),sz(1),sz(2))/clima;
     indsx = buf+(j-1)*(sz(1)+buf)+[1:sz(1)];
     indsy = buf+(i-1)*(sz(2)+buf)+[1:sz(2)];
 %    [fx fy] = gradient(temp);
     if exist('in','var') && in
-        temp = interp2(xin,yin,squeeze(A1(k,:,:))/clima,xout,yout,'cubic');
-        array(indsx,indsy) = temp;
+        temp = interp2(xin,yin,squeeze(A1(k,:,:)),xout,yout,'cubic');
+        %array(indsx,indsy) = temp;
     else
-        array(indsx,indsy) = squeeze(A1(k,:,:)/clima);%temp;
+        temp = squeeze(A1(k,:,:));%temp;
     end
+    if exist('rad','var') && ~isempty(rad) && rad
+        temp = imfilter(temp,fspecial('gaussian',max(5,rad*2),rad));
+    end
+    if ~exist('clim','var') 
+        clima=max(abs(temp(:)));
+    else
+        clima = clim;
+    end
+    array(indsx,indsy) = temp/clima;
 %    quivDat(k,:) = [mean(indsx) mean(indsy) mean(fx(:)) mean(fy(:))];
 %    k=k+1;
   end
@@ -76,10 +80,11 @@ end
 %    if nargout>0
 %        hout=imagesc(x,y,array,[-1 1]);
 %    else
+%array = imfilter(array,fspecial('gaussian',5,1));
 if isreal(array)
-    imagesc(x,y,array);%,[0 1]
+    imagesc(x,y,array,[0 1]);%
 else
-    array = complexIm(array);
+    array = complexIm(array,0,1,[],[],1);
     imagesc(x,y,array);
 end
 %axis image

@@ -94,27 +94,36 @@ subplot(6,6,2*i-1);imagesc(complexIm(imfilter(squeeze(tes1(fx(i),:,:)),fspecial(
 subplot(6,6,2*i);imagesc(complexIm(imfilter(squeeze(teSp(fy(i),:,:)),fspecial('gaussian',5,1)),0,1));axis off;
 end
 %% compare different layers in 512-electrode data
-ss = [];
-for i =1:32
-x = getData('AB3-58.h5',(i-1)*16+(1:16),1000000);
-x = filtHigh(x,1250,100,8);
-s = std(x,0,2);
-ss = [ss s];
-end
-ss1 = ss(:);
-probes1= probes(:,[1:12 14 13 16 15]);
-for i = 1:size(probes,1)
-for j = 1:size(probes,2)
-ssa(i,j) = ss1(probes1(i,j)+1);
-end
-end
+%ss = [];
+%for i =1:32
+%x = getData('AB3-58.h5',(i-1)*16+(1:16),1000000);
+%x = filtHigh(x,1250,100,8);
+%s = std(x,0,2);
+%ss = [ss s];
+%end
+%ss1 = ss(:);
+%probes1= probes(:,[1:12 14 13 16 15]);
+%for i = 1:size(probes,1)
+%for j = 1:size(probes,2)
+%ssa(i,j) = ss1(probes1(i,j)+1);
+%end
+%end
+r = rippledet('AB3-59',512,154);
+rm = mean(r,2);
+rm = showGrid(rm,probes1);
+rm = rm > graythresh(rm);
 r = roipoly;
-f = probes1(ssa < .11 & r)+1;
+r1 = r & showGrid(1-rm,probes1);
+%f = probes1(ssa < .11 & r)+1;
+f = probes1(r1)+1;
+fTest = zeros(512,1);
+fTest(f) = 1;
+figure;showGrid(fTest,probes1);
 [A,W] = runTriggerICA(pos,v,Xf(f,:),.05);
-r1 = roipoly;
-f1 = probes1(ssa > .12 & r1)+1;
-[A1,W1] = runTriggerICA(pos,v,Xf(f1,:),.05);
-[A2,W2] = runTriggerICA(pos,v,Xf([f; f1],:),.05);
+%r1 = roipoly;
+%f1 = probes1(ssa > .12 & r1)+1;
+%[A1,W1] = runTriggerICA(pos,v,Xf(f1,:),.05);
+%[A2,W2] = runTriggerICA(pos,v,Xf([f; f1],:),.05);
 %% ica on anterior, posterior, and both shanks (AB3-58AP.mat)
 [A2,W2,Z2] = runTriggerICA(pos,v,Xf(:,:),.05);
 [A,W,Z] = runTriggerICA(pos,v,Xf(probes1(:) > 255,:),.05);
@@ -210,3 +219,38 @@ tM(i,:) = circshift(tempMag(i,:),[0 50-mx(i)]);
 tT(i,:) = circshift(tempTime(i,:),[0 50-mx(i)]);
 end
 plot(tT')
+%%FIG 1 anatomy
+figure;imagesc(pos(:,:,3));colormap gray;axis image;
+[xs,ys] = meshgrid((1:32)*50,(1:8)*300);
+scale = 5/3;
+hold all;scatter(ys(:)*scale-150,xs(:)*scale,'r','filled')
+hold all;scatter(ys(:)*scale-150+4000,xs(:)*scale,'r','filled')
+%load elecPos.mat
+x8 = reshape(cc1(1,:),[8 8]);
+y8 = reshape(cc1(2,:),[8 8]);
+y8 = y8/mean(mean(diff(y8)))*20;
+x8 = x8/mean(mean(diff(x8')))*200;
+scatter(x8(:)*scale+1200,-y8(:)*scale,'y','filled');
+x8 = x8(:,5:8);y8 = y8(:,5:8);
+scatter(x8(:)*scale+1200,-y8(:)*scale,'g','filled');
+scatter(x8(:)*scale+1200,-y8(:)*scale,'y');
+%% find sequences of ic activations
+allCorr = zeros(numel(lags),512,512);for j = 1:numel(lags)
+allCorr(j,:,:) = Xfd*circshift(Xfd,[0 lags(j)])';
+end
+[mVal,mInds] = max(abs(allCorr));
+mVal = squeeze(mVal);mInds = squeeze(mInds);
+
+%%try 2
+for i = 1:512
+m(i) = max(bwlabel(bwmorph(abs(Xfd(i,:)) > 4,'dilate',10)));
+end
+figure;plot(m)
+fi = find(m > 10);
+%sPlot(abs(Xfd(fi,:)))
+%[inds,fi] = sort(m,'descend');
+xy = [];for i = 1:numel(fi)
+temp = imfilter(squeeze(actMax(fi(i),:,:)),fspecial('gaussian',5,1));
+[xy(i,1) xy(i,2)] = find(temp == max(temp(:)));
+end
+[a b c] = mtspo_ga(xy,1-mVal(fi,fi),1);

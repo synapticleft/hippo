@@ -1,4 +1,4 @@
-function [A,W,Z] = runTriggerICA(pos,Xf,thresh)
+function [A,W,Z,alphas] = runTriggerICA(pos,Xf,thresh)
 %% convert demodulated complex data to real valued w/ 2x dimensionality, 
 %% run fastICA, then bin and render activations.
 warning off all;
@@ -14,12 +14,12 @@ for i = 1:size(pos,2)
 end
 pos(reject,:) = nan;
 %plot(pos(:,1),'r');return;
-if size(Xf,2) < size(pos,1)
-    pos = pos(1:size(Xf,2),:);
-end
 for i = 1:size(pos,2)
     nanInds = find(~isnan(pos(:,i)));
     pos(:,i) = interp1(nanInds,pos(nanInds,i),1:size(pos,1));
+end
+if size(Xf,2) < size(pos,1)
+    pos = pos(1:size(Xf,2),:);
 end
 nanInds = isnan(pos(:,1));
 if size(pos,2) > 2
@@ -53,7 +53,7 @@ end
 
 vel = angVel(pos);%vel = filtLow(vel(:,1),1250/32,1);
 vel = [0; vel(:,1)];
-vel = filtLow(vel,1250/32/dec,1);
+vel = filtLow(vel,1250/32/dec,.5);
 vel = vel/max(vel);
 inds = vel > thresh;
 %inds = abs(zscore(abs(v(:,1)))) < 1;
@@ -66,7 +66,7 @@ inds = vel > thresh;
 %[A(i,:,:),W(i,:,:),Z(i,:,:)] = ACMNsym(Xf(:,inds),'mle_circ');%%%%nonCircComplexFastICAsym(Xf,'pow');%c%complex_ICA_EBM(Xf);%%zscore(Xf,0,2));%zscore(Xf,0,2)n
 %end
 %[A W Z] = cfpa2(Xf);%cfastica(Xf);
-[A W Z] = ACMNsym(Xf(:,inds),'mle_circ');
+[A W Z alphas] = ACMNsym(Xf(:,inds),'mle_circ');
 return
  Xf = [real(Xf);imag(Xf)];%[abs(Xf); angle(Xf)];
  rdim = size(Xf,1);

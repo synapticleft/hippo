@@ -33,7 +33,7 @@ for i = 1:numel(vals)
     figure(f2);subplot(xdim,ydim,i);imagesc(complexIm(flipud(reshape(u*exp(1i*angle(mean(conj(u)))),[8 8])),0,1,60/f(i)));
     figure(f3);subplot(xdim,ydim,i);
     for j = 1:size(phi,3)
-        [dx dy] = circ_diff(reshape(tt(:,j),sz));
+        [dx dy] = angGradient(reshape(tt(:,j),sz));
         dx = dx/f(i)*max(f);
         dy = dy/f(i)*max(f);
         hold all;
@@ -44,12 +44,3 @@ for i = 1:numel(vals)
     axis tight;
 %    set(gca,'xlim',[0 9],'ylim',[0 9]);
 end
-
-function [dx dy] = circ_diff(in)
-dx = ones(size(in));dy = ones(size(in));
-dx(:,2:end) = in(:,2:end)./in(:,1:end-1);
-dx(:,1:end-1) = dx(:,1:end-1).*dx(:,2:end);
-dx = angle(dx);
-dy(2:end,:) = in(2:end,:)./in(1:end-1,:);
-dy(1:end-1,:) = dy(1:end-1,:).*dy(2:end,:);
-dy = angle(dy);
