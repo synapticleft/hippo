@@ -16,19 +16,21 @@ a = memmapfile([data_root1 fname '.eeg'],'Format','int16');
 %    [~,~,nSamples,numChans] = LoadBinary(input,1,numChans,[],[],[],[1 2]);
 %else
 %[~,~,nSamples,numChans] = LoadBinary([data_root1 fname '.eeg'],1,[],[],[],[],[1 2]);
-Par = LoadPar([data_root1 fname]);
-nSamples = [Par.nChannels numel(a.data)/Par.nChannels]
 %nSamples = [numChans nSamples];
 %end
 if ~exist('dec','var') || isempty(dec)
     dec = 1;
 end
+if  ~exist('elecs','var') || isempty(elecs)
+    Par = LoadPar([data_root1 fname]);
+    nSamples = [Par.nChannels numel(a.data)/Par.nChannels];
+    elecs = 1:nSamples(1);
+else
+    nSamples(1) = max(elecs);
+end
 if ~exist('sz','var') || isempty(sz)
     sz = nSamples(2);
     sz = dec*(floor(sz/dec));
-end
-if  ~exist('elecs','var') || isempty(elecs)
-    elecs = 1:nSamples(1);
 end
 if ~exist('rind','var') || isempty(rind)
     rind = 0;

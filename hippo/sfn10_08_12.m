@@ -254,3 +254,44 @@ temp = imfilter(squeeze(actMax(fi(i),:,:)),fspecial('gaussian',5,1));
 [xy(i,1) xy(i,2)] = find(temp == max(temp(:)));
 end
 [a b c] = mtspo_ga(xy,1-mVal(fi,fi),1);
+%%plot vel plus sequences of activation in maze
+vel = angVel(pos);
+veld = [];
+for i = 1:2
+veld(:,i) = decimate(vel(:,i),8);
+end
+figure;subplot('position',[0 .8 1 .2]);
+inds = 5900:6500;
+veld = filtLow(veld(inds,1),1250/32/8,1);
+plot(veld,'b','linewidth',2);hold all;
+vSig = filtLow(v1(inds),1250/32/8,1);
+vSig = vSig - prctile(vSig,5);
+b = veld > 2;
+for i = 1:4
+    b = b - bwmorph(b,'endpoints');
+end
+b = bwmorph(b,'dilate',7);
+for i = 1:3
+    b = b - bwmorph(b,'endpoints');
+end
+hold all;
+plot(vSig/max(vSig)*8,'r','linewidth',2);axis tight;
+set(gca,'xtick',[],'ytick',[]);
+subplot('position',[0 0 1 .8]);hold all;
+imagesc(filtLow(abs(Xfd(fi,inds)),1250/32/8,1));
+b = find(bwmorph(b,'endpoints'));
+for i = 1:numel(b)
+    subplot('position',[0 0 1 .8]);plot(b(i)*ones(2,1),[0 numel(fi)],'w--','linewidth',2);
+    %subplot('position',[0 .8 1 .2]);plot(b(i)*ones(2,1),[-.5 10],'k--','linewidth',2);
+end
+subplot('position',[0 .8 1 .2]);set(gca,'ylim',[-.5 max(veld)*1.3]);
+%% make patchwork for maze activations
+[im frameCol] = superImp(absMean,fi,1,5,6);
+%% zoom into home base
+[a b] = restlessBox(Xfd(fi,:),pos,[-inf 160 160 300],frameCol,37:39,33:36);
+%% draw boundaries on array
+for i = 1:3
+xx = min(bounds1{i}.xs):max(bounds{i}.xs);
+yy = interp1(bounds1{i}.xs,bounds{i}.ys,xx,'cubic');
+plot(xx,yy,'w--','linewidth',2);
+end

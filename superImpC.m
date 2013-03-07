@@ -40,10 +40,10 @@ if ~exist('meanAng','var')
         meanAng(i) = 0;%angle(vs(i,peakLoc(i)));
     end
 end
-c = rand(1,numel(peakLoc));%mod(peakLoc*scale/size(x,3),1);
+c = mod(peakLoc*scale/size(x,3),1);%rand(1,numel(peakLoc));%
 cc = angCol(max(1,ceil(c*64)),:);
 subplot(5,1,3);set(gca,'nextPlot','add','ColorOrder',cc,'Color',[0 0 0],'xticklabel',[],'yticklabel',[],'fontsize',16);
-plot(abs(vs)');axis tight;%+abs(circshift(vs,[0 size(vs,2)/2]))'
+plot(abs(vs)','linewidth',2);axis tight;%+abs(circshift(vs,[0 size(vs,2)/2]))'
 subplot(5,1,[4 5]);hold on;
 for i = 1:size(x,1);
     im(1,b == i) = c(i);%i/size(x,1);

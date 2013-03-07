@@ -1,15 +1,19 @@
-function array=showGrid(A,grid,rad,ratio,in,clim)
+function array=showGrid(A,grid,rad,ratio,in,myDim,clim)
 
 if ~exist('ratio','var') || isempty(ratio)
     ratio = [1 1];
 end
 
 buf=1;
-if ndims(A) == 2
+if ndims(A) == 2 %&& numel(A) ~= prod(size(A))
     A = A.';
 end
+if exist('myDim','var')
+    n = myDim; m = ceil(size(A,1)/n);
+else
 n = ceil(sqrt(size(A,1)));
 m = ceil(size(A,1)/n);
+end
 if ndims(A) == 2
 if numel(grid) == 2
     sz = grid;
@@ -54,7 +58,7 @@ for j=1:m
         temp = squeeze(A1(k,:,:));%temp;
     end
     if exist('rad','var') && ~isempty(rad) && rad
-        temp = imfilter(temp,fspecial('gaussian',max(5,rad*2),rad));
+        temp = imfilter(temp,fspecial('gaussian',max(5,rad*2),rad),'replicate');
     end
     if ~exist('clim','var') 
         clima=max(abs(temp(:)));
@@ -81,12 +85,21 @@ end
 %        hout=imagesc(x,y,array,[-1 1]);
 %    else
 %array = imfilter(array,fspecial('gaussian',5,1));
+
 if isreal(array)
-    imagesc(x,y,array,[0 1]);%
+    imagesc(x,y,array,[0 1]);colormap gray;%
 else
-    array = complexIm(array,0,1,[],[],1);
-    imagesc(x,y,array);
+    imagesc(x,y,complexIm(array,0,1,[],[],1));
 end
+if exist('in','var') && in
+    axis image;
+end
+red = 6;
+array1 = imresize(array,1/red,'bilinear');
+[dx dy] = angGradient(array1);
+[xs ys] = meshgrid(red*(1:size(array1,2))-2,red*(1:size(array1,1))-2);
+hold all;quiver(xs,ys,-dx,-dy,'color','w','linewidth',2);
+axis off;
 %axis image
 %    end
 %    hold on;

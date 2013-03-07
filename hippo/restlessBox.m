@@ -1,0 +1,92 @@
+function [allAct posMean] = restlessBox(act,pos,bounds,frameCol,down,up)
+
+if exist('frameCol','var')
+    frameCol = squeeze(frameCol);
+end
+thresh = 2;
+dec = round(size(pos,1)/size(act,2));
+for i =1:2
+    posd(:,i) = decimate(pos(:,i),dec);
+end
+posd = posd(1:size(act,2),:);
+
+bounded = posd(:,1) > bounds(1) & posd(:,1) < bounds(2) & ...
+    posd(:,2) > bounds(3) & posd(:,2) < bounds(4);
+figure;scatter(posd(:,1),posd(:,2),'filled');
+numExp = 13;
+bounded = bwmorph(bounded,'dilate',numExp);
+for i =1:numExp
+    bounded = bounded - bwmorph(bounded,'endpoints');
+end
+bounded = logical(bounded);
+hold all;scatter(posd(bounded,1),posd(bounded,2),'filled','r');
+bounded = bwlabel(bounded);
+xdim = ceil(sqrt(max(bounded)));
+ydim = ceil(max(bounded)/xdim);
+col = [0 0 1; 0 1 0; 1 0 0; 1 1 0; 0 1 1;1 0 1];
+f1 = figure;
+f2 = figure;
+allAct = zeros(size(act,1),max(bounded));
+posMean = sideSeq(bounded,posd,mean(bounds(3:4)));
+for i = 1:max(bounded)
+    tempMag = abs(act(:,bounded == i));
+    allAct(:,i) = sum(max(tempMag - thresh,0),2);
+    [ys xs] = meshgrid(1:sum(bounded == i),1:size(act,1));
+    offSet = find(bounded == i,1);
+    %scatter(posd(offSet+ys(tempMag > thresh),1),posd(offSet+ys(tempMag > thresh),2),...
+    %    tempMag(tempMag > thresh)*5,col(mod(xs(tempMag > thresh),size(col,1))+1,:),'filled');
+    figure(f2);hold all;
+    %subplot(1,2,1+(posMean(i)<0));hold all;
+    if exist('down','var')
+        inds = zeros(size(act,1),1);
+        inds(down) = 1;
+        tempMag1 = tempMag;tempMag1(~inds,:) = 0;tempMag(logical(inds),:) = 0;    
+        scatter(posd(offSet+ys(tempMag1 > thresh),1),posd(offSet+ys(tempMag1 > thresh),2),...
+        tempMag1(tempMag1 > thresh)*10,getCol(xs,tempMag1,thresh,frameCol),'v','filled');
+    end
+    if exist('up','var')
+        inds = zeros(size(act,1),1);
+        inds(up) = 1;
+        tempMag1 = tempMag;tempMag1(~inds,:) = 0;tempMag(logical(inds),:) = 0;    
+        scatter(posd(offSet+ys(tempMag1 > thresh),1),posd(offSet+ys(tempMag1 > thresh),2),...
+        tempMag1(tempMag1 > thresh)*10,getCol(xs,tempMag1,thresh,frameCol),'^','filled');
+    end
+    scatter(posd(offSet+ys(tempMag > thresh),1),posd(offSet+ys(tempMag > thresh),2),...
+        tempMag(tempMag > thresh)*10,getCol(xs,tempMag,thresh,frameCol),'s','filled');
+    %figure(f1);
+    %subplot(1,2,1+(posMean(i)<0));hold all;
+    %plot(posd(offSet+(0:5),1),posd(offSet+(0:5),2),'k--');
+    %scatter(posd(offSet+ys(tempMag > thresh),1),posd(offSet+ys(tempMag > thresh),2),...
+    %    tempMag(tempMag > thresh)*5,col(mod(xs(tempMag > thresh),size(col,1))+1,:),'filled');
+    %%scatter(posd(bounded == i,1),posd(bounded == i,2),20,cc(ceil(linspace(.01,64,size(tempMag,2))),:),'filled');
+    drawnow;
+end
+%for i = 1:2
+%    subplot(1,2,i);set(gca,'xlim',max(0,bounds(1:2)),'ylim',bounds(3:4));
+%end
+figure(f2);set(gca,'xlim',max(0,bounds(1:2)),'ylim',bounds(3:4),'color',[0 0 0]);
+
+function colVec = getCol(xs,tempMag,thresh,frameCol)    
+if ~exist('frameCol','var') || isempty(frameCol)
+        colVec = col(mod(xs(tempMag > thresh),size(col,1))+1,:);
+    else
+        colVec = frameCol(xs(tempMag > thresh),:);
+    end
+
+function posSeq = sideSeq(runInds,pos,ref)
+posSeq = zeros(1,max(runInds)+1);
+for i = 1:max(runInds)+1
+    if i == 1
+        inds = 1:find(runInds == 1,1)-1;
+    elseif i == max(runInds)+1
+        inds = find(runInds == i-1, 1, 'last' )+1:size(pos,1);
+    else
+        inds = (find(runInds == i-1)+1):(find(runInds == i)-1);
+    end
+    temp = [max(pos(inds,2))-ref min(pos(inds,2))-ref];
+    if abs(temp(1)) > abs(temp(2))
+        posSeq(i) = temp(1);
+    else
+        posSeq(i) = temp(2);
+    end
+end

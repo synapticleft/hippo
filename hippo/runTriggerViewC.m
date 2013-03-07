@@ -137,8 +137,8 @@ b = [0 diff(b)];
 runs = bwlabel(b > 0);
 w = watershed(b==0);
 w = w-1; 
-posd(mod(w,2) ==1 ,1) = posd(mod(w,2) ==1 ,1) + max(posd(:));
-pos(mod(w,2) ==1 ,1) = pos(mod(w,2) ==1 ,1) + max(pos(:));
+posd(mod(w,2) ==1 ,1) = -posd(mod(w,2) ==1 ,1) + 2*max(posd(:));
+pos(mod(w,2) ==1 ,1) = -pos(mod(w,2) ==1 ,1) + 2*max(pos(:));
 runs1 = round(w/2);
 inds = runs1 > 0 & runs1 <= max(runs);
 t1 = zeros(size(t,1),max(runs),accumbins(1)*2);
@@ -171,6 +171,7 @@ spatial = spatial(posInds,:);
 %peakLoc = peakLoc(indLoc);
 posInds = posInds(indLoc);
 spatial = spatial(indLoc,:);
+posInds = 1:size(r1,2);
 t = t(posInds,:);t1 = t1(posInds,:,:);r1 = r1(:,posInds);r2 = r2(:,posInds);
 t = bsxfun(@times,t,exp(1i*-angle(v(:,1))).');
 % sPlot(t);
@@ -240,7 +241,7 @@ figure;plot(temp(:,1),temp(:,2));
 % freezeColors(h3);
 %sPlot([bsxfun(@times,t,sk'); vel']);
 %figure;imagesc(complexIm(corr(ups(:,:)'),0,1));
-superImpC(tes,[],1,prctile(abs(tes(:)),99.5));
+superImpC(tes,[],1,prctile(abs(tes(:)),99));
 
 % figure;
 % for i = 1:max(runs1)

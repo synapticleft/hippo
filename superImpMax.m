@@ -1,4 +1,4 @@
-function [im frameCol] = superImp(x,frames,rad,maxVal,numCol,bb)
+function [im frameCol] = superImpMax(x,frames,rad,maxVal,bb)
 %%SUPERIMP combines multiple components into 1 image, assigning each
 %%component a different color, for each pixel, choosing the component with
 %%the largest magnitude at that location. All components are normalized.
@@ -16,23 +16,42 @@ if exist('frames','var')
     x = x(frames,:,:);
 end
 allReg = zeros(size(x));
+cents = zeros(size(x,1),2);
 for i = 1:size(x,1)
     if exist('rad','var') && rad
         x(i,:,:) = imfilter(squeeze(x(i,:,:)),fspecial('gaussian',5,rad));
     end
-    allReg(i,:,:) = x(i,:,:) > maxVal/4;%max(max(squeeze(x(i,:,:))))/2;
     if ~exist('maxVal','var')
         x(i,:,:) = x(i,:,:)/max(max(max(x(i,:,:))));
     else
-        x(i,:,:) =  x(i,:,:)/maxVal;
+        if numel(maxVal) > 1
+            allReg(i,:,:) = x(i,:,:) > maxVal(end);
+        else
+            allReg(i,:,:) = x(i,:,:) > maxVal/4;%max(max(squeeze(x(i,:,:))))/2;
+        end
+        %temp = squeeze(allReg(i,:,:));pause(.5);
+        allReg(i,:,:) = bwlabel(squeeze(allReg(i,:,:)));
+        allReg(i,allReg(i,:) ~= mode(allReg(i,allReg(i,:) > 0))) = 0;
+        %temp = temp + squeeze(allReg(i,:,:))
+        c = regionprops(min(1,squeeze(allReg(i,:,:))),'centroid');
+        cents(i,:) = c.Centroid;
+        x(i,:,:) =  x(i,:,:)/maxVal(1);
     end
 end
-if exist('numCol','var') && ~isempty(numCol)
-    cols = sepCols(allReg,numCol);
-    cols = cols/numCol;
-else
-    cols = (1:size(allReg,1))/size(allReg,1);
-end
+%if exist('numCol','var') && ~isempty(numCol)
+%    cols = sepCols(allReg,numCol);
+%    cols = cols/numCol;
+%else
+cols = (1:size(allReg,1))/size(allReg,1);
+mVal = squareform(pdist(cents));
+%mVal = -log(mVal);mVal = mVal - min(mVal(:));mVal(isinf(mVal)) = 0;
+mVal = 1./mVal;mVal(isinf(mVal)) = 0;
+order = mytsp_ga(cents,mVal);
+%s = mdscale(mVal,1);
+%[~,order] = sort(s);
+x = x(order,:,:);
+%cols = cols(order);
+%end
 x = abs(x);
 x = min(1,max(0,x));
 [a b]= max(x);
