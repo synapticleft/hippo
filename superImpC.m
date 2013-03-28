@@ -15,11 +15,13 @@ if exist('frames','var') && ~isempty(frames)
     x = x(frames,:,:);
 end
 vs = zeros(size(x,1),size(x,3));
+f = fspecial('gaussian',5,rad);
+%f([1 2 4 5],:) = 0;f = f/sum(f(:));
 for i = 1:size(x,1)
     [u,s,v] = svds(squeeze(x(i,:,:)),1);
-    vs(i,:) = -mean(u)/abs(mean(u))*s*v';
+    vs(i,:) = mean(u)/abs(mean(u))*s*v';
     if exist('rad','var') && rad
-        x(i,:,:) = imfilter(squeeze(x(i,:,:)),fspecial('gaussian',5,rad));
+        x(i,:,:) = imfilter(squeeze(x(i,:,:)),f);
     end
     if ~exist('maxVal','var')
         x(i,:,:) = x(i,:,:)/max(max(max(abs(x(i,:,:)))));
@@ -51,7 +53,7 @@ for i = 1:size(x,1);
     im(3,b == i) = a(b == i);
 %     scatter(1:size(x,3),angle(vs(i,:)*exp(-1i*angle(vs(i,peakLoc(i))))),...
 %         abs(vs(i,:))*100/max(abs(vs(i,:))),cc(i,:),'filled');
-inds = [max(1,peakLoc(i)-10):min(size(x,3),peakLoc(i)+10) find(abs(vs(i,:)) > .3*max(abs(vs(i,:))))];
+inds = 1:size(vs,2);%[max(1,peakLoc(i)-10):min(size(x,3),peakLoc(i)+10) find(abs(vs(i,:)) > .3*max(abs(vs(i,:))))];
     if ~exist('maxVal','var')
         s = abs(vs(i,inds))*50/max(abs(vs(i,:)));
     else

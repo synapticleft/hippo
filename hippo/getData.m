@@ -5,7 +5,7 @@ function [X whiteningMatrix dewhiteningMatrix] = getData(fname,dec,elecs,sz,rind
 % you store the data files.
 
 %data_root = '/media/Expansion Drive/redwood/';%'/media/work/hippocampus/';%
-data_root1 = '/media/Expansion Drive/redwood/';%KenjiMizuseki/';
+data_root1 = '/media/Expansion Drive/KenjiMizuseki/';
 %fname = 'hippo.h5';%'96elec.h5';%
 %padding = 0;%20000;
 %info = hdf5info([data_root fname '.h5']);

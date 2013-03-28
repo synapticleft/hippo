@@ -1,33 +1,46 @@
-function [allAct posMean] = restlessBox(act,pos,bounds,frameCol,down,up)
+function [allAct posMean] = restlessBox(act,pos,bounds,frameCol)
 
-if exist('frameCol','var')
-    frameCol = squeeze(frameCol);
-end
-thresh = 2;
+thresh = 3;
 dec = round(size(pos,1)/size(act,2));
 for i =1:2
     posd(:,i) = decimate(pos(:,i),dec);
 end
 posd = posd(1:size(act,2),:);
-
 bounded = posd(:,1) > bounds(1) & posd(:,1) < bounds(2) & ...
     posd(:,2) > bounds(3) & posd(:,2) < bounds(4);
-figure;scatter(posd(:,1),posd(:,2),'filled');
-numExp = 13;
+numExp = 13*8/dec;
 bounded = bwmorph(bounded,'dilate',numExp);
 for i =1:numExp
     bounded = bounded - bwmorph(bounded,'endpoints');
 end
 bounded = logical(bounded);
-hold all;scatter(posd(bounded,1),posd(bounded,2),'filled','r');
+%figure;scatter(posd(:,1),posd(:,2),'filled');
+%hold all;scatter(posd(bounded,1),posd(bounded,2),'filled','r');
 bounded = bwlabel(bounded);
-xdim = ceil(sqrt(max(bounded)));
-ydim = ceil(max(bounded)/xdim);
-col = [0 0 1; 0 1 0; 1 0 0; 1 1 0; 0 1 1;1 0 1];
-f1 = figure;
-f2 = figure;
-allAct = zeros(size(act,1),max(bounded));
+%xdim = ceil(sqrt(max(bounded)));
+%ydim = ceil(max(bounded)/xdim);
+%col = [0 0 1; 0 1 0; 1 0 0; 1 1 0; 0 1 1;1 0 1];
+%f1 = figure;
+%f2 = figure;
+%allAct = zeros(size(act,1),max(bounded));
 posMean = sideSeq(bounded,posd,mean(bounds(3:4)));
+%posMean = posMean > 0;
+for i = 1:2
+    figure;hold all;%subplot(2,1,i);
+    inds = bounded & posMean == i-1;
+    %tempMag = abs(act(:,inds));
+    %allAct(:,i) = sum(max(tempMag - thresh,0),2);
+    for j = 1:size(act,1)
+    [ys xs] = meshgrid(find(inds),j);%1:size(act,1));
+    tempMag = abs(act(j,inds));
+    scatter(posd(ys(tempMag > thresh),2),posd(ys(tempMag > thresh),1),...
+        tempMag(tempMag > thresh)*3,getCol(xs,tempMag>thresh,frameCol),'filled');
+    drawnow;
+    end
+    set(gca,'xlim',max(0,bounds(3:4)),'ylim',bounds(1:2),'color',[0 0 0]);
+    axis square
+end
+return
 for i = 1:max(bounded)
     tempMag = abs(act(:,bounded == i));
     allAct(:,i) = sum(max(tempMag - thresh,0),2);
@@ -66,15 +79,16 @@ end
 %end
 figure(f2);set(gca,'xlim',max(0,bounds(1:2)),'ylim',bounds(3:4),'color',[0 0 0]);
 
-function colVec = getCol(xs,tempMag,thresh,frameCol)    
-if ~exist('frameCol','var') || isempty(frameCol)
-        colVec = col(mod(xs(tempMag > thresh),size(col,1))+1,:);
-    else
-        colVec = frameCol(xs(tempMag > thresh),:);
-    end
+function colVec = getCol(xs,inds,frameCol)    
+%if ~exist('frameCol','var') || isempty(frameCol)
+%        colVec = col(mod(xs(tempMag > thresh),size(col,1))+1,:);
+%    else
+        colVec = frameCol(xs(inds),:);
+%    end
 
-function posSeq = sideSeq(runInds,pos,ref)
+function [runDir posSeq] = sideSeq(runInds,pos,ref)
 posSeq = zeros(1,max(runInds)+1);
+runDir = zeros(size(runInds));
 for i = 1:max(runInds)+1
     if i == 1
         inds = 1:find(runInds == 1,1)-1;
@@ -89,4 +103,5 @@ for i = 1:max(runInds)+1
     else
         posSeq(i) = temp(2);
     end
+    runDir(runInds == i) = posSeq(i) > 0;
 end

@@ -295,3 +295,27 @@ xx = min(bounds1{i}.xs):max(bounds{i}.xs);
 yy = interp1(bounds1{i}.xs,bounds{i}.ys,xx,'cubic');
 plot(xx,yy,'w--','linewidth',2);
 end
+%%%%%%%%%%
+ind = [ 4     3    28    19    11    43];
+A = A(:,fi);
+A = bsxfun(@times,A,exp(1i*-angle(mean(A))));
+A1 = bsxfun(@rdivide,A,sqrt(sum(A.*conj(A))));
+A2 = bsxfun(@minus,A1(:,ind),mean(A1,2));
+ for i = 1:12
+if mod(i,2)
+base = 256;
+else
+base = 0;
+end
+A3(i,:) = A2(base+(1:256),ceil(i/2));
+end
+figure;showGrid(A3.',probes1(:,1:8),.25,[1 6],1,6);drawnow;
+hold all;for j = 1:6
+offX = 88*mod(j-1,3);
+offY = 33*floor((j-1)/3);
+for i = 1:3
+xx = min(bounds1{i}.xs):max(bounds1{i}.xs);
+yy = interp1(bounds1{i}.xs,bounds1{i}.ys,xx,'cubic');
+plot(offX+xx,offY+yy,'w--','linewidth',2);
+end
+end
