@@ -1,168 +1,61 @@
-function [allMax,W] = serverICA(pos,Xf,v,W)
-thresh = [.05 1];accumbins = 50;
-dec = 32;
-%%Processing of position information
-bounds = [.2 .9];
-pos(pos == -1) = nan;
-reject = 0;
-for i = 1:4
-    reject = reject | min([0; diff(pos(:,i))],flipud([0; diff(flipud(pos(:,i)))])) < -20;
-end
-pos(reject,:) = nan;
-for i = 1:4
-    nanInds = find(~isnan(pos(:,i)));
-    pos(:,i) = interp1(nanInds,pos(nanInds,i),1:size(pos,1));
-end
-nanInds = isnan(pos(:,1)) | isnan(pos(:,3));
-vel = angVel(pos);vel = vel(:,1);
-vel = [0; vel];
-pos = bsxfun(@minus,pos,nanmean(pos));
-[~,~,c] = svd(pos(~nanInds,1:2),'econ');pos = (c\pos(:,1:2)')';%pos = a;pos(nanInds) = nan;
-pos = pos(:,1);
-pos = pos - min(pos) + eps;
-pos = pos/(max(pos)+eps);
-pos(nanInds) = 0;
+function [allResp,W,allRun] = serverICA(pos,Xf,v,subset)
+accumbins = 100;thresh = .05;
+pos = fixPos(pos);
+Xf = [bsxfun(@times,Xf,exp(1i*angle(v(:,1))).')];
+Xf = Xf(:,~any(isnan(pos')));
+v = v(~any(isnan(pos')));
+pos = pos(~any(isnan(pos')),:);
+vel = angVel(pos);%vel = filtLow(vel(:,1),1250/32,1);
+vel = [0; vel(:,1)];
 vel = filtLow(vel,1250/32,.5);
-nanInds = find(~isnan(vel));
-vel = interp1(nanInds,vel(nanInds),1:numel(vel));
-%vel = vel(1:size(X,2));
-inds = vel > thresh(1);
-%% which repetition of rat running
+vel = vel/max(vel);
+inds = vel > thresh;
 b = nan*ones(size(pos,1),1);
-b(pos(:,1) < bounds(1)) = -1;b(pos(:,1) > bounds(2)) = 1;
+bounds = [.1 .9];
+Xf = Xf(:,inds);
+pos = pos(inds,1);
+pos = pos-min(pos)+eps;
+pos = pos/max(pos);
+b(pos < bounds(1)) = -1;b(pos > bounds(2)) = 1;
 nanInds = find(~isnan(b));
 b = interp1(nanInds,b(nanInds),1:size(pos,1));
 b = [0 diff(b)];
-runs = watershed(b==0);
-f = find(runs == 0);
-runs(f) = runs(f-1);
-%% which contiguous chunk of data
-chunk = bwlabel(inds);
-h = hist(chunk,0:max(chunk));
-a = accumarray([ones(size(chunk)); chunk+1]',pos,[],@mean);
-f = find(h(2:end) < 1250/dec*thresh(2) | a(2:end) < bounds(1) | a(2:end) > bounds(2));
-inds(ismember(chunk,f)) = 0;
-%chunk = bwlabel(inds);
-dPos = [0; diff(pos)];
-a = accumarray(runs'+1,dPos,[],@mean);
-f = find(a(2:end) > 0);
-pos(ismember(runs,f)) = 2-pos(ismember(runs,f));pos = pos/2;
-posd = floor(pos*accumbins*2)+1;posd = min(2*accumbins,max(1,posd));
-posd = posd(inds);v = v(inds,1);
-%runs = ceil(runs/2);
+w = watershed(b==0);
+w = w-1; 
+pos(mod(w,2) ==1 ,1) = -pos(mod(w,2) ==1 ,1) + 2*max(pos(:));
+pos = ceil(pos*accumbins);
+Xf = whiten(Xf);
 %%%%%%%%%
-% warning off all;
-% dec = 1;
-% bounds = [.1 .9];
-% pos(pos == -1) = nan;
-% reject = 0;
-% for i = 1:size(pos,2)
-%     reject = reject | min([0; diff(pos(:,i))],flipud([0; diff(flipud(pos(:,i)))])) < -20;
-% end
-% pos(reject,:) = nan;
-% if size(Xf,2) < size(pos,1)
-%     pos = pos(1:size(Xf,2),:);
-% end
-% for i = 1:size(pos,2)
-%     nanInds = find(~isnan(pos(:,i)));
-%     pos(:,i) = interp1(nanInds,pos(nanInds,i),1:size(pos,1));
-% end
-% nanInds = isnan(pos(:,1));
-% if size(pos,2) > 2
-%     nanInds = nanInds | isnan(pos(:,3));
-% end
-% pos = pos(~nanInds,:);Xf = Xf(:,~nanInds);%v = v(~nanInds,:);sp = sp(:,~nanInds);
-% if dec > 1
-%     for i = 1:4
-%         posd(:,i) = decimate(pos(:,i),dec);
-%     end
-%     pos = posd;clear posd;
-% end
-% pos = bsxfun(@minus,pos,mean(pos));
-% % [a,~,~] = svd(pos(:,1:2),'econ');pos = a;
-% % for i = 1:2    
-% %     pos(:,i) = pos(:,i) - min(pos(:,i));
-% %     pos(:,i) = pos(:,i)/(max(pos(:,i)));
-% %     pos(:,i) = min(pos(:,i),.9999);
-% % end
-% %Xf = [bsxfun(@times,Xf,exp(1i*angle(v(:,1))).')];
-% %Xf = bsxfun(@times,Xf,exp(1i*angle(v(:,1)))');
-% if dec > 1
-% Xfd = decimate(Xf(1,:),dec);Xfd(2:size(Xf,1),:) = 0;
-% for i = 2:size(Xf,1)
-%     Xfd(i,:) = decimate(Xf(i,:),dec);
-% end
-% Xf = Xfd;clear Xfd;
-% end
-% vel = angVel(pos);
-% vel = [0; vel(:,1)];
-% vel = filtLow(vel,1250/32/dec,1);
-% vel = vel/max(vel);
-% inds = vel > thresh;
-if 0
-if ~exist('W','var')
-    A = zeros(100,64,63);
-    W = zeros(100,63,64);
-    Z = zeros(100,64,63);
-    al = zeros(100,63);
-    for i = 1:100
-        [A(i,:,:),W(i,:,:),Z(i,:,:),al(i,:)] = ACMNsym(Xf(:,inds),'mle_circ');
-    end
-end
-allMax = zeros(size(W,1),accumbins*2);
-for i = 1:size(W,1)
-    act = squeeze(W(i,:,:))*Xf(:,inds);
-    act = bsxfun(@times,act,v.');
-    acPos = zeros(size(act,1),2*accumbins);
-    for j = 1:size(act,1)
-        acPos(j,:) = accumarray([ones(size(posd)) posd],act(j,:),[1 2*accumbins],@mean);
-    end
-    [mxVal,mxInd] = max(abs(acPos)');
-    [mxVal,srt] = sort(mxVal,'ascend');
-    mxInd = mxInd(srt);
-    allMax(i,mxInd) = mxVal;
-end
-else
-    [X,wh] = myWhiten(Xf(:,inds));
-    allMax = zeros(size(Xf,1)-1,accumbins*2);
-    for i = size(Xf,1)-1:-1:1
-        W{i} = myACMNsym(X(i:end,:));
-        act = W{i}'*X(i:end,:);
-        act = bsxfun(@times,act,v.');
-        acPos = zeros(size(act,1),2*accumbins);
-        for j= 1:size(act,1)
-            acPos(j,:) = accumarray([ones(size(posd)) posd],act(j,:),[1 2*accumbins],@mean);
+if ~subset
+    %if ~exist('W','var')
+    W = zeros(100,size(Xf,1),size(Xf,1));
+    %end
+    allResp = zeros(size(W,1),size(W,2),accumbins*2);
+    for i = 1:size(W,1)
+        W(i,:,:) = myACMNsym(Xf);
+        act = squeeze(W(i,:,:))'*Xf;
+        for j = 1:size(act,1)
+            allResp(i,j,:) = accumarray([ones(size(pos)) pos],act(j,:),[1 2*accumbins],@mean);
         end
-        [mxVal,mxInd] = max(abs(acPos)');
-        [mxVal,srt] = sort(mxVal,'ascend');
-        mxInd = mxInd(srt);
-        allMax(i,mxInd) = mxVal;
-        imagesc(allMax);drawnow;
+        i
     end
+    save('fullICA.mat','W','allResp');
+else
+    Xf = Xf(end:-1:1,:);
+    allResp = zeros(sum(2:size(Xf,1)),accumbins*2);
+    allRun = zeros(1,size(allResp,1));
+    counter = 0;
+    for i = 1:size(Xf,1)
+        W{i} = myACMNsym(Xf(1:i,:));
+        act = W{i}'*Xf(1:i,:);
+        for j= 1:size(act,1)
+            allResp(counter+j,:) = accumarray([ones(size(pos)) pos],act(j,:),[1 2*accumbins],@mean);
+        end
+        allRun(counter+(1:size(act,1))) = i;
+        counter = counter + size(act,1);
+    end
+    save('subsetICA.mat','allRun','allResp','W');
 end
-
-function [x,wh] = myWhiten(Xin)
-[Ex, Dx] = eig(cov(Xin'));
-% d = flipud(diag(Dx));
-% cumVar = sum(d);
-% maxLastEig = sum(cumsum(d)/cumVar < .9999999)
-% Dx = Dx(end-maxLastEig+1:end,end-maxLastEig+1:end);
-% Ex = Ex(:,end-maxLastEig+1:end);
-% factors = diag(Dx);
-% noise_factors = ones(size(Dx,1),1);
-% rolloff_ind = sum(cumsum(flipud(factors))/cumVar > .999999)
-% noise_factors(1:rolloff_ind) = .5*(1+cos(linspace(pi-.01,0,rolloff_ind))); 
-% Dx = diag(factors./noise_factors);
-wh = sqrt(inv(Dx)) * Ex';
-x = wh * Xin;
-% dewhiteningMatrix = Ex * sqrt (Dx);
-% %noise_factors(1:rolloff_ind) = .5*(1+cos(linspace(pi-.01,0,rolloff_ind))); 
-% %D = diag(flipud(1./noise_factors));
-% %zerophaseMatrix = E*inv (sqrt (D))*E';
-% rolloff_ind = 2;
-% noise_factors(1:rolloff_ind) = .5*(1+cos(linspace(pi-.01,0,rolloff_ind)));
-% %D = diag(flipud(1./noise_factors));
-% zerophaseMatrix = Ex*sqrt(diag(flipud(noise_factors)))*Ex';%inv (sqrt (D))*E';
 
 function W = myACMNsym(x)
 inVal = 2.5;

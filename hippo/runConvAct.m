@@ -81,8 +81,10 @@ runs = ceil(runs/2);
 runs1 = round(resample([runs runs(end)*ones(1,100)],ratio,1));runs1 = runs1(1:size(X,2));
 %% many bases
 load('params.mat','lambda','whiteningMatrix','dewhiteningMatrix');
+%lambda = [.8 .25];
 load('phi.mat','phi');
 opts_lbfgs_a = lbfgs_options('iprint', -1, 'maxits', 20,'factr', 0.01, 'cb', @cb_a);
+%lambda = [1 .25];
 [~,J,R] = size(phi);%J1 = size(phi1,2);
 Jp = numel(posInds);%
 %la = linspace(.1,1,8);
@@ -129,7 +131,7 @@ for j = 39%1:max(chunk1)
     %subplot(311);imagesc([squeeze(magAll(1,:,:)) squeeze(magAll(2,:,:))]);
     %subplot(312);imagesc(complexIm([squeeze(timeAll(1,:,:)) squeeze(timeAll(2,:,:))],0,1));drawnow; 
     %subplot(313);plot(aMult);axis tight;
-    %sPlot(aMult',[],0);title(j);
+    sPlot(aMult',[],0);title(j);drawnow;
 end
 %    end
 %end

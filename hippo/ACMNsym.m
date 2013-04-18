@@ -10,7 +10,7 @@
 % mle_circ assumes circular and runs mutch faster
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [A,W,Z,alphaHist] = ACMNsym(Xin,typeStr)
+function [A,W,WOr,alphas] = ACMNsym(Xin,typeStr)
 inVal = 2.5;
  type = 2;
  if strcmp(typeStr,'mle_noncirc') == 1
@@ -54,7 +54,7 @@ inVal = 2.5;
 % %D = diag(flipud(1./noise_factors));
 % zerophaseMatrix = Ex*sqrt(diag(flipud(noise_factors)))*Ex';%inv (sqrt (D))*E';
 %%%%%%%%%%%%
-[x,whiteningMatrix,dewhiteningMatrix,zerophaseMatrix] = whiten(Xin);
+[x,whiteningMatrix,dewhiteningMatrix] = whiten(Xin);%,zerophaseMatrix
   [n,m] = size(x);
  pC = (x*transpose(x))/m;
 
@@ -65,8 +65,8 @@ alphas = ones(n,1)*inVal;
     W = complex(randn(n),randn(n));%W;
   Wold = zeros(n);
   k=0;
-a2 = .01;
-eta = 1;
+a2 = .01;%.2;
+%eta = 1;
 alphaHist = zeros(maxcounter,n);
    while (norm(abs(Wold'*W)-eye(n),'fro')>(n*1e-4) && k < maxcounter)%&& k < 15*n)
        minAbsCos = min(abs(diag(W' * Wold)));
@@ -164,13 +164,14 @@ alphaHist = zeros(maxcounter,n);
       end
     [E,D] = eig(W'*W);
     W = W * E /sqrt(D)*E';%* inv(sqrt(D)) * E';
-         plot(alphaHist(1:k,:));drawnow;
+         %plot(alphaHist(1:k,:));drawnow;
          %subplot(211);subplot(212);imagesc(showGrid(dewhiteningMatrix*W,[8 4]));drawnow;
   end; %While
 %  figure;plot(alphas);
 %  [mean(alphas) median(alphas)]
 A = dewhiteningMatrix*W;
-Z = zerophaseMatrix*A;
+%Z = zerophaseMatrix*A;
+WOr = W;
 W = W' * whiteningMatrix;
 %shat = W'*x;
 %Ahat = inv(Q)*W;

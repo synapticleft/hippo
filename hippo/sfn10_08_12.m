@@ -319,3 +319,26 @@ yy = interp1(bounds1{i}.xs,bounds1{i}.ys,xx,'cubic');
 plot(offX+xx,offY+yy,'w--','linewidth',2);
 end
 end
+%%
+figure;for i = 1:150
+subtightplot(1,1,1);
+showGrid(real(A3Or.'*exp(1i*i/15*2*pi)),probes1(:,1:8),.25,[1 6],1,4);
+hold all;for j = 1:6
+offX = 88*mod(j-1,2)+44;
+offY = 33*floor((j-1)/2);
+for ii = 1:3
+xx = min(bounds{ii}.xs):max(bounds{ii}.xs);
+yy = interp1(bounds{ii}.xs,bounds{ii}.ys,xx,'cubic');
+plot(offX+xx,offY+yy,'w--','linewidth',2);
+end
+offX = 88*mod(j-1,2);
+offY = 33*floor((j-1)/2);
+for ii = 1:3
+xx = min(bounds1{ii}.xs):max(bounds1{ii}.xs);
+yy = interp1(bounds1{ii}.xs,bounds1{ii}.ys,xx,'cubic');
+plot(offX+xx,offY+yy,'w--','linewidth',2);
+end
+end
+hold off;drawnow;
+m(i) = getframe(gcf);
+end

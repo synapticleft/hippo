@@ -1,36 +1,31 @@
-function [a b inds] = crcns1(trace,f1,dims,ratio)
-%this program visualizes spatial LFP in two frequency bands and 
-%shows the direction in which they move.
-%MODDED TO SHOW RAW LFP AND THETA FILTERED
+function crcns1(traceT,dims,ratio,im)
 
-global step
-global h
-
-Fs = 1250/4;
+subplot('position',[0 0 1 1]);
 figure('Name','Traveling LFP waves in rat hippocampus');
-trace = bsxfun(@minus,trace,mean(trace,2));
-trace = bsxfun(@rdivide,trace,std(trace,0,2));
-traceT = trace;%morFilter(trace,f1,Fs);%hipFilter(trace,f1(1),f1(2),Fs);%
-HT = angle(traceT);%hilbert(traceT'))';
-traceT = real(traceT);
 if numel(dims) > 2
-    probes = size(dims);
+    probes = dims-min(dims(:))+1;%trace = trace(dims-min(dims(:)) + 1,:);
+    dims = size(dims);
 end
 center = dims([2 1])/2;
 scale = 20;
 numPast = 500;
 histT = nan*ones(numPast,2);
-step = 1;
-%h = uicontrol('Style','slider','Position', [20 20 100 20],'Value',2,'Min',1,'Max',20, 'Callback',@fixStep);
-%tRange = [min(traceT(:)) max(traceT(:))]; gRange = [min(traceG(:)) max(traceG(:))];
-%tRange = [-1 1]*sqrt(mean(var(traceT(:))))*2; orRange = [-1 1]*sqrt(mean(var(trace(:))))*2;
 trange = std(traceT(:))*[-2 2];
-startInd = 1000;
-%colormap gray;
-for i = startInd:size(trace,2)%startInd + 500%
-    [xt yt] = myGradient(reshape(HT(:,i),dims));
+% if exist('in','var') && ~isempty(in) && in
+%     [xout yout] = meshgrid(ratio(2):ratio(2)*dims(2),ratio(1):ratio(1)*dims(1));
+%     [xin yin] = meshgrid((1:dims(2))*ratio(2),(1:dims(1))*ratio(1));
+%     dims = size(xout);
+% end
+for i = 1:size(traceT,2)%startInd + 500%
+    temp = traceT(:,i);temp = temp(probes);
+    %if exist('in','var') && ~isempty(in) && in
+    %    temp = interp2(xin,yin,squeeze(temp),xout,yout,'cubic');
+    %end
+    temp = imfilter(temp,fspecial('gaussian',5,1));
+    [xt yt] = angGradient(imresize(temp,1/2,'bilinear'));%myGradient(HT);%(reshape(HT(:,i),dims));
+    [xs ys] = meshgrid(1:size(xt,2),1:size(xt,1));
+    temp = real(temp);
     xt = -xt;yt = flipud(yt);tm = [mean(xt(:)) mean(yt(:))];
-    if mod(i,step) == 0
         histT = circshift(histT,[-1 0]);
         histT(numPast,:) = center([2 1]).*ratio+tm*scale;
         %subplot('Position',[0 0 1 .48]);
@@ -42,19 +37,21 @@ for i = startInd:size(trace,2)%startInd + 500%
         %quiver(center(2)*ratio(1),center(1)*ratio(2),tm(1)*scale,tm(2)*scale,'k--','LineWidth',5);
         %hold off;
         %subplot('Position',[0 .52 1 .48]);%s1);%1,2,2);
-        temp = 
-        surf((1:dims(2))*ratio(1),(1:dims(1))*ratio(2),flipud(reshape(traceT(:,i),dims)));set(gca,'zlim',trange);hold on;
-        quiver3(center(2)*ratio(1),center(1)*ratio(2),trange(1),tm(1)*scale,tm(2)*scale,0,'k--','LineWidth',5);
-        plot3(histT(:,1),histT(:,2),trange(1)*ones(size(histT,1),1),'k','LineWidth',1.5);hold off;
-        set(gca,'xticklabel',[],'yticklabel',[],'zticklabel',[]);
+        %temp = flipud(reshape(traceT(:,i),dims));
+        surf((1:dims(1))*ratio(1),(1:dims(2))*ratio(2),rot90(rot90(rot90(temp))));set(gca,'zlim',trange);%hold on;
+        title((i-1)*4/1250);ylabel ('posterior-anterior');xlabel('ventral-dorsal');zlabel('voltage');
+       % quiver3(center(2)*ratio(1),center(1)*ratio(2),trange(1),tm(1)*scale,tm(2)*scale,0,'k--','LineWidth',5);
+       % plot3(histT(:,1),histT(:,2),trange(1)*ones(size(histT,1),1),'k','LineWidth',1.5);hold off;
+        %quiver3(ys*ratio(1),xs*ratio(2),-1*ones(size(ys)),xt*scale,yt*scale,zeros(size(ys)),'k--','LineWidth',1);hold off;
+        hold on;imagesc(randn(8,16));hold off;
+        set(gca,'xticklabel',[],'yticklabel',[],'zticklabel',[],'fontsize',16);
 %        imagesc((1:dims(1))*ratio(1),(1:dims(2))*ratio(2),flipud(reshape(trace(:,i),dims)),orRange*.8);axis off;
-        drawnow;
-    end
-    if i > startInd
-%    m(i-startInd) = getframe(gcf);
-    end
+        
+        axesLabelsAlign3D;drawnow;
+        %m(i-startInd) = getframe(gcf);
 end
-%movie2avi(m,'crcnsSurf.avi');
+return
+movie2avi(m,'crcnsSurf.avi');
 
 function fixStep(a,b)
 global step

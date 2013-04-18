@@ -1,4 +1,11 @@
 function Xf = morFilter(X,Fc,Fs,norm,win)
+
+%Fc = center frequency
+%Fs = sampling rate
+%norm = normalize output of each channel to 1 (default 0)
+%win = window for filter (default 1 s)
+%Xf = complex-valued filtered output
+
 if ~exist('norm','var')
     norm = 0;
 end

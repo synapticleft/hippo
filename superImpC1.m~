@@ -1,10 +1,11 @@
-function [im allxc] = superImpC1(x,rad,thresh,r)
+function im = superImpC1(x,rad,thresh,W) %allxc
 %%SUPERIMP combines multiple components into 1 image, assigning each
 %%component a different color, for each pixel, choosing the component with
 %%the largest magnitude at that location. All components are normalized.
 %%INPUTS:   c = all 2-d image components
 %%          rad = width of gaussian smoothing kernel
 %%          maxVal = if you want to normalize all components by a fixed value (default: normalize maximum of each component to 1)
+warning off all;
 x(:) = zscore(x(:));
 %xm = squeeze(abs(mean(x,2)));
 %x = x(max(xm,[],2)>thresh,:,:);
@@ -30,6 +31,8 @@ for i = 1:size(x,1)
         end
 end
 remInds = sum(tempF,2)==0;
+A = pinv(W);
+W(remInds,:) = [];A(:,remInds) = [];
 x(remInds,:,:) = [];
 tempF(remInds,:) =[];
 [a b]= max(abs(x));
@@ -40,7 +43,8 @@ a = max(0,min(1,a/upperBound));
 im = zeros(3,size(a,1),size(a,2));
 scale = 1;angCol = colormap('hsv');
 [~,peakLoc] = max(tempF');
-[~,so] = sort(peakLoc);
+[~,so] = sort(peakLoc,'ascend');
+bound = sum(peakLoc < size(x,2)/2);
 figure;
 c = mod(peakLoc*scale/size(x,2),1);%rand(1,numel(peakLoc));%
 cc = angCol(max(1,ceil(c*64)),:);
@@ -68,13 +72,25 @@ im = hsv2rgb(im);
 subplot(5,1,[1 2]);image(im);set(gca,'xtick',[],'fontsize',16);hold all;
 plot([size(x,2)/2 size(x,2)/2]+1,[1 size(im,1)],'w--','linewidth',2);
 ylabel('trial #');
-x = abs(x(so,:)) > thresh;
-xc = x*x';%abs(corr((x(:,:))'));
+x = double(abs(x(so,:)) > thresh);
+xc = x*x'/size(x,2);%abs(corr((x(:,:))'));
 % for i = 1:size(x,1)
 %     temp = circshift(x(i,:,:),[0 0 1]);
 %     xc(i,i) = corr((temp(:)),(x(i,:)).');
 % end
-figure;imagesc(xc);
+figure;imagesc(xc);hold all;plot([0 size(xc,1)+1],[bound bound]+.5,'w--','linewidth',3);
+plot([bound bound]+.5,[0 size(xc,1)+1],'w--','linewidth',3);
+Ac = abs(corr(A(:,so)));
+Wc = abs(corr(W(so,:)'));
+for i = 1:size(x,1)
+    xc(i,i) = -1;
+end
+figure;hist(xc(:),-.1:.005:.1);return
+figure;subplot(121);imagesc(Ac);axis image;
+subplot(122);imagesc(Wc);axis image;
+%figure;scatter(xc(:),Ac(:),'filled');hold all;scatter(xc(:),Wc(:),'r','filled');
+figure;bar([mean(Ac(xc == 0)) mean(Ac(xc > 0 && xc < .01)) mean(Ac(xc > .01))]);
+figure;bar([mean(Ac(xc == 0)) mean(Wc(xc > 0 && xc < .01)) mean(Wc(xc > .01))]);
 %buff = 5;
 %allxc = [];
 %for i = -buff:buff

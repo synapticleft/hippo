@@ -1,10 +1,11 @@
-function im = superImpC1(x,rad,thresh,r) %allxc
+function im = superImpC1(x,rad,thresh,W) %allxc
 %%SUPERIMP combines multiple components into 1 image, assigning each
 %%component a different color, for each pixel, choosing the component with
 %%the largest magnitude at that location. All components are normalized.
 %%INPUTS:   c = all 2-d image components
 %%          rad = width of gaussian smoothing kernel
 %%          maxVal = if you want to normalize all components by a fixed value (default: normalize maximum of each component to 1)
+warning off all;
 x(:) = zscore(x(:));
 %xm = squeeze(abs(mean(x,2)));
 %x = x(max(xm,[],2)>thresh,:,:);
@@ -30,6 +31,8 @@ for i = 1:size(x,1)
         end
 end
 remInds = sum(tempF,2)==0;
+A = pinv(W);
+W(remInds,:) = [];A(:,remInds) = [];
 x(remInds,:,:) = [];
 tempF(remInds,:) =[];
 [a b]= max(abs(x));
@@ -77,6 +80,22 @@ xc = x*x'/size(x,2);%abs(corr((x(:,:))'));
 % end
 figure;imagesc(xc);hold all;plot([0 size(xc,1)+1],[bound bound]+.5,'w--','linewidth',3);
 plot([bound bound]+.5,[0 size(xc,1)+1],'w--','linewidth',3);
+Ac = abs(corr(A(:,so)));
+Wc = abs(corr(W(so,:)'));
+for i = 1:size(x,1)
+    xc(i,i) = -1;
+end
+figure;subplot(121);imagesc(Ac);axis image;
+subplot(122);imagesc(Wc);axis image;
+%figure;scatter(xc(:),Ac(:),'filled');hold all;scatter(xc(:),Wc(:),'r','filled');
+figure;subplot(121);bar([mean(Ac(xc == 0)) mean(Ac(xc > 0 & xc < .01)) mean(Ac(xc > .01))]);
+subplot(122);bar([mean(Wc(xc == 0)) mean(Wc(xc > 0 & xc < .01)) mean(Wc(xc > .01))]);
+figure;
+for i= 1:5
+    subplot(121);scatter(i,mean(diag(Ac,i)),'filled');hold all
+    subplot(122);scatter(i,mean(diag(Wc,i)),'filled');hold all;
+end
+   axis tight; 
 %buff = 5;
 %allxc = [];
 %for i = -buff:buff

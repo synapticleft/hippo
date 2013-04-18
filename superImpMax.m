@@ -1,4 +1,4 @@
-function [im frameCol] = superImpMax(x,frames,rad,maxVal)
+function [im cols frameCol] = superImpMax(x,frames,rad,maxVal,cols)
 %%SUPERIMP combines multiple components into 1 image, assigning each
 %%component a different color, for each pixel, choosing the component with
 %%the largest magnitude at that location. All components are normalized.
@@ -6,11 +6,13 @@ function [im frameCol] = superImpMax(x,frames,rad,maxVal)
 %%          frames = which components to combine in image (choose ones with well-defined features)
 %%          rad = width of gaussian smoothing kernel
 %%          maxVal = if you want to normalize all components by a fixed value (default: normalize maximum of each component to 1)
-if exist('frames','var')
+if exist('frames','var') && ~isempty(frames)
     x = x(frames,:,:);
 end
+xn = x~=0;
+x(xn) = zscore(x(xn));
 allReg = zeros(size(x));
-cents = zeros(size(x,1),2);
+%cents = zeros(size(x,1),2);
 for i = 1:size(x,1)
     if exist('rad','var') && rad
         x(i,:,:) = imfilter(squeeze(x(i,:,:)),fspecial('gaussian',5,rad));
@@ -23,6 +25,7 @@ for i = 1:size(x,1)
         else
             allReg(i,:,:) = x(i,:,:) > maxVal/4;
         end
+%allReg(i,x(i,:)>0) = zscore(x(i,x(i,:)>0)) > maxVal(end);
         allReg(i,:,:) = bwlabel(squeeze(allReg(i,:,:)));
         allReg(i,allReg(i,:) ~= mode(allReg(i,allReg(i,:) > 0))) = 0;
         allReg(i,:,:) = min(1,allReg(i,:,:));
@@ -30,18 +33,24 @@ for i = 1:size(x,1)
         x(i,:,:) = allReg(i,:,:).*x(i,:,:);
     end
 end
-mVal = corr(x(:,:)');
+sum(sum(allReg(:,:),2) > 0)
+figure;showGrid(allReg);drawnow;
+figure;imagesc(squeeze(sum(allReg)));
+%mVal = corr(x(:,:)');
 mVal1 = x(:,:)*x(:,:)';%cov(x(:,:)');
-for i = 1:size(mVal,1)
-    mVal(i,i) = 0;
+for i = 1:size(mVal1,1)
+%    mVal(i,i) = 0;
     mVal1(i,i) = 0;
 end
 %mVal = sqrt(max(0,mVal)); mVal1 = sqrt(max(0,mVal1));
 %figure;subplot(211);imagesc(mVal,[0 prctile(mVal(:),99)]);
 %subplot(212);imagesc(mVal1,[0 prctile(mVal1(:),99)]);return
-cols = (1:size(allReg,1))/size(allReg,1);
-[s,order] = myOsc(mVal1,size(x,1));
-x = x(order,:,:);allReg = allReg(order,:,:);
+if ~exist('cols','var')
+    cols = (1:size(allReg,1))/size(allReg,1);
+    [~,order] = myOsc(mVal1,size(x,1));
+    cols(order) = cols;
+end
+%x = x(order,:,:);%allReg = allReg(order,:,:);
 x = abs(x);
 x = min(1,max(0,x/maxVal(1)));
 [a b]= max(x);
@@ -55,12 +64,12 @@ for i = 1:size(x,1);
 end
 frameCol(1,:,2:3) = 1;
 frameCol = squeeze(hsv2rgb(frameCol));
-figure;hold all;
-for i = 1:size(x,1)
-    bounds = bwboundaries(squeeze(allReg(i,:,:)));
-    plot(bounds{1}(:,1),bounds{1}(:,2),'color',frameCol(i,:),'linewidth',2);
-end
-frameCol(order,:) = frameCol;
+% figure;hold all;
+% for i = 1:size(x,1)
+%     bounds = bwboundaries(squeeze(allReg(i,:,:)));
+%     plot(bounds{1}(:,1),bounds{1}(:,2),'color',frameCol(i,:),'linewidth',2);
+% end
+%frameCol(order,:) = frameCol;
 im = max(0,im);
 im = permute(im,[2 3 1]);
 im = hsv2rgb(im);

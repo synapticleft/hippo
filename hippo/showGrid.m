@@ -65,6 +65,9 @@ for j=1:m
     else
         clima = clim;
     end
+    %temp = temp - min(temp(:));
+    %temp = temp/max(temp(:));
+   % temp = rot90(rot90((temp)));
     array(indsx,indsy) = temp/clima;
 %    quivDat(k,:) = [mean(indsx) mean(indsy) mean(fx(:)) mean(fy(:))];
 %    k=k+1;
@@ -87,18 +90,19 @@ end
 %array = imfilter(array,fspecial('gaussian',5,1));
 
 if isreal(array)
-    imagesc(x,y,array,[0 1]);colormap gray;%
+    imagesc(x,y,array,[-1 1]);%[min(array(array~=-1)) max(array(array~=-1))]);colormap gray;%
+    colormap gray;
 else
     imagesc(x,y,complexIm(array,0,1,[],[],1));
 end
 if exist('in','var') && ~isempty(in) && in
     axis image;
 end
-red = 6;
-% array1 = imresize(array,1/red,'bilinear');
-%  [dx dy] = angGradient(array1);
-%  [xs ys] = meshgrid(red*(1:size(array1,2))-2,red*(1:size(array1,1))-2);
-%  hold all;quiver(xs,ys,-dx,-dy,'color','w','linewidth',2);
+%red = 6;
+%array1 = imresize(array,1/red,'bilinear');
+% [dx dy] = angGradient(array1);
+% [xs ys] = meshgrid(red*(1:size(array1,2))-2,red*(1:size(array1,1))-2);
+% hold all;quiver(xs,ys,-dx,-dy,'color','w','linewidth',2);
 axis off;
 %axis image
 %    end

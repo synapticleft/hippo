@@ -92,10 +92,10 @@ lambda = [.5 3/50];%2.5;
 %laa = linspace(laa(6),laa(8),10);
 %la = linspace(-.5,.2,8);
 %laa = linspace(-1.1,.1,8);
-la = linspace(.1,1,8);
-laa = linspace(.005,.05,8);
-%la = .5;laa = 3/50;
-la = .8; laa = .25;
+%la = linspace(.1,1,8);
+%laa = linspace(.005,.05,8);
+la = .5;laa = 3/50;
+%la = .8; laa = .25;
 figure;
 for k = 1:numel(la)
     for l = 1:numel(laa)

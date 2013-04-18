@@ -39,7 +39,6 @@ for i = 1:2
     pos(:,i) = max(0,min(pos(:,i),.9999));
     posd(:,i) = floor(pos(:,i)*accumbins(min(numel(accumbins),i)))+1;
 end
-figure;hist(pos(:,1),linspace(0,1,100));return
 Xf = [bsxfun(@times,Xf,exp(1i*angle(v(:,1))).')];
 inds = bwmorph(inds,'dilate',20);
 Xf = Xf(:,inds);posd = posd(inds,:);%veld = veld(inds,:);

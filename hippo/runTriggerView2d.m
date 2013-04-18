@@ -1,5 +1,8 @@
-function [actMean,actMax] = runTriggerView2d(pos,v,Xf,binSize,thresh,r)
+function [actMean,absMean] = runTriggerView2d(pos,v,Xf,binSize,thresh,r)
 
+if isempty(v)
+    v = Xf(1,:)';
+end
 if size(v,1) < size(pos,1)
     pos = pos(1:size(v,1),:);
 end
@@ -46,13 +49,15 @@ vel = vel(inds);%pos = pos(inds,:);
 %if exist('posInds','var') && ~isempty(posInds)
 %    r = r(:,posInds); %% IS THIS RIGHT??
 %end
-Xf = r*Xf;
+if exist('r','var')
+    Xf = r*Xf;
+end
 Xf = bsxfun(@times,Xf,exp(1i*angle(v(:,1))).');
 actMean = zeros(size(Xf,1),max(posd(:,1)),max(posd(:,2)));
-actMax = actMean;
+absMean = actMean;
 for i = 1:size(Xf,1)
-    actMean(i,:,:) = accumarray(posd,Xf(i,:),[],@mean);
-    actMax(i,:,:) = accumarray(posd,abs(Xf(i,:)),[],@max);
+%    actMean(i,:,:) = accumarray(posd,Xf(i,:),[],@mean);
+    absMean(i,:,:) = accumarray(posd,abs(Xf(i,:)),[],@mean);
 end
 %complexAct = 0;
 %if ~complexAct

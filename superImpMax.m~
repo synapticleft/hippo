@@ -1,4 +1,4 @@
-function [im frameCol] = superImpMax(x,frames,rad,maxVal)
+function [im cols frameCol] = superImpMax(x,frames,rad,maxVal,cols)
 %%SUPERIMP combines multiple components into 1 image, assigning each
 %%component a different color, for each pixel, choosing the component with
 %%the largest magnitude at that location. All components are normalized.
@@ -6,15 +6,10 @@ function [im frameCol] = superImpMax(x,frames,rad,maxVal)
 %%          frames = which components to combine in image (choose ones with well-defined features)
 %%          rad = width of gaussian smoothing kernel
 %%          maxVal = if you want to normalize all components by a fixed value (default: normalize maximum of each component to 1)
-%%          bb = in case you want a separate background image to assign the intensity of the pixel, rather than the componnent
-% if exist('frames','var') && ~isempty(frames)
-%     x = x(frames(randperm(numel(frames))),:,:);
-% else
-%     x = x(randperm(size(x,1)),:,:);
-% end
 if exist('frames','var')
     x = x(frames,:,:);
 end
+x(x~=0 = zscore(x(x~=0));
 allReg = zeros(size(x));
 cents = zeros(size(x,1),2);
 for i = 1:size(x,1)
@@ -24,46 +19,55 @@ for i = 1:size(x,1)
     if ~exist('maxVal','var')
         x(i,:,:) = x(i,:,:)/max(max(max(x(i,:,:))));
     else
-        if numel(maxVal) > 1
-            allReg(i,:,:) = x(i,:,:) > maxVal(end);
-        else
-            allReg(i,:,:) = x(i,:,:) > maxVal/4;
-        end
+%         if numel(maxVal) > 1
+%             allReg(i,:,:) = x(i,:,:) > maxVal(end);
+%         else
+%             allReg(i,:,:) = x(i,:,:) > maxVal/4;
+%         end
+%allReg(i,x(i,:)>0) = zscore(x(i,x(i,:)>0)) > maxVal(end);
         allReg(i,:,:) = bwlabel(squeeze(allReg(i,:,:)));
         allReg(i,allReg(i,:) ~= mode(allReg(i,allReg(i,:) > 0))) = 0;
         allReg(i,:,:) = min(1,allReg(i,:,:));
-        %allReg(i,:,:) = bwmorph(squeeze(allReg(i,:,:)),'dilate');
+        allReg(i,:,:) = bwmorph(squeeze(allReg(i,:,:)),'dilate',1);
         x(i,:,:) = allReg(i,:,:).*x(i,:,:);
     end
 end
-mVal = corr(x(:,:)');
+figure;showGrid(allReg);drawnow;
+figure;imagesc(squeeze(sum(allReg)));
+%mVal = corr(x(:,:)');
 mVal1 = x(:,:)*x(:,:)';%cov(x(:,:)');
-for i = 1:size(mVal,1)
-    mVal(i,i) = 0;
+for i = 1:size(mVal1,1)
+%    mVal(i,i) = 0;
     mVal1(i,i) = 0;
 end
 %mVal = sqrt(max(0,mVal)); mVal1 = sqrt(max(0,mVal1));
 %figure;subplot(211);imagesc(mVal,[0 prctile(mVal(:),99)]);
 %subplot(212);imagesc(mVal1,[0 prctile(mVal1(:),99)]);return
-cols = (1:size(allReg,1))/size(allReg,1);
-[s,order] = myOsc(mVal1,size(x,1));
-x = x(order,:,:);
+if ~exist('cols','var')
+    cols = (1:size(allReg,1))/size(allReg,1);
+    [~,order] = myOsc(mVal1,size(x,1));
+    cols(order) = cols;
+end
+%x = x(order,:,:);%allReg = allReg(order,:,:);
 x = abs(x);
 x = min(1,max(0,x/maxVal(1)));
 [a b]= max(x);
 a = squeeze(a); b = squeeze(b);
 im = zeros(3,size(a,1),size(a,2));
-figure;hold all;
 for i = 1:size(x,1);
     im(1,b == i) = cols(i);%s(i);%i/size(x,1);
     frameCol(1,i,1) = cols(i);%s(i);%
     im(2,b == i) = 1;
     im(3,b == i) = a(b == i);
-    bounds = bwboundaries(squeeze(allReg(i,:,:0)));
-    plot(bounds{1}(1,:),bounds{1}(2,:),'
 end
 frameCol(1,:,2:3) = 1;
 frameCol = squeeze(hsv2rgb(frameCol));
+% figure;hold all;
+% for i = 1:size(x,1)
+%     bounds = bwboundaries(squeeze(allReg(i,:,:)));
+%     plot(bounds{1}(:,1),bounds{1}(:,2),'color',frameCol(i,:),'linewidth',2);
+% end
+%frameCol(order,:) = frameCol;
 im = max(0,im);
 im = permute(im,[2 3 1]);
 im = hsv2rgb(im);
@@ -76,8 +80,7 @@ p.w = zeros(p.N,1);
 p.G = mVal;
 thetaInit = 2*pi.*rand(p.N,1);
 [~,s] = rk4(@coupledOsc,0, 100,thetaInit,10000,p); 
-sPlot(exp(1i*s));
-figure;plot(std(exp(1i*s)));
+%sPlot(exp(1i*s));
 s = s(:,end);
 s = mod(s,2*pi)/(2*pi);
 [~,order] = sort(s);

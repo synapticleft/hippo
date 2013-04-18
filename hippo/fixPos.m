@@ -1,6 +1,10 @@
 function pos = fixPos(file)
 
-pos = importdata(file);
+if strcmp(file,'char')
+    pos = importdata(file);
+else
+    pos = file;
+end
 
 pos(pos == -1) = nan;
 reject = 0;

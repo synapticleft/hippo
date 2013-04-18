@@ -1,4 +1,4 @@
-function [X whiteningMatrix dewhiteningMatrix] = getData(fname,dec,elecs,sz,rind)%,rdim)
+function [X whiteningMatrix dewhiteningMatrix] = getData(fname,dec,elecs,rind,sz)%,rdim)
 % USAGE  >> X = getData('ec014.468.h5',1:64,[],[],32); %32 is the
 % decimation factor, you may also use a smaller one to get high-freq
 % information. You will need to change data_root to match the folder where
@@ -28,12 +28,14 @@ if  ~exist('elecs','var') || isempty(elecs)
 else
     nSamples(1) = max(elecs);
 end
-if ~exist('sz','var') || isempty(sz)
-    sz = nSamples(2);
-    sz = dec*(floor(sz/dec));
-end
 if ~exist('rind','var') || isempty(rind)
     rind = 0;
+end
+if ~exist('sz','var') || isempty(sz)
+    sz = nSamples(2);
+    sz = rind + dec*(floor(sz/dec));
+else
+    sz = rind + sz;
 end
 %rind = padding + ceil(rand*(nSamples(2) - padding*2 - sz));
 
@@ -42,7 +44,7 @@ end
 %X = double(h5varget([data_root fname],'/hReal',[0 rind],[nSamples(1) sz]));%-1
 
 %if dec > 1
-    X = zeros(numel(elecs),ceil(sz/dec));
+    X = zeros(numel(elecs),ceil((sz-rind)/dec));
     for i = 1:numel(elecs)
         %tic;
         %temp = double(h5varget([data_root fname '.h5'],'/hReal',[elecs(i)-1 rind],[1 sz]));%nSamples(1)
@@ -66,8 +68,8 @@ end
 %        X(i,:) = double(h5varget([data_root fname],'/hReal',[elecs(i)-1 rind],[1 sz]));
 %    end
 %end
-X = bsxfun(@minus,X,mean(X,2));
-X = bsxfun(@rdivide,X,std(X,0,2));
+%X = bsxfun(@minus,X,mean(X,2));
+%X = bsxfun(@rdivide,X,std(X,0,2));
 
 % if nargout > 1
 %     % Calculate the eigenvalues and eigenvectors of covariance matrix.

@@ -1,0 +1,21 @@
+function plotMultiRun1(acts)
+angCol = colormap(hsv(64));
+h = zeros(1,200);
+
+figure;
+for i = 1:size(acts,1)
+t1 = t1(max(t1,[],2)>1,:);
+t1(t1 < 1) = nan;
+[~,peakLoc] = max(t1,[],2);
+h(peakLoc) = h(peakLoc) + 1;
+c = peakLoc/size(t1,2);%rand(1,numel(peakLoc));%
+cc = angCol(max(1,ceil(c*64)),:);
+set(gca,'nextPlot','add','ColorOrder',cc,'Color',[0 0 0],'xticklabel',[],'yticklabel',[],'fontsize',16);
+hold on;plot(i/2+t1','linewidth',2);drawnow;
+end
+axis tight;
+angC = colormap(hsv(200));
+figure;hold on;for i = 1:200
+bar(i,h(i),'facecolor',angC(i,:),'edgecolor',angC(i,:));
+end
+axis tight;set(gca,'color','k');
