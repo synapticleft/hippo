@@ -12,7 +12,7 @@ end
 if ~exist('win','var')
     win = 1;
 end
-Fb = 1/500;
+Fb = 1/500;%70;%
 %Fc = 8.4 for hippocampus
 %Fb = 1/500, win = 1 for hippocampal LFP
 %Fb = 1/5000, Fc = 160, win = 5 for ripples

@@ -1,4 +1,6 @@
 function [dx dy] = angGradient(in)
+%Find local phase gradient for gridded data
+
 dx = ones(size(in));dy = ones(size(in));
 dx(:,2:end) = in(:,2:end)./in(:,1:end-1);
 dx(:,1:end-1) = dx(:,1:end-1).*dx(:,2:end);

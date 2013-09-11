@@ -1,5 +1,5 @@
 function [A,W,Z] = cfpa2(x)
-
+%%a particular implementation of complex-ICA
 %[v,whiteningMatrix,dewhiteningMatrix,zerophaseMatrix] = whiten(x);
 %v = v.';
 x = x.';

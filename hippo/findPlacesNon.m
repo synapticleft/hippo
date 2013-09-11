@@ -1,4 +1,5 @@
 function [filts acts] = findPlacesNon(fields,thresh)
+%fit place fields nonparametrically
 warning off;
 fields(:) = zscore(fields(:));
 buffer = 24;%floor(size(fields,3)/2/10);

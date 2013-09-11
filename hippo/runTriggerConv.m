@@ -64,25 +64,26 @@ reg = bwlabel(inds);
 %% whiten X
 %X = bsxfun(@minus,X,mean(X,2));
 %S = 64;		% time points in original sources 
-J = 64;		% number of basis functions for source generation
+J = 1000;		% number of basis functions for source generation
 R = 20;%20;		% number of time points in basis functions generating sources
 if J >= 1
     if ~exist('dewhiteningMatrix','var') || isempty(dewhiteningMatrix)
         numSamples = 50000;
         indsSub = rand(numel(inds),1) < numSamples/sum(inds);
-        [Ex, Dx] = eig(cov(X(:,indsSub' & inds)'));
-        d = flipud(diag(Dx));
-        cumVar = sum(d);
-        maxLastEig = sum(cumsum(d)/cumVar < .9999999)
-        Dx = Dx(end-maxLastEig+1:end,end-maxLastEig+1:end);
-        Ex = Ex(:,end-maxLastEig+1:end);
-        factors = diag(Dx);
-        noise_factors = ones(size(Dx,1),1);
-        rolloff_ind = sum(cumsum(flipud(factors))/cumVar > .999999)
-        noise_factors(1:rolloff_ind) = .5*(1+cos(linspace(pi-.01,0,rolloff_ind)));
-        Dx = diag(factors./noise_factors);
-        whiteningMatrix = sqrt(inv(Dx)) * Ex';
-        dewhiteningMatrix = Ex * sqrt (Dx);
+        %[Ex, Dx] = eig(cov(X(:,indsSub' & inds)'));
+        %d = flipud(diag(Dx));
+        %cumVar = sum(d);
+        %maxLastEig = sum(cumsum(d)/cumVar < .9999999)
+        %Dx = Dx(end-maxLastEig+1:end,end-maxLastEig+1:end);
+        %Ex = Ex(:,end-maxLastEig+1:end);
+        %factors = diag(Dx);
+        %noise_factors = ones(size(Dx,1),1);
+        %rolloff_ind = sum(cumsum(flipud(factors))/cumVar > .999999)
+        %noise_factors(1:rolloff_ind) = .5*(1+cos(linspace(pi-.01,0,rolloff_ind)));
+        %Dx = diag(factors./noise_factors);
+        %whiteningMatrix = sqrt(inv(Dx)) * Ex';
+        %dewhiteningMatrix = Ex * sqrt (Dx);
+        [~,whiteningMatrix,dewhiteningMatrix] = whiten(X(:,indsSub' & inds)');
     else
         whiteningMatrix = pinv(dewhiteningMatrix);
     end

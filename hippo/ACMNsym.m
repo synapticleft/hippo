@@ -54,7 +54,8 @@ inVal = 2.5;
 % %D = diag(flipud(1./noise_factors));
 % zerophaseMatrix = Ex*sqrt(diag(flipud(noise_factors)))*Ex';%inv (sqrt (D))*E';
 %%%%%%%%%%%%
-[x,whiteningMatrix,dewhiteningMatrix] = whiten(Xin);%,zerophaseMatrix
+[x,whiteningMatrix,dewhiteningMatrix] = whiten(Xin);%,.0001);%,zerophaseMatrix
+%x = Xin;whiteningMatrix = eye(size(x,1));dewhiteningMatrix = eye(size(x,1));zerophaseMatrix = eye(size(x,1));
   [n,m] = size(x);
  pC = (x*transpose(x))/m;
 

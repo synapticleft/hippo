@@ -1,5 +1,6 @@
 function [spikeMat cellInfo] = hipSpikesTony(file,bin,subSet)%a b c badUnits
 %% extract all spikes into matrix downsampled to match lfp and position files.
+%% for cells not in Kenji's metadata
 %bin usually 32/1.25
 %%new way for Kenji's data
 %load('/media/work/hippocampus/KenjiData.mat');

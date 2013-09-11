@@ -1,8 +1,8 @@
-function [ac numSamps] = runTriggerConvDisp(X,pos,phi,thresh,accumbins,dewhiteningMatrix)
+function [ac numSamps SAll] = runTriggerConvDisp(X,pos,phi,thresh,accumbins,whiteningMatrix)
+%% make plots of responses by convolutional sparse coding after learning
 
 ratio = round(size(X,2)/size(pos,1));
 dec = 32/ratio;
-peakToPeak = ceil(1250/dec/8);
 %%Processing of position information
 bounds = [.1 .9];
 pos(pos == -1) = nan;
@@ -28,7 +28,6 @@ for i = 1:size(pos,2)
 end
 pos(nanInds) = 0;
 vel = filtLow(vel,1250/32,.5);
-vela = vel;
 nanInds = find(~isnan(vel));
 vel = interp1(nanInds,vel(nanInds),1:numel(vel));
 %vel = vel/max(vel);
@@ -52,7 +51,7 @@ posd(ismember(reg,f)) = posd(ismember(reg,f)) + accumbins;
 %% whiten X
 X = bsxfun(@minus,X,mean(X,2));
 if 1
-    if ~exist('dewhiteningMatrix','var')
+    if ~exist('whiteningMatrix','var')
         numSamples = 50000;
         indsSub = rand(numel(inds),1) < numSamples/sum(inds);
         [Ex, Dx] = eig(cov(X(:,indsSub' & inds)'));
@@ -67,9 +66,9 @@ if 1
         noise_factors(1:rolloff_ind) = .5*(1+cos(linspace(pi-.01,0,rolloff_ind)));
         Dx = diag(factors./noise_factors);
         whiteningMatrix = sqrt(inv(Dx)) * Ex';
-        dewhiteningMatrix = Ex * sqrt (Dx);
-    else
-        whiteningMatrix = pinv(dewhiteningMatrix);
+%        dewhiteningMatrix = Ex * sqrt (Dx);
+    %else
+    %    whiteningMatrix = pinv(dewhiteningMatrix);
     end
         X = whiteningMatrix * X;
 %          phi1 = phi;
@@ -96,10 +95,12 @@ lambda = [.5 3/50];%2.5;
 %laa = linspace(.005,.05,8);
 la = .5;laa = 3/50;
 %la = .8; laa = .25;
+params.Fs = 1250/dec;params.tapers = [3 5];
 figure;
-for k = 1:numel(la)
-    for l = 1:numel(laa)
-for j = 40%1:max(reg)
+%for k = 1:numel(la)
+%    for l = 1:numel(laa)
+SAll = 0;
+for j = 1:max(reg)
 Xsamp = X(:,reg == j);
     %% compute the map estimate
     tic
@@ -110,30 +111,22 @@ Xsamp = X(:,reg == j);
     lb  = zeros(1,J*P); % lower bound
     ub  = zeros(1,J*P); % upper bound
     nb  = ones(1,J*P); % bound type (none)
-    [a1,fx,exitflag,userdata] = lbfgs(@objfun_a_conv, a0(:), lb, ub, nb, opts_lbfgs_a, Xsamp, phi, [la(k) laa(l)]);
+    [a1,fx,exitflag,userdata] = lbfgs(@objfun_a_conv, a0(:), lb, ub, nb, opts_lbfgs_a, Xsamp, phi, [la laa]);% [la(k) laa(l)]);
     a1 = reshape(a1, J, P);
-    %[~,id] = meshgrid(1:S,1:J);id = id';
-    %aTemp = a1(:,1:S);aTemp = aTemp';
-    %rpos = repmat(posd(reg == j),[J 1]);
+    [~,id] = meshgrid(1:S,1:J);id = id';
+    aTemp = a1(:,1:S);aTemp = aTemp';
+    [S,f] = mtspectrumc(aTemp,params);
+    SAll = SAll + interp1(f,S,0:.5:100);
+    imagesc(log(SAll));drawnow;
+    rpos = repmat(posd(reg == j),[J 1]);
     %plot(id(:));hold all;plot(rpos);plot(aTemp(:));return
     %[size(id) size(id(:)) size(rpos) size(rpos(:))]
-    %ac = ac + accumarray([id(:) rpos],aTemp(:),[J max(posd)],@sum);
-    %numSamps = numSamps + accumarray(posd(reg == j),ones(1,sum(reg == j)),[max(posd) 1],@sum);
+    ac = ac + accumarray([id(:) rpos],abs(aTemp(:)),[J max(posd)],@sum);
+    numSamps = numSamps + accumarray(posd(reg == j),ones(1,sum(reg == j)),[max(posd) 1],@sum);
     %sPlot(a1,[],0);
-subplot(numel(la),numel(laa),(k-1)*numel(laa)+l);imagesc(a1);axis off tight;
+%subplot(numel(la),numel(laa),(k-1)*numel(laa)+l);imagesc(a1);axis off tight;
     %subplot(211);imagesc(a1);
     %subplot(212);imagesc(bsxfun(@rdivide,ac,numSamps'));
     drawnow;
     time_inf = toc;
-
-%     %% reconstruct
-%     EI = zeros(N,S);
-%     for r = 1:R
-%         EIr = phi(:,:,r)*a1;
-%         srt = R+1-r;
-%         fin = R+S-r;
-%         EI = EI + EIr(:,srt:fin);
-%     end
-end
-    end
 end

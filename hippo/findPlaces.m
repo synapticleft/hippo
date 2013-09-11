@@ -1,4 +1,5 @@
 function [fits cis acts] = findPlaces(fields,thresh,sign)
+% fit wavelets to place fields of complex-valued features
 
 buffer = floor(size(fields,3)/2/10);
 if ~exist('sign','var') || sign > 0

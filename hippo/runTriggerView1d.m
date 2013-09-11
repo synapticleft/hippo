@@ -1,4 +1,5 @@
 function [t1 vels] = runTriggerView1d(pos,v,Xf,accumbins,thresh,r)
+%% 1d binning of ICA activations on linear track
 
 bounds = [.1 .9];
 pos(pos == -1) = nan;
@@ -59,12 +60,16 @@ b = interp1(nanInds,b(nanInds),1:size(pos,1));
 b = [0 diff(b)];
 runs = bwlabel(b > 0);
 w = watershed(b==0);
+w(w == 0) = w(find(w == 0)-1);
 w = w-1; 
-posd(mod(w,2) ==1 ,1) = -posd(mod(w,2) ==1 ,1) + 2*max(posd(:));
+m = accumarray(w'+1,[0; diff(pos(:,1))],[],@mean);
+%posd(mod(w,2) ==1 ,1) = accumbins+posd(mod(w,2) ==1 ,1);% + 2*max(posd(:));
+posd(ismember(w+1,find(m>0)) ,1) = accumbins+posd(ismember(w+1,find(m>0)),1);
 runs1 = round(w/2);
 inds = runs1 > 0 & runs1 <= max(runs);
 t1 = zeros(size(t,1),max(runs),accumbins(1)*2);
-vels = accumarray([runs1(inds); posd(inds,1)']',vel(inds),[max(runs) 2*accumbins(1)] ,@mean);
+dP = [0;diff(pos(:,1))];
+vels = accumarray([runs1(inds); posd(inds,1)']',dP(inds),[max(runs) 2*accumbins(1)] ,@mean);
 for j = 1:size(t,1)
          t1(j,:,:) = accumarray([runs1(inds); posd(inds,1)']',t(j,inds),[max(runs) 2*accumbins(1)] ,@mean);
          t1(j,:,:) = t1(j,:,:)*exp(1i*angle(mean(r1(:,j))));

@@ -68,6 +68,7 @@ eps = 1; % epsilon in G
 % Condition in Theorem 1 should be < 0 when maximising and > 0 when 
 % minimising E{G(|w^Hx|^2)}. 
 [x,whiteningMatrix,dewhiteningMatrix,zerophaseMatrix] = whiten(mixedsig);
+%x = mixedsig;whiteningMatrix = eye(size(x,1));dewhiteningMatrix = eye(size(x,1));zerophaseMatrix = eye(size(x,1));
 n = size(x,1);
 %  C = cov(x');
   maxcounter = 100;
@@ -98,7 +99,7 @@ n = size(x,1);
     meanAbsCos = mean(abs(diag(W' * WOld)));
     fprintf('Step no. %d, change in value of estimate: %.3g %.3g\n', counter, 1 - minAbsCos,1-meanAbsCos);
     counter = counter + 1;
-    imagesc(dewhiteningMatrix*W,[8 4]));drawnow;
+    %imagesc(dewhiteningMatrix*W,[8 4]));drawnow;
   end
 	A = dewhiteningMatrix * W;  
   	W = W' * whiteningMatrix;

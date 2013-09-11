@@ -1,4 +1,5 @@
 function [h nFields momInertia momInertia1] = getPlaceStats(filts,acts,fullResp,thresh)% momInertia cents
+%%collection of statistics for place fields
 
 momInertia = [];
 %angChange = [];

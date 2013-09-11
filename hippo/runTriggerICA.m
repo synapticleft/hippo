@@ -1,7 +1,8 @@
-function [A,W,Z,alphas] = runTriggerICA(pos,Xf,thresh)
+function [A,W,Z] = runTriggerICA(pos,Xf,thresh)
+%% run complex-valued ICA; alternatively
 %% convert demodulated complex data to real valued w/ 2x dimensionality, 
-%% run fastICA, then bin and render activations.
-warning off all;
+%% run fastICA
+%warning off all;
 dec = 1;
 bounds = [.1 .9];
 pos(pos == -1) = nan;
@@ -65,8 +66,10 @@ inds = vel > thresh;
 %for i = 1:100
 %[A(i,:,:),W(i,:,:),Z(i,:,:)] = ACMNsym(Xf(:,inds),'mle_circ');%%%%nonCircComplexFastICAsym(Xf,'pow');%c%complex_ICA_EBM(Xf);%%zscore(Xf,0,2));%zscore(Xf,0,2)n
 %end
-%[A W Z] = cfpa2(Xf);%cfastica(Xf);
-[A W Z alphas] = ACMNsym(Xf(:,inds),'mle_circ');
+%[A W Z] = cfpa2(Xf);%
+[A W Z ] = ACMNsym(Xf(:,inds),'mle_circ');%alphascfastica(Xf(:,inds));%
+%[W,sp] = grunica1(Xf(:,inds));
+%W = W*sp; A = pinv(W);
 return
  Xf = [real(Xf);imag(Xf)];%[abs(Xf); angle(Xf)];
  rdim = size(Xf,1);

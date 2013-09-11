@@ -1,4 +1,5 @@
 function [actMean,absMean] = runTriggerView2d(pos,v,Xf,binSize,thresh,r)
+%% binning of 2-d data in open maze
 
 if isempty(v)
     v = Xf(1,:)';

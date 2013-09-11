@@ -1,11 +1,12 @@
 function [X whiteningMatrix dewhiteningMatrix] = getData(fname,dec,elecs,rind,sz)%,rdim)
+%% take data from .eeg file and put it into .mat file
 % USAGE  >> X = getData('ec014.468.h5',1:64,[],[],32); %32 is the
 % decimation factor, you may also use a smaller one to get high-freq
 % information. You will need to change data_root to match the folder where
 % you store the data files.
 
 %data_root = '/media/Expansion Drive/redwood/';%'/media/work/hippocampus/';%
-data_root1 = '/media/Expansion Drive/KenjiMizuseki/';
+data_root1 = '';%'/clusterfs/cortex/scratch/gagarwal/';%'/media/Expansion Drive/KenjiMizuseki/';
 %fname = 'hippo.h5';%'96elec.h5';%
 %padding = 0;%20000;
 %info = hdf5info([data_root fname '.h5']);
@@ -21,12 +22,13 @@ a = memmapfile([data_root1 fname '.eeg'],'Format','int16');
 if ~exist('dec','var') || isempty(dec)
     dec = 1;
 end
-if  ~exist('elecs','var') || isempty(elecs)
     Par = LoadPar([data_root1 fname]);
     nSamples = [Par.nChannels numel(a.data)/Par.nChannels];
+    
+if  ~exist('elecs','var') || isempty(elecs)
     elecs = 1:nSamples(1);
-else
-    nSamples(1) = max(elecs);
+%else
+%    nSamples(1) = max(elecs);
 end
 if ~exist('rind','var') || isempty(rind)
     rind = 0;

@@ -1,5 +1,5 @@
 function [posInds,t,tes] = runTriggerWheel(pos,v,Xf,thresh,r,probes,posInds,r2)
-
+%% used in t maze
 %X = getData('ec014.440.h5',97:98,[],[],1);
 %whl = decimate(abs(diff(X(1,:))),32);
 %whl(2,:) = decimate(abs(diff(X(2,:))),32);

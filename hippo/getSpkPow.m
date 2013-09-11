@@ -1,4 +1,5 @@
 function allS = getSpkPow(file,shanks,v)
+%% creates a power spectrum of spike waveforms for each neurons, then takes the hilbert transform in theta band
 
 d = ['/media/work/hippocampus/' file '/'];%['/media/Expansion Drive/KenjiMizuseki/'];%
 nSpikes = inf;%20000;

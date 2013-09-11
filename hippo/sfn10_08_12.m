@@ -1,21 +1,26 @@
 %% panel 3 - Demodulation demo
-nSteps = 1000;
-x = linspace(0,20*pi,nSteps);
+nSteps = 700;
+x = linspace(0,14*pi,nSteps);
 y = exp(1i*x);
-A = [zeros(200,1); ones(300,1); zeros(500,1)]/2+1;
+A = [zeros(100,1); ones(200,1); zeros(400,1)]/2+1;
 win = 20;
 A = filtfilt(gausswin(win),sum(gausswin(win)),A);
-dP = [zeros(600,1); ones(300,1); zeros(100,1)]*-pi/2;
+dP = [zeros(400,1); ones(200,1); zeros(100,1)]*-pi/2;
 dP = filtfilt(gausswin(win),sum(gausswin(win)),dP);
 z = A'.*exp(1i*(x+dP'));zd = -conj((z.*conj(y))*1i);
-angCol = colormap('hsv');
+angCol = colormap('hsv');angCol = circshift(angCol,[16 0]);
+absCol = colormap('jet');
 c = ceil((angle(z)+pi)/(2*pi)*64);
-figure;plot3(1:nSteps,real(y),imag(y),'k');
-hold all;scatter3(1:nSteps,real(z),imag(z),[],bsxfun(@times,angCol(c,:),(A/max(A))),'filled');
-sh = 4;
+c1 = imag(z)-min(imag(z))+eps;
+c1 = ceil(c1/max(c1)*64);
+figure;sh = 4;
+plot3(1:nSteps,zeros(size(y)),imag(y),'k');
+hold all;scatter3(1:nSteps,zeros(size(z)),imag(z),[],absCol(c1,:),'filled');
 plot3(1:nSteps,real(y),imag(y)-sh,'k');
+hold all;scatter3(1:nSteps,real(z),imag(z)-sh,[],bsxfun(@times,angCol(c,:),(A/max(A))),'filled');
+plot3(1:nSteps,real(y),imag(y)-2*sh,'k');
 c = max(1,ceil((angle(zd)+pi)/(2*pi)*64));
-hold all;scatter3(1:nSteps,real(zd),imag(zd)-sh,[],bsxfun(@times,angCol(c,:),(A/max(A))),'filled');
+hold all;scatter3(1:nSteps,real(zd),imag(zd)-2*sh,[],bsxfun(@times,angCol(c,:),(A/max(A))),'filled');
 set(gca,'xtick',[],'ytick',[],'ztick',[],'linewidth',2);
 %% panel 4/5
 inds = 52965:53140;angCol = colormap('hsv');
@@ -44,18 +49,19 @@ for i = 1:size(X1,1)
     scatter3((sub-min(sub))/1250*8,real(X1d(i,:)),imag(X1d(i,:))-sh,[],bsxfun(@times,angCol(c,:),abs(X1(i,sub)')/mA),'filled');
 end
 %% panel 5
-figure;subplot(411);plot(temp*1250/32,'k','linewidth',2);axis tight;
-colorbar;set(gca,'xtick',[],'fontsize',16);title('Velocity');ylabel('cm/s');
-subplot(412);imagesc(X(:,indsa));set(gca,'ytick',[1 64],'xtick',[],'fontsize',16);colormap jet;colorbar;freezeColors;title('Raw LFP');
-subplot(413);imagesc(complexIm(X1,0,1));colorbar;set(gca,'ytick',[1 64],'xtick',[],'fontsize',16);ylabel('Channel #');title('Filtered Theta');
-subplot(414);imagesc(linspace(0,size(X1,2)/1250*8,size(X1,2)),1:64,...bsxfun(@times,X1,exp(1i*angle(v1)'))
-    complexIm(X1.*exp(1i*-angle(u*v1')),0,2,16));colorbar;set(gca,'ytick',[1 64],'xtick',1:4,'fontsize',16);...
-    colormap hsv; freezeColors;title('Demodulated Theta');xlabel('Time (s)');
+c = ceil((angle(v2)+pi)/(2*pi)*64);
+figure;subplot('position',[.1 .85 .9 .1]);plot(temp*1250/32,'k','linewidth',2);axis tight;set(gca,'xtick',[],'fontsize',16);title('Velocity');ylabel('cm/s');
+subplot('position',[.1 .6 .9 .2]);imagesc(X(:,indsa));set(gca,'ytick',[1 64],'xtick',[],'fontsize',16);title('Raw LFP');
+subplot('position',[.1 .3 .9 .2]);imagesc(complexIm(X1,0,1));set(gca,'ytick',[1 64],'xtick',[],'fontsize',16);ylabel('Channel #');title('Filtered Theta');
+subplot('position',[.1 .26 .9  .03]);scatter(1:numel(v2),real(v2),[],angCol(c,:),'filled');axis tight off;
+subplot('position',[.1 .01 .9 .2]);imagesc(linspace(0,size(X1,2)/1250*8,size(X1,2)),1:64,...bsxfun(@times,X1,exp(1i*angle(v1)'))
+    complexIm(bsxfun(@times,X1,exp(1i*-angle(v2))),0,1,16));%.*exp(1i*-angle(u*v1')),0,2,16));
+set(gca,'ytick',[1 64],'xtick',1:4,'fontsize',16);title('Demodulated Theta');xlabel('Time (s)');
 
-figure;subplot(4,1,2);imagesc(complexIm(v2,0,1));colorbar;axis off;
-c = ceil(mod(angle(v2),2*pi)/(2*pi)*64);%(angle(v2*1i)+pi)
-subplot(4,1,3);scatter(1:numel(v2),real(v2),[],angCol(c,:),'filled');
-set(gca,'color','w','xtick',[],'ytick',[]);axis tight; colorbar;
+%figure;subplot(4,1,2);imagesc(complexIm(v2,0,1));colorbar;axis off;
+%c = ceil(mod(angle(v2),2*pi)/(2*pi)*64);%(angle(v2*1i)+pi)
+%subplot(4,1,3);scatter(1:numel(v2),real(v2),[],angCol(c,:),'filled');
+%set(gca,'color','w','xtick',[],'ytick',[]);axis tight; colorbar;
 %% panel 6
 offSet = 1;
 Xf1 = [bsxfun(@times,Xf,exp(1i*angle(v(:,1))).');...
@@ -342,3 +348,30 @@ end
 hold off;drawnow;
 m(i) = getframe(gcf);
 end
+%% ICA at different levels
+%Xp = runTriggerView1d(pos,v,Xf,100,.05);
+%Xps = repmat(mean(Xp,2),[1 88 1]);
+%Xpn = Xp-Xps;
+%goodInds = Xp(1,:) ~= 0;
+numSamps = size(Xp(:,:),2);
+circ = exp(1i*linspace(0,numSamps*pi/2,numSamps));
+ys = repmat(eye(size(Xp,3)),[1 size(Xp,2)]);ys = permute(ys,[1 3 2]);
+xcLen = 25;
+xc = zeros(20,xcLen*2+1);
+for i = 1:20
+temp = Xps + Xpn*(i-1)/10;
+temp = temp(:,:);%/sqrt(temp(:)'*temp(:));
+%[A,W] = ACMNsym(bsxfun(@times,temp(:,goodInds),circ(goodInds)),'mle_circ');
+%icaAct = W*temp(:,:);
+%icaAct = squeeze(mean(reshape(icaAct,[64 88 200]),2));
+temp = bsxfun(@minus,temp,mean(temp(:,goodInds),2));
+W = (temp(:,goodInds)*temp(:,goodInds)')\temp(:,goodInds)*ys(:,goodInds)';
+temp(:,~goodInds) = nan;
+ys = W'*temp;
+ys = squeeze(nanmean(reshape(ys,[size(ys,1) size(Xps,2) size(Xps,3)]),2));
+for j = 1:size(ys,1)
+    xc(i,:) = xc(i,:) + xcov(ys(j,:),xcLen);
+end
+%xc(i,:) = interp1(1:101,xc(i,:),1:.1:101);
+end
+figure;imagesc(complexIm(xc));

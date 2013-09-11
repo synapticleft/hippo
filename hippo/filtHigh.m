@@ -1,4 +1,4 @@
-function y = filtHigh(sig,Fs,f,order)
+function sig = filtHigh(sig,Fs,f,order)
 
 %used X = filtHigh(X,1250/8,4,4);
 
@@ -12,8 +12,8 @@ d1 = design(f1,'butter');
 %a1 = filter(d1,flipud(filter(d1,flipud(a'))))';
 [B,A]= sos2tf(d1.sosMatrix,d1.ScaleValues);
 if isreal(sig)
-    y = filtfilt(B,A,sig')';
+    sig = filtfilt(B,A,sig')';
 else
-    y = complex(filtfilt(B,A,real(sig)')',filtfilt(B,A,imag(sig)')');
+    sig = complex(filtfilt(B,A,real(sig)')',filtfilt(B,A,imag(sig)')');
 end
-y(nanInds) = nan;
+sig(nanInds) = nan;

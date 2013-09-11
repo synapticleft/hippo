@@ -1,19 +1,23 @@
-function [magAll timeAll numSamps] = runConvAct(X,pos,accumbins)%numAll 
+function [magAll timeAll numSamps SAll SXAll] = runConvAct(X,pos,accumbins)%numAll 
+%% make plots of responses by convolutional sparse coding after learning
+%% magAll = magnitude of responses
+%% timeAll = phase of responses w.r.t. PC1
+%% SAll = power spectrum
 
-load('phi1.mat','c','d');
-spatial = zeros(size(c,1),size(c,3));
-c2 = c;
-for i = 1:size(c,1)
-c2(i,:,:) = squeeze(c(i,:,:))./max(d,1);
-[u,s,v1] = svds(squeeze(c2(i,:,:)),1);
-spatial(i,:) = mean(u)*s*v1';
-end
-posInds = find(max(spatial') > .3*max(spatial(:)));
-spatial = spatial(posInds,:);
-[~,peakLoc] = max(abs(spatial)');
-[~,indLoc] = sort(peakLoc);
-posInds = posInds(indLoc);
-spatial = spatial(indLoc,:);
+% load('phi1.mat','c','d');
+% spatial = zeros(size(c,1),size(c,3));
+% c2 = c;
+% for i = 1:size(c,1)
+% c2(i,:,:) = squeeze(c(i,:,:))./max(d,1);
+% [u,s,v1] = svds(squeeze(c2(i,:,:)),1);
+% spatial(i,:) = mean(u)*s*v1';
+% end
+%posInds = find(max(spatial') > .3*max(spatial(:)));
+%spatial = spatial(posInds,:);
+%[~,peakLoc] = max(abs(spatial)');
+%[~,indLoc] = sort(peakLoc);
+%posInds = posInds(indLoc);
+%spatial = spatial(indLoc,:);
 %plot(spatial');
 %superImp(c2,posInds,1);
 %% position processing
@@ -72,7 +76,8 @@ chunk1 = bwlabel(round(resample(double(inds),ratio,1)));chunk1 = chunk1(1:size(X
 dPos = [0; diff(pos)];
 a = accumarray(runs'+1,dPos,[],@mean);
 f = find(a(2:end) > 0);
-pos(ismember(runs,f)) = 2-pos(ismember(runs,f));pos = pos/2;
+pos(ismember(runs,f)) = pos(ismember(runs,f)) + 1;%2-pos(ismember(runs,f));
+pos = pos/2;
 %posd = floor(pos*accumbins*2)+1;posd = min(2*accumbins,max(1,posd));
 pos = resample(pos,ratio,1);
 pos = pos(1:size(X,2)); 
@@ -83,6 +88,7 @@ runs1 = round(resample([runs runs(end)*ones(1,100)],ratio,1));runs1 = runs1(1:si
 load('params.mat','lambda','whiteningMatrix','dewhiteningMatrix');
 %lambda = [.8 .25];
 load('phi.mat','phi');
+posInds = 1:size(phi,2);
 opts_lbfgs_a = lbfgs_options('iprint', -1, 'maxits', 20,'factr', 0.01, 'cb', @cb_a);
 %lambda = [1 .25];
 [~,J,R] = size(phi);%J1 = size(phi1,2);
@@ -94,7 +100,10 @@ magAll = zeros(2,Jp,2*accumbins);timeAll = magAll;numSamps = 0;
 figure;
 %for k = 1:numel(la)
 %    for l = 1:numel(laa)
-for j = 39%1:max(chunk1)
+
+params.Fs = 1250/dec;params.tapers = [3 5];
+SAll = 0;SXAll = 0;
+for j = 1:max(chunk1) %39%
     thisRun = chunk1 == j;%min(find(chunk1 == j-1)):max(find(chunk1 == j));% 
     %% for single
 %    Xsamp = wh1*X(:,chunk1 == j);%
@@ -107,17 +116,21 @@ for j = 39%1:max(chunk1)
     ub  = zeros(1,J*P); % upper bound
     nb  = 0*ones(1,J*P); % bound type (none)
     a0 = zeros(size(phi,2), P);
-    aMult = lbfgs(@objfun_a_conv, a0(:), lb, ub, nb, opts_lbfgs_a, Xsamp, phi,lambda);% [la(k) laa(l)]);%
+    aMult = a0;%lbfgs(@objfun_a_conv, a0(:), lb, ub, nb, opts_lbfgs_a, Xsamp, phi,lambda);% [la(k) laa(l)]);%
     aMult = reshape(aMult, J, P);
     aMult = aMult(posInds,:);
     peakTimes = repmat(exp(1i*xComp),[Jp 1])';
     [~,id] = meshgrid(1:S,1:Jp);id = id';
     aMult = aMult(:,1:S)';
+    [S,f] = mtspectrumc(aMult,params);
+    SAll = SAll + interp1(f,S,0:.5:100);
     posTemp = repmat(posd1(thisRun),[Jp 1]);
     magAll(1,:,:) = squeeze(magAll(1,:,:)) + accumarray([id(:) posTemp(:)],max(0,aMult(:)),[Jp max(posd1)],@sum);
     timeAll(1,:,:) = squeeze(timeAll(1,:,:)) + accumarray([id(:) posTemp(:)],peakTimes(:).*max(0,aMult(:)),[Jp max(posd1)],@sum);
     magAll(2,:,:) = squeeze(magAll(2,:,:)) + accumarray([id(:) posTemp(:)],max(0,-aMult(:)),[Jp max(posd1)],@sum);
     timeAll(2,:,:) = squeeze(timeAll(2,:,:)) + accumarray([id(:) posTemp(:)],peakTimes(:).*min(0,aMult(:)),[Jp max(posd1)],@sum);
+    [S,f] = mtspectrumc(Xsamp(end,:),params);
+    SXAll = SXAll + interp1(f,S,0:.5:100);
 %     f = find(aMult(:) > mag);
 %     posTemp = repmat(posd1(chunk1 == j),[Jp 1]);
 %     magAll(1,:,:) = squeeze(magAll(1,:,:)) + accumarray([id(f) posTemp(f)],aMult(f),[Jp max(posd1)],@sum);
@@ -131,7 +144,8 @@ for j = 39%1:max(chunk1)
     %subplot(311);imagesc([squeeze(magAll(1,:,:)) squeeze(magAll(2,:,:))]);
     %subplot(312);imagesc(complexIm([squeeze(timeAll(1,:,:)) squeeze(timeAll(2,:,:))],0,1));drawnow; 
     %subplot(313);plot(aMult);axis tight;
-    sPlot(aMult',[],0);title(j);drawnow;
+    subplot(211);sPlot(aMult',[],0);title(j);drawnow;
+    subplot(212);imagesc(log(SAll)');
 end
 %    end
 %end

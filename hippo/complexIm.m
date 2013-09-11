@@ -1,4 +1,4 @@
-function im = complexIm(in,sub,pow,scale,h,setMax)
+function im = complexIm(in,sub,pow,scale,setMax,h)
 in = squeeze(in);
 if ~exist('scale','var') || isempty(scale)
     scale = 1;
@@ -24,7 +24,11 @@ if ~exist('setMax','var')
 end
 if ~exist('h','var') || isempty(h)
     %im(:,:,1) = min(1,max(0,(angle(in)*scale)/(2*pi)+.5));
-    im(:,:,1) = mod(angle(in)*scale,2*pi)/(2*pi);
+    %if scale > 1
+    %    im(:,:,1) = (tanh(scale*angle(in)/pi)+1)/3;%mod(angle(in)*scale,2*pi)/(2*pi);
+    %else
+        im(:,:,1) = mod(angle(in)*scale,2*pi)/(2*pi);
+   % end
     im(:,:,2) = 1;im(:,:,3) = min(1,power(abs(in)/setMax,pow));
 else
     im(:,:,1) = angle(h);im(:,:,3) = min(1,abs(h)./setMax);im(:,:,2) = min(1,power(abs(in)/setMax,pow));

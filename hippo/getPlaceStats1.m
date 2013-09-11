@@ -1,4 +1,6 @@
 function getPlaceStats1(fields,thresh)
+%% statistics of place fields
+%% fits trial by trial variability
 warning off;
 fields(:) = zscore(fields(:));
 fields = permute(fields,[1 3 2]);

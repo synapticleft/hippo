@@ -1,11 +1,7 @@
 function [cc mse kern snr f] = pipeLine1(y,x,numCross,ridge,~,~,useKern)
+%% cross-validated linear regression
 figsOn = 0;
 samples = size(x,1);
-%x = bsxfun(@minus,x,mean(x));
-%x = bsxfun(@rdivide,x,std(x));
-%for testing
-%tk = sin(linspace(0,pi,size(x,2)));
-%y = (x*tk')'; y = y + randn(size(y))*std(y(:))/2;
 %y = bsxfun(@minus,y,mean(y,2));
 cc = zeros(numCross,size(y,1));
 %params.Fs = fs;params.fpass = [0 70];params.tapers = [5 9];
@@ -15,7 +11,6 @@ for i = 1:numCross
     testInds = testInds(1):testInds(2);
     trainInds = setdiff(1:samples,testInds);
     if numCross == 1 trainInds = testInds; end
-%    [min(testInds) max(testInds) samples]
     xTest = x(testInds,:);
     xTrain = x(trainInds,:);
     yTest = y(:,testInds);
@@ -30,11 +25,11 @@ for i = 1:numCross
         else
             yEst = xTest*conj(squeeze(kern(i,:,:)));
         end
+    cc(i,:) = diag(corr(yTest.',yEst));
+    mse(i,:) = mean(abs(yTest.'-yEst).^2)/mean(abs(yTest.').^2);
 %    [gamma,~,~,~,~,f] = coherencyc(yTest',yEst,params);
 %    gammasq = gamma.*conj(gamma);
 %    snr(i,:,:) = gammasq./(1-gammasq);
-    cc(i,:) = diag(corr(yTest.',yEst));
-    mse(i,:) = mean(abs(yTest.'-yEst).^2)/mean(abs(yTest.').^2);
 %     try
 %     sigSpec(i,1,:) = mtspectrumc(yTest,params);
 %     sigSpec(i,2,:) = mtspectrumc(yEst',params);

@@ -1,13 +1,15 @@
 function array=showGrid(A,grid,rad,ratio,in,myDim,clim)
+%% image in a grid data sets that have multiple images
+%% like electrode arrays or activations of various ICs
 
 if ~exist('ratio','var') || isempty(ratio)
     ratio = [1 1];
 end
 
 buf=1;
-if ndims(A) == 2 %&& numel(A) ~= prod(size(A))
-    A = A.';
-end
+%if ndims(A) == 2 %&& numel(A) ~= prod(size(A))
+%    A = A.';
+%end
 if exist('myDim','var') && ~isempty(myDim)
     n = myDim; m = ceil(size(A,1)/n);
 else
@@ -22,6 +24,7 @@ else
     sz = size(grid);
     grid = grid-min(grid(:)) + 1;
 end
+max(grid(:))
 A1 = zeros(size(A,1),sz(1),sz(2));
 A1(:,:) = A(:,grid(:));
 else
@@ -34,7 +37,7 @@ if exist('in','var') && ~isempty(in) && in
     sz = size(xout);
 end
 
-array=-ones(buf+m*(sz(1)+buf),buf+n*(sz(2)+buf));
+array=ones(buf+m*(sz(1)+buf),buf+n*(sz(2)+buf));
 if ~isreal(A)
     array = array*nan;
 end
@@ -60,12 +63,14 @@ for j=1:m
     if exist('rad','var') && ~isempty(rad) && rad
         temp = imfilter(temp,fspecial('gaussian',max(5,rad*2),rad),'replicate');
     end
+    if isreal(temp)
+        temp = temp - prctile(temp(:),5);%min(temp(:));
+    end
     if ~exist('clim','var') 
         clima=max(abs(temp(:)));
     else
         clima = clim;
     end
-    %temp = temp - min(temp(:));
     %temp = temp/max(temp(:));
    % temp = rot90(rot90((temp)));
     array(indsx,indsy) = temp/clima;
@@ -90,10 +95,10 @@ end
 %array = imfilter(array,fspecial('gaussian',5,1));
 
 if isreal(array)
-    imagesc(x,y,array,[-1 1]);%[min(array(array~=-1)) max(array(array~=-1))]);colormap gray;%
+    imagesc(x,y,array,[0 1]);%[min(array(array~=-1)) max(array(array~=-1))]);colormap gray;%
     colormap gray;
 else
-    imagesc(x,y,complexIm(array,0,1,[],[],1));
+    imagesc(x,y,complexIm(array,0,.5,[],1));
 end
 if exist('in','var') && ~isempty(in) && in
     axis image;

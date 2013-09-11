@@ -1,4 +1,5 @@
 function [v h] = angVel(pos)
+%% find velocity of rat with respect to head orientation
 
 pos(pos == -1) = nan;
 or = pos(:,1:2) - pos(:,3:4);

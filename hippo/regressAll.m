@@ -1,4 +1,5 @@
 function [o,i] = regressAll(pcaDat,lfpDat,posDat,inds)
+%% an attempt to fit PC2 with PC1  -- outdated
 
 
 if size(lfpDat,1) > size(lfpDat,2)

@@ -1,4 +1,5 @@
 function allS = getRipPow(file,elecs,v)
+% find theta-locked high-frequency components
 
 d = ['/media/work/hippocampus/'];%['/media/Expansion Drive/KenjiMizuseki/'];%
 file = [file '.h5'];

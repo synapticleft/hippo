@@ -1,4 +1,5 @@
 function [allAct posMean] = restlessBox(act,pos,bounds,frameCol)
+%% scatter activations in waiting box, with colors corresponding to the binned activation renderings
 
 thresh = 3;
 dec = round(size(pos,1)/size(act,2));

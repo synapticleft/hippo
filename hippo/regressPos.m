@@ -1,4 +1,5 @@
 function regressPos(pos,v,Xf,thresh)
+%% fitting position data using demodulated data and reconstruction 
 
 warning off all;
 s = size(Xf,1);

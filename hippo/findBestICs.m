@@ -1,5 +1,7 @@
-function findBestICs(fields,w,thresh,fieldsConv,wConv,whiteFields)
+function findBestICs(fields,w,fieldsConv,wConv)
+%% match up results from complex ICA to those from sparse coding so that most correlated BF's can be compared.
 
+thresh = 1;
 rad = 1;%.75;
 fields(:) = zscore(fields(:));
 fieldsConv(:) = zscore(fieldsConv(:));
@@ -11,12 +13,14 @@ w = w(:,threshInds);
 fields = bsxfun(@times,fields,exp(1i*angle(mean(w))).');
 w = bsxfun(@rdivide,w,sqrt(mean(w.*conj(w))).*exp(1i*angle(mean(w))));
 w = bsxfun(@minus,w,mean(w,2));
-
+s1 = size(fields,3);
 for i = 1:size(fieldsConv,1)
 fieldsConv(i,:,:) = imfilter(squeeze(fieldsConv(i,:,:)),fspecial('gaussian',5,rad));
+fieldsConv(i,:,s1/2+1:end) = fieldsConv(i,:,end:-1:s1/2+1);
 end
 for i = 1:size(fields,1)
 fields(i,:,:) = imfilter(squeeze(fields(i,:,:)),fspecial('gaussian',5,rad));
+fields(i,:,s1/2+1:end) = fields(i,:,end:-1:s1/2+1);
 end
 cc = corr(abs(fields(:,:))',abs(fieldsConv(:,:))');
 figure;
@@ -36,13 +40,13 @@ figure;
 chosen = [9:11 22];
 ydim = 4;xdim = 4;
 for i = 1:4
-    subtightplot(xdim,ydim,i);imagesc(complexIm(imfilter(squeeze(whiteFields(i,:,:)),fspecial('gaussian',5,rad))));axis off;
-    hold all;plot([1 1]*size(fields,3)/2,[0 size(fields,2)],'w--','linewidth',2);
+    %subtightplot(xdim,ydim,i);imagesc(complexIm(imfilter(squeeze(whiteFields(i,:,:)),fspecial('gaussian',5,rad))));axis off;
+    %hold all;plot([1 1]*size(fields,3)/2,[0 size(fields,2)],'w--','linewidth',2);
     im = squeeze(fields(chosen(i),:,:));
     %im = abs(im);
     im = complexIm(1i*im);
     subtightplot(xdim,ydim,ydim+i);imagesc(im);axis off;%complexIm());axis off;
-    hold all;plot([1 1]*size(fields,3)/2,[0 size(fields,2)],'w--','linewidth',2);
+    hold all;plot([1 1]*size(fields,3)/2,[0 size(fields,2)],'w','linewidth',2);
     subtightplot(xdim,ydim,2*ydim+i);imagesc(complexIm(rot90(rot90(reshape(w(:,chosen(i)),[8 8])))));axis off;
     subtightplot(xdim,ydim,3*ydim+i);hold off;plot(1,0);set(gca,'nextPlot','add','ColorOrder',squeeze(complexIm(w(:,chosen(i)))),'xtick',[],'ytick',[]);
     plot(squeeze(wConv(:,inds(chosen(i)),:))','linewidth',1);axis tight;
