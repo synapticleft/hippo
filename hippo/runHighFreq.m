@@ -1,10 +1,10 @@
-function [A,tes,td] = runHighFreq(X,pos,A,W)
+function [W,tes,td] = runHighFreq(X,pos,W,v)
 
 accumbins = [50 1];
 ratio = round(size(X,2)/size(pos,1));
 dec = 32/ratio;
 %%Processing of position information
-thresh = .05;bounds = [.1 .9];win = [-1 1]*ceil(1250/dec/8/2);
+thresh = .05;bounds = [.1 .9];%win = [-1 1]*ceil(1250/dec/8/2);
 pos(pos == -1) = nan;
 reject = 0;
 for i = 1:4
@@ -32,16 +32,19 @@ vel = filtLow(vel,1250/32,1);
 nanInds = find(~isnan(vel));
 vel = interp1(nanInds,vel(nanInds),1:numel(vel));
 vel = vel/max(vel);
-vel = resample(vel,ratio,1);
-pos = resample(pos,ratio,1);
-pos = pos(1:size(X,2),:); vel = vel(1:size(X,2));
+%vel = resample(vel,ratio,1);
+%pos = resample(pos,ratio,1);
+%pos = pos(1:size(X,2),:); vel = vel(1:size(X,2));
 inds = vel > thresh;
 pos = pos(inds,:);
+%if exist('v','var')
+%    v = resample(v(:,1),ratio,1);
+%end
 for i= 1:2
     posd(:,i) = max(1,floor(pos(:,i)*accumbins(min(numel(accumbins),i)))+1);
 end
-if ~exist('A','var')
-    [A,W] = gfastica(zscore(X(:,inds),0,2),'lastEig',size(X,1),'g','tanh','approach','symm','stabilization','on');
+if ~exist('W','var')
+    [~,W] = gfastica(zscore(X(:,inds),0,2),'lastEig',size(X,1),'g','tanh','approach','symm','stabilization','on');
 end
 %%
 b = nan*ones(size(pos,1),1);
@@ -53,23 +56,32 @@ runs = bwlabel(b > 0);
 w = watershed(b==0);
 w = w-1; %w(w== max(w)) = 0;
 t = W*zscore(X,0,2);%
-td = zeros(size(X,1),ceil(size(X,2)/ratio));
-for i = 1:size(X,1)
+td = zeros(size(t,1),ceil(size(X,2)/ratio));
+for i = 1:size(t,1)
     td(i,:) = decimate(t(i,:).^2,ratio);
 end
-t = t(:,inds);
-vInterp = zeros(2,size(t,1),max(runs),accumbins(1));
+clear t
+if exist('v','var')
+    td = morFilter(td,8,1250/32);
+    td = bsxfun(@times,td,exp(1i*angle(v(:,1).')));
+end
+td = td(:,inds);
+vInterp = zeros(2,size(td,1),max(runs),accumbins(1));
 for k = 1:2
 %    runs1 = b*(-1^k)>0;runs1 = bwlabel(runs1);
     runs1 = bwlabel(w>0 & mod(w,2) == k-1 & w <=2*max(runs));
     inds = runs1 > 0;
-    for j = 1:size(t,1)
-        vInterp(k,j,:,:) = accumarray([runs1(inds); posd(inds,1)']',t(j,inds),[max(runs) accumbins(1)] ,@std);
+    for j = 1:size(td,1)
+        if exist('v','var')
+            vInterp(k,j,:,:) = accumarray([runs1(inds); posd(inds,1)']',td(j,inds),[max(runs) accumbins(1)] ,@mean);
+        else
+            vInterp(k,j,:,:) = accumarray([runs1(inds); posd(inds,1)']',td(j,inds),[max(runs) accumbins(1)] ,@std);
+        end
     end
 end
 t1 = [squeeze(vInterp(1,:,:)) squeeze(vInterp(2,:,:))];
-posInds = 1:size(t1,1);
-xdim = ceil(sqrt(numel(posInds)));ydim = ceil(numel(posInds)/xdim);
+%posInds = 1:size(t1,1);
+%xdim = ceil(sqrt(numel(posInds)));ydim = ceil(numel(posInds)/xdim);
 %h1 = figure;h2 = figure;
 tes = zeros(size(t1,1),max(runs),2*accumbins(1));
 for i =1:size(t1,1)
