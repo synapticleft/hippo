@@ -1,4 +1,4 @@
-[a,b,c,d] = LoadCluRes('ec014.468',4);
+c[a,b,c,d] = LoadCluRes('ec014.468',4);
 s = LoadSpk('ec014.468.spk.4',8);
 %% plot sorted spike waveforms
 figure;for i = 1:max(b)

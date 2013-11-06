@@ -11,7 +11,7 @@ dayCells = PyrIntMap.Map(:,1) == find(strcmp(dayID,PyrIntMap.fileBase)) & Region
 %d = ['/media/Kenji_data/' Beh{whichDay,3} '/' Beh{whichDay,1} '/' file '/'];
 someShanks = unique(PyrIntMap.Map(dayCells,3));
 %%old way
-if ~exist('d','var')
+if ~exist('d','var') || isempty(d)
     d = ['/media/work/hippocampus/' file '/'];%['/media/Expansion Drive/KenjiMizuseki/'];%
 end
 if exist('someShanks','var') && ~isempty(someShanks)

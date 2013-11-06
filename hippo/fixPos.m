@@ -3,7 +3,7 @@ function [posa posd fast w] = fixPos(file)
 
 thresh = .05;
 bounds = [.15 .85];
-if strcmp(file,'char')
+if isstr(file)%strcmp(file,'char')
     pos = importdata(file);
 else
     pos = file;

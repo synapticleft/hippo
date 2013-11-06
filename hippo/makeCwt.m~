@@ -1,0 +1,17 @@
+function makeCwt(file,pos)
+
+dec = 32;
+numElecs = 64;
+levels = 1:.5:9;
+
+[~,~,~,runNum] = fixPos(pos);
+
+runNum = round(interp(runNum,dec));
+
+Xc = zeros(numel(levels),numel(runNum));
+for i = 1:numElecs
+    X = getData(file,1,i);
+    for j = 1:max(runNum)
+        Xc(:,runNum == j) = cwt(X(runNum == j
+    end
+end
