@@ -1,4 +1,4 @@
-function array=showGrid(A,grid,rad,ratio,in,myDim,clim)
+function array=showGrid(A,grid,rad,ratio,in,myDim,clim,flipMe)
 %% image in a grid data sets that have multiple images
 %% like electrode arrays or activations of various ICs
 
@@ -66,14 +66,17 @@ for j=1:m
     if isreal(temp)
         temp = temp - prctile(temp(:),5);%min(temp(:));
     end
-    if ~exist('clim','var') 
-        clima=max(abs(temp(:)));
+    if ~exist('clim','var') || isempty(clim)
+        clima= prctile(abs(temp(:)),99.95);%max(abs(temp(:)));
     else
         clima = clim;
     end
     %temp = temp/max(temp(:));
    % temp = rot90(rot90((temp)));
-    array(indsx,indsy) = temp/clima;
+   if exist('flipMe','var') && flipMe == 1 %ndims(A) == 3
+       temp = flipud(temp);
+   end
+    array(indsx,indsy) = (temp)/clima;%
 %    quivDat(k,:) = [mean(indsx) mean(indsy) mean(fx(:)) mean(fy(:))];
 %    k=k+1;
   end

@@ -1,4 +1,4 @@
-function [Out1, Out2, Out3] = gfastica(mixedsig, varargin)
+141606function [Out1, Out2, Out3] = gfastica(mixedsig, varargin)
 %FASTICA - Fast Independent Component Analysis
 %
 % FastICA for Matlab 7.x and 6.x
@@ -411,7 +411,7 @@ else
       fprintf ('''pcaE'', ''pcaD''.\n');
     end;
     % Calculate PCA
-    [E, D]= gpcamat(mixedsig, firstEig, lastEig, interactivePCA, verbose);
+    [E, D, cumVar]= gpcamat(mixedsig, firstEig, lastEig, interactivePCA, verbose);
 %     if lastEig == size(mixedsig,1)
 %         figure;plot(filtfilt(gausswin(20),1,diff(log(diag(D)))));
 %         lastEig = input('Enter cutoff: ');
@@ -419,7 +419,6 @@ else
 %     end
   end
 end
-
 % skip the rest if user only wanted PCA
 if only > 1
   
@@ -441,7 +440,7 @@ if only > 1
     end;
     % Calculate the whitening
     [whitesig, whiteningMatrix, dewhiteningMatrix, zerophaseMatrix] = gwhitenv ...%, zpMatrix
-						     (mixedsig, E, D, verbose);
+						     (mixedsig, E, D, cumVar, verbose);
   end
   
 end % if only > 1

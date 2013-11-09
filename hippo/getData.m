@@ -23,6 +23,7 @@ if ~exist('dec','var') || isempty(dec)
     dec = 1;
 end
     Par = LoadPar([data_root1 fname]);
+    %Par.nChannels = 512;
     nSamples = [Par.nChannels numel(a.data)/Par.nChannels];
     
 if  ~exist('elecs','var') || isempty(elecs)
@@ -35,9 +36,9 @@ if ~exist('rind','var') || isempty(rind)
 end
 if ~exist('sz','var') || isempty(sz)
     sz = nSamples(2);
-    sz = rind + dec*(floor(sz/dec));
+    sz = dec*(floor(sz/dec));%rind + 
 else
-    sz = rind + sz;
+    sz = sz;%rind + 
 end
 %rind = padding + ceil(rand*(nSamples(2) - padding*2 - sz));
 
@@ -45,18 +46,22 @@ end
 %      double(h5varget([data_root fname],'/hImag',[0 rind-1],[nSamples(1) sz])));
 %X = double(h5varget([data_root fname],'/hReal',[0 rind],[nSamples(1) sz]));%-1
 
-%if dec > 1
+if dec > 1
     X = zeros(numel(elecs),ceil((sz-rind)/dec));
+else
+    X = int16(zeros(numel(elecs),sz-rind));
+end
+    
     for i = 1:numel(elecs)
         %tic;
         %temp = double(h5varget([data_root fname '.h5'],'/hReal',[elecs(i)-1 rind],[1 sz]));%nSamples(1)
         %toc
         tic;
-        temp = double(a.data((rind:sz-1)*nSamples(1)+elecs(i)))';
+        temp = a.data((rind:sz-1)*nSamples(1)+elecs(i))';
         toc
         if dec > 1
             tic;
-            X(i,:) = decimate(temp,dec);%X(i,:),dec);
+            X(i,:) = decimate(double(temp),dec);%X(i,:),dec);
             toc
         else
             X(i,:) = temp;
