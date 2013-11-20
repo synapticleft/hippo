@@ -3,8 +3,8 @@ function [A,W,Z] = runTriggerICA(pos,Xf,thresh)
 %% convert demodulated complex data to real valued w/ 2x dimensionality, 
 %% run fastICA
 %warning off all;
-dec = 1;
-bounds = [.1 .9];
+%dec = 1;
+%bounds = [.1 .9];
 pos(pos == -1) = nan;
 %figure;plot(pos(:,1));hold all;
 %plot([0; diff(pos(:,1))]);
@@ -44,13 +44,13 @@ end
 %Xf = [bsxfun(@times,Xf,exp(1i*angle(v(:,1))).')];
 %Xf = filtLow(Xf,1250/32,2);
 %Xf = bsxfun(@times,Xf,exp(1i*angle(v(:,1)))');
-if dec > 1
-Xfd = decimate(Xf(1,:),dec);Xfd(2:size(Xf,1),:) = 0;
-for i = 2:size(Xf,1)
-    Xfd(i,:) = decimate(Xf(i,:),dec);
-end
-Xf = Xfd;clear Xfd;
-end
+%if dec > 1
+%Xfd = decimate(Xf(1,:),dec);Xfd(2:size(Xf,1),:) = 0;
+%for i = 2:size(Xf,1)
+%    Xfd(i,:) = decimate(Xf(i,:),dec);
+%end
+%Xf = Xfd;clear Xfd;
+%end
 
 vel = angVel(pos);%vel = filtLow(vel(:,1),1250/32,1);
 vel = [0; vel(:,1)];
@@ -70,8 +70,8 @@ inds = vel > thresh;
 [A W Z ] = ACMNsym(Xf(:,inds),'mle_circ');%alphascfastica(Xf(:,inds));%
 %[W,sp] = grunica1(Xf(:,inds));
 %W = W*sp; A = pinv(W);
-return
- Xf = [real(Xf);imag(Xf)];%[abs(Xf); angle(Xf)];
- rdim = size(Xf,1);
- [A,W,Z] = gfastica(zscore(Xf,0,2),'lastEig',rdim,'g','tanh','approach','symm','stabilization','on');%
+% return
+% Xf = [real(Xf);imag(Xf)];%[abs(Xf); angle(Xf)];
+% rdim = size(Xf,1);
+% [A,W,Z] = gfastica(zscore(Xf,0,2),'lastEig',rdim,'g','tanh','approach','symm','stabilization','on');%
 %t = W*zscore(Xf,0,2);

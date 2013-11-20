@@ -1,5 +1,6 @@
 function Xf = morFilter(X,Fc,Fs,norm,win)
 
+%X = n x t matrix, where n = # channels, t = # timesteps
 %Fc = center frequency
 %Fs = sampling rate
 %norm = normalize output of each channel to 1 (default 0)
@@ -12,7 +13,7 @@ end
 if ~exist('win','var')
     win = 1;
 end
-Fb = 1/500;%70;%
+Fb = 1/500; %This parameter controls bandwidth, may need to be changed for your purposes
 %Fc = 8.4 for hippocampus
 %Fb = 1/500, win = 1 for hippocampal LFP
 %Fb = 1/5000, Fc = 160, win = 5 for ripples

@@ -1,5 +1,11 @@
 function [posa posd fast w] = fixPos(file)
 %% take position info from whl file and preprocess it
+% file is either a .whl file, or a tx4 array of positions
+% posa = position array with '-1' removed
+% posd = 1-d position on linear track, separating 2 directions of motion
+% fast = boolean indicating if rat was faster than some threshold (useful
+%   for removing periods when there is no motion and theta shrinks)
+% w = trial number for linear track runs
 
 thresh = .05;
 bounds = [.15 .85];
