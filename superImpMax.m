@@ -1,7 +1,8 @@
 function [im cols frameCol] = superImpMax(x,frames,rad,maxVal,cols)
-%%SUPERIMP combines multiple components into 1 image, assigning each
+%%SUPERIMPMAX combines multiple components into 1 image, assigning each
 %%component a different color, for each pixel, choosing the component with
 %%the largest magnitude at that location. All components are normalized.
+%%unlike SUPERIMP, it assigns colors to distinguish neighbors.
 %%INPUTS:   c = all 2-d image components
 %%          frames = which components to combine in image (choose ones with well-defined features)
 %%          rad = width of gaussian smoothing kernel

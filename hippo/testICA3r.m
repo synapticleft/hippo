@@ -74,7 +74,7 @@ tr = rand(1,numel(pos)*trials) < .5;
 te = ~tr;
 [u,s] = eig(Xf*Xf');
 poses = repmat(linspace(1,numel(pos),numel(pos))',[trials 1]);
-if 1
+if 0
 Xfa = pinv(sqrt(s))*u'*Xf;
 for i = 1:size(Xf,1)
     Xf = Xfa(end-i+1:end,:);
@@ -86,7 +86,6 @@ else
     W = (Xf(:,tr)*Xf(:,tr)'+eye(size(Xf,1)))\Xf(:,tr)*ys(:,tr)';
     [~,m] = max( W'*Xf(:,te));
 end
-return
 ys = W'*Xf;
 ys = squeeze(mean(reshape(ys,[size(ys,1) numel(pos) trials]),3));
 for i = 1:size(ys,1)
@@ -105,7 +104,7 @@ end
 %[A W] = fastica(bsxfun(@times,Xf,real(exp(1i*linspace(pi,pi*numel(pos)*trials,numel(pos)*trials)))),'approach','symm');
 sk = sign(skewness((W*(Xf))')');
 c = bsxfun(@times,W*(Xf),sk);
-A = bsxfun(@times,A,sk');
+%A = bsxfun(@times,A,sk');
 %timeCourses = c(:,1:numel(pos)*2);
 c = reshape(c,[size(c,1) numel(pos) trials]);%b*Xf;
 c = permute(c,[1 3 2]);

@@ -1,4 +1,4 @@
-function [Out1, Out2, Out3] = gfastica(mixedsig, varargin)
+function [A,W] = gfastica(mixedsig, varargin) %Out1, Out2, Out3] 
 %FASTICA - Fast Independent Component Analysis
 %
 % FastICA for Matlab 7.x and 6.x
@@ -227,7 +227,7 @@ end
 % Remove the mean and check the data
 
 [mixedsig, mixedmean] = remmean(mixedsig);
-
+%mixedmean = zeros(size(mixedsig,1),1);
 [Dim, NumOfSampl] = size(mixedsig);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -411,7 +411,7 @@ else
       fprintf ('''pcaE'', ''pcaD''.\n');
     end;
     % Calculate PCA
-    [E, D, cumVar]= gpcamat(mixedsig, firstEig, lastEig, interactivePCA, verbose);
+    %[E, D, cumVar]= gpcamat(mixedsig, firstEig, lastEig, interactivePCA, verbose);
 %     if lastEig == size(mixedsig,1)
 %         figure;plot(filtfilt(gausswin(20),1,diff(log(diag(D)))));
 %         lastEig = input('Enter cutoff: ');
@@ -439,8 +439,11 @@ if only > 1
       fprintf ('''whiteSig'', ''whiteMat'', ''dewhiteMat''.\n');
     end;
     % Calculate the whitening
-    [whitesig, whiteningMatrix, dewhiteningMatrix, zerophaseMatrix] = gwhitenv ...%, zpMatrix
-						     (mixedsig, E, D, cumVar, verbose);
+    %[whitesig, whiteningMatrix, dewhiteningMatrix, zerophaseMatrix] = gwhitenv ...%, zpMatrix
+	%					     (mixedsig, E, D, cumVar, verbose);
+    %whitesig = mixedsig;whiteningMatrix = eye(size(whitesig,1));
+    %dewhiteningMatrix = eye(size(whitesig,1));zerophaseMatrix = eye(size(whitesig,1));
+     [whitesig, whiteningMatrix, dewhiteningMatrix] = whiten(mixedsig);                     
   end
   
 end % if only > 1
@@ -472,7 +475,7 @@ if only > 2
 		  numOfIC, g, finetune, a1, a2, myy, stabilization, epsilon, ...
 		  maxNumIterations, maxFinetune, initState, guess, sampleSize, ...
 		  displayMode, displayInterval, verbose);
-  Z = zerophaseMatrix*A;
+  %Z = zerophaseMatrix*A;
   % Check for valid return
   if ~isempty(W)
     % Add the mean back in.
@@ -496,25 +499,25 @@ end % if only > 2
 % The output depends on the number of output parameters
 % and the 'only' parameter.
 
-if only == 1    % only PCA
-  Out1 = E;
-  Out2 = D;
-elseif only == 2  % only PCA & whitening
-  if nargout == 2
-    Out1 = whiteningMatrix;
-    Out2 = dewhiteningMatrix;
-  else
-    Out1 = whitesig;
-    Out2 = whiteningMatrix;
-    Out3 = dewhiteningMatrix;
-  end
-else      % ICA
-    Out1 = A;
-     Out2 = W;
-     Out3 = Z;
+% if only == 1    % only PCA
+%   Out1 = 0;%E
+%   Out2 = 0;%D
+% elseif only == 2  % only PCA & whitening
+%   if nargout == 2
+%     Out1 = whiteningMatrix;
+%     Out2 = dewhiteningMatrix;
+%   else
+%     Out1 = whitesig;
+%     Out2 = whiteningMatrix;
+%     Out3 = dewhiteningMatrix;
+%   end
+% %else      % ICA
+% %     Out1 = A;
+% %      Out2 = W;
+% %      Out3 = Z;
 %   else
 %     Out1 = icasig;
 %     Out2 = A;
 %     Out3 = W;
 %   end
-end
+% end

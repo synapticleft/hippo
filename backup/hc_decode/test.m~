@@ -1,0 +1,87 @@
+%% Example of 1D decoding with various methods (Template Matching, OLE, Bayesian)...
+
+% Define a basis over the track...
+basis.n = 30;   % number of basis functions
+basis.s = 70;   % width parameter
+[basis,Xrbf] = get1Dbasis('vonmises',basis.n,rpos*pi,basis.s);
+
+% Positions to use for decoding...
+pvec = linspace(0,2*pi,256); % track length is mapped 0-2*pi for von-mises/fourier bases
+[tmp,dbasis] = get1Dbasis('vonmises',basis.n,pvec,basis.s);
+
+%% Fit place fields (basic linear-Gaussian model) to use with Template matching and Bayesian decoding...
+
+nfoldcv = 10;
+
+% Fit n-fold cross-validated, L2-regularized place-field models for each neuron/lfp-channel...
+y = zscore(spk');
+for chan=1:size(y,2)
+%    fprintf('Channel %03i/%03i...\n',chan,size(y,2))
+    m(chan) = fitCVridge(Xrbf,y(:,chan),nfoldcv,[0 logspace(-3,1,10)]);
+end
+
+% Collect place fields for each cv-fold...
+lam = cell(0);
+for i=1:nfoldcv
+    for chan=1:size(y,2)
+        lam{i}(:,chan) = m(chan).breg(1,i)+dbasis*m(chan).breg(2:end,i);
+    end
+end
+
+%% Plot model fits...
+
+figure(1)
+clf
+c=1;
+for chan=1:min(80,size(y,2))
+    subplot(10,8,c)
+    [edges,ym,yl,yu] = vec2hist_sem(rpos*pi,y(:,chan),64);
+    errorbar_noh('v6',edges+mean(diff(edges))/2,ym,yl,yu,'r.')
+    hold on
+
+    lamplot = mean(m(chan).breg(1,:),2)+basis.rbf_basis*mean(m(chan).breg(2:end,:),2);
+    plot(basis.x0,lamplot,'k')
+    hold off
+    
+    axis tight
+    xlim([0 2*pi])
+    title(num2str(chan))
+    set(gca,'XTick',[])
+    set(gca,'YTick',[])
+    drawnow
+    c=c+1;
+end
+
+%% Template Matching...
+
+f = [];
+for i=1:nfoldcv
+    f(m(1).cvidx_ts{i},:) = y(m(1).cvidx_ts{i},:)*lam{i}';  % read-out function (maximum is most likely pos)
+end
+decodePostProcess_basic
+decoding_err(1,1) = mean(abs(err));
+decoding_err(1,2) = median(abs(err));
+
+%% OLE...
+
+f = [];
+for i=1:nfoldcv
+    g = y(m(1).cvidx_tr{i},:)\Xrbf(m(1).cvidx_tr{i},:);
+    f(m(1).cvidx_ts{i},:) = y(m(1).cvidx_ts{i},:)*(g*dbasis');
+end
+% Transform and Standardize the read-out function...
+f = exp(f);
+f = bsxfun(@rdivide,f,sum(f,2));
+decodePostProcess_basic
+decoding_err(2,1) = mean(abs(err));
+decoding_err(2,2) = median(abs(err));
+
+%% Compare methods...
+
+figure(4)
+subplot(2,1,1)
+bar(decoding_err(:,1))
+title('Mean Err')
+subplot(2,1,2)
+bar(decoding_err(:,2))
+title('Median Err')

@@ -20,7 +20,7 @@ for i = 1:size(x,1)
     if exist('rad','var') && rad
         x(i,:,:) = imfilter(squeeze(x(i,:,:)),fspecial('gaussian',5,rad));
     end
-    allReg(i,:,:) = x(i,:,:) > maxVal/4;%max(max(squeeze(x(i,:,:))))/2;
+    allReg(i,:,:) = x(i,:,:) > max(max(squeeze(x(i,:,:))))/2;%maxVal/4;%
     if ~exist('maxVal','var')
         x(i,:,:) = x(i,:,:)/max(max(max(x(i,:,:))));
     else

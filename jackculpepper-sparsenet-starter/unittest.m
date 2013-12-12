@@ -1,7 +1,7 @@
 %L = 144;
 %M = 4*L;
 L =  size(Xf,1);
-M = 100;
+M = 64;
 %Mrows = sqrt(L);
 
 %Lsz = sqrt(L);
@@ -13,8 +13,7 @@ save_every = 0;% 100;
 test_every = 100;
 
 %% sparse penalty
-lambda = 2;
-
+lambda = [10 .06];
 %% weight decay
 gamma = 0.0;
 
@@ -56,13 +55,13 @@ B = 100;
 reinit
 
 eta = 0.1;
-num_trials = 2000;
+num_trials = 400;%2000;
 
 % for B = 10:10:100
 %     sparsenet
 % end
 
-for target_angle = target_angle_init:-0.01:0.01
+for target_angle = target_angle_init%:-0.01:0.01
     sparsenet
 end
 

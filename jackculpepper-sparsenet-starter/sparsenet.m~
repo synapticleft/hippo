@@ -51,10 +51,10 @@ for t = 1:num_trials
             end
         case 'batch'
             
-        lb  = zeros(1,B*M); % lower bound
-        ub  = zeros(1,B*M); % upper bound
-        nb  = ones(1,B*M);  % bound type (lower only)
-        nb  = zeros(1,B*M); % bound type (none)
+            lb  = zeros(1,B*M); % lower bound
+            ub  = zeros(1,B*M); % upper bound
+            nb  = ones(1,B*M);  % bound type (lower only)
+            nb  = zeros(1,B*M); % bound type (none)
             a = phi\X;
             [a,fx,exitflag,userdata] = lbfgs(@objfun_a,a(:),lb,ub,nb,opts,phi,X,lambda);
             a = reshape(a,M,B);
@@ -114,8 +114,12 @@ for t = 1:num_trials
                 %atest0 = atest1;
             case 'batch'
                 atest1 = phi\Xtest;
+                lb  = zeros(1,numel(atest1)); % lower bound
+                ub  = zeros(1,numel(atest1)); % upper bound
+                nb  = ones(1,numel(atest1));  % bound type (lower only)
+                nb  = zeros(1,numel(atest1)); % bound type (none)
                 [atest1,fx,exitflag,userdata] = lbfgs(@objfun_a,atest1(:),lb,ub,nb,opts,phi,Xtest,lambda);
-                atest1 = reshape(atest1,
+                atest1 = reshape(atest1,M,numel(atest1)/M);
         end
         fprintf('\n');
         objtest = objfun_a(atest1(:),phi,Xtest,lambda);
@@ -134,22 +138,25 @@ for t = 1:num_trials
     if display_every == 1 || mod(update,display_every) == 0
         % Display the bfs
         %array = render_network(phi, Mrows);
-        phi1 = zerophaseMatrix*dewhitenMatrix*phi;
-        display_Phi(complex(phi1(1:32,:),phi1(34:end-1,:)),1);
-%        sfigure(1); colormap(gray);
+%           sfigure(1); colormap(gray);
 %        imagesc(array, [-1 1]);
 %        axis image off;
+
+%        phi1 = zerophaseMatrix*dewhitenMatrix*phi;
+%        display_Phi(complex(phi1(1:size(phi1,1)/2-1,:),phi1(size(phi1,1)/2+1:end-1,:)),1);
+
  
         EI = phi*a;
 
         mx = max(abs([ EI(:) ; X(:) ]));
         mn = min(abs([ EI(:); X(:)]));
         sfigure(4);
-        subplot(1,2,1),imagesc(EI, [mn mx]),title('EI');
+        subplot(2,2,1),imagesc(EI, [mn mx]),title('EI');
             colormap(gray),axis image off;
-        subplot(1,2,2),imagesc(X,[mn mx]),title('X');
+        subplot(2,2,2),imagesc(X,[mn mx]),title('X');
             colormap(gray),axis image off;
-
+        subplot(223);imagesc(abs(a)),title('a');colormap(gray),axis image off;
+        subplot(222
         sfigure(5);
         bar(std(a,0,2));
         axis tight;

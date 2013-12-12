@@ -1,0 +1,91 @@
+
+vel = [[0; diff(rpos(:,1))] [0; diff(rpos(:,2))]];
+spd = sqrt(sum(vel.^2,2));
+lspd = log(spd+10e-5);
+vr = abs(v(:,1));
+
+%% Assess Decoding Results...
+
+% idx=1:size(f,1);
+[tmp,maxpost]=max(f');
+xyhat = pvec(maxpost,:);
+idx=1:size(xyhat,1);
+
+figure(1)
+clf
+subplot(2,1,1)
+plot(rpos(:,1),'k')
+hold on
+plot(xyhat(:,1),'r')
+hold off
+axis tight
+xlim(xl)
+
+subplot(2,1,2)
+plot(rpos(:,2),'k')
+hold on
+plot(xyhat(:,2),'r')
+hold off
+axis tight
+xlim(xl)
+
+%% Confusion matrix...
+
+% edges = [pvec-mean(diff(pvec))/2 max(pvec)+mean(diff(pvec))/2];
+% [tmp,rpos_bin] = histc(rpos(idx)*pi,edges);
+% 
+% C=[];
+% for i=1:length(pvec)
+%     bidx = find(rpos_bin==i);
+%     C(:,i) = mean(f(bidx,:),1);
+% end
+% if all(C(:)>=0)
+%     C = bsxfun(@rdivide,C,sum(C));
+% end
+% figure(2)
+% clf
+% imagesc((C))
+% axis image
+% colorbar
+% colormap(flipud(cbrew(256,'rdbu')))
+% title('Confusion Matrix')
+% xlabel('True Position')
+% ylabel('Predicted Position')
+
+%% Absolute error...
+
+err = sqrt(sum((rpos-xyhat).^2,2));
+err = err*200;
+
+figure(3)
+col='r';
+clf
+subplot(1,3,1)
+% plot(mean(spk),(err)*200,'o')
+[edges,ym,yl,yu] = vec2hist_sem(mean(spk(idx,:),2),abs(err),25);
+hold on
+errorbar(edges+mean(diff(edges))/2,ym,yl,yu,[col 'o-'])
+hold off
+axis tight
+xlabel('Avg Spikes')
+ylabel('Decoding Error')
+
+subplot(1,3,2)
+% plot(lspd,abs(err)*200,'o')
+[edges,ym,yl,yu] = vec2hist_sem(lspd(idx),abs(err),25);
+hold on
+errorbar(edges+mean(diff(edges))/2,ym,yl,yu,[col 'o-'])
+hold off
+axis tight
+xlabel('log-Speed')
+ylabel('Decoding Error')
+
+subplot(1,3,3)
+% plot(vr*10,abs(err)*200,'o')
+[edges,ym,yl,yu] = vec2hist_sem(vr(idx)*10,abs(err),25);
+hold on
+errorbar(edges+mean(diff(edges))/2,ym,yl,yu,[col 'o-'])
+hold off
+axis tight
+xlabel('abs(v)*10')
+ylabel('Decoding Error')

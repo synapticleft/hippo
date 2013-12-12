@@ -151,11 +151,18 @@ for t = 1:num_trials
         mx = max(abs([ EI(:) ; X(:) ]));
         mn = min(abs([ EI(:); X(:)]));
         sfigure(4);
-        subplot(1,2,1),imagesc(EI, [mn mx]),title('EI');
+        subplot(2,2,1),imagesc(EI, [mn mx]),title('EI');
             colormap(gray),axis image off;
-        subplot(1,2,2),imagesc(X,[mn mx]),title('X');
+        subplot(2,2,2),imagesc(X,[mn mx]),title('X');
             colormap(gray),axis image off;
-
+        subplot(223);%imagesc(abs(a)),title('a');colormap(gray),axis image off;
+        a = bsxfun(@rdivide,abs(a),max(abs(a)));
+        [h,x] = hist(a(:),0:.1:1);
+        plot(x,min(2,h/size(a,2)));
+        xs = meshgrid(1:B,1:M);
+        subplot(224);
+        scatter(xs(:),abs(a(:)),'filled');hold all;
+        scatter(xs(1,:),max(abs(a)),'filled','r');hold off;
         sfigure(5);
         bar(std(a,0,2));
         axis tight;

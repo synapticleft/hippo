@@ -133,6 +133,7 @@ for t = 1:num_trials
        % saveparamscmd = sprintf('%s gamma', saveparamscmd);
         saveparamscmd = sprintf('%s dewhiteningMatrix', saveparamscmd);
         saveparamscmd = sprintf('%s whiteningMatrix', saveparamscmd);
+        saveparamscmd = sprintf('%s zerophaseMatrix', saveparamscmd);
         saveparamscmd = sprintf('%s eta', saveparamscmd);
         saveparamscmd = sprintf('%s eta_up', saveparamscmd);
         saveparamscmd = sprintf('%s eta_down', saveparamscmd);

@@ -1,14 +1,26 @@
-function [X,wh,dw,zp] = whiten(X,fudgefactor)
+function [X,wh,dw,zp] = whiten(X,fudgefactor,useEig)
+if nargin < 3
+    useEig = 1;
+end
 if nargin == 1
     fudgefactor = 0;
 end
 X = bsxfun(@minus, X, mean(X,2));
 A = X*X'/size(X,2);
+if useEig
 [V,D] = eig(A);
-D = D + fudgefactor*eye(size(D,1));
-wh = sqrt(inv(D))*V';
+%D = diag(max(diag(D),eps));
+D = D + (fudgefactor-min(0,min(diag(D))-eps))*eye(size(D,1));
+d = diag(D); %ones(size(D,1),1);%+1e-10
+else
+    [V,D] = svd(A,'econ');
+    d = diag(D);
+end
+dsqrtinv = real(d + ones(size(d))*eps).^(-0.5);
+wh = diag(dsqrtinv)*V';
 dw = V*sqrt(D);%Ex * sqrt (Dx);
-zp = V*diag([ones(1,size(D,1)-1) 0])*V';
+%zp = V*V';%*diag([ones(1,size(D,1)-1) 0])
+zp = V*diag(dsqrtinv)*V';
 %zerophaseMatrix = E*inv (sqrt (D))*E';
 %zerophaseMatrix = Ex*sqrt(diag(flipud(noise_factors)))*Ex';
 

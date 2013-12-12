@@ -103,7 +103,7 @@ rankTolerance = 1e-7;
 d = flipud(diag(D));
 cumVar = sum(d);
 %figure;plot(log(d));drawnow;
-maxLastEig = sum(cumsum(d)/cumVar < .999999)
+maxLastEig = sum(cumsum(d)/cumVar < 1);%.999999)
 %maxLastEig = sum(d > .001)
 if maxLastEig == 0,
   fprintf (['Eigenvalues of the covariance matrix are' ...

@@ -51,9 +51,9 @@ for i = 1:size(traceT,2)%startInd + 500%
         set(gca,'xticklabel',[],'yticklabel',[],'zticklabel',[],'fontsize',16);
 %        imagesc((1:dims(1))*ratio(1),(1:dims(2))*ratio(2),flipud(reshape(trace(:,i),dims)),orRange*.8);axis off;
         axesLabelsAlign3D;drawnow;
-        m(i) = getframe(gcf);
+        %m(i) = getframe(gcf);
 end
-movie2avi(m,'crcnsSurf512.avi');
+%movie2avi(m,'crcnsSurf512.avi');
 
 function fixStep(a,b)
 global step
