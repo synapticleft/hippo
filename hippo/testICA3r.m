@@ -1,7 +1,7 @@
 function medErr = testICA3r(shanks,SNRs,smoothness,nSources,trials) %[xc fs]
 %% simulation for paper using real-valued, non-oscillatory activity
 
-figsOn = 1;
+figsOn = 0;
 div = 50;
 pos = linspace(0,1,500);
 posHet = pos;%[linspace(0,.66,100) linspace(.67,1,100)];
@@ -131,8 +131,9 @@ set(gca,'nextPlot','add','ColorOrder',cc);
 xs = repmat(posHet,[numel(f) 1]);
 temps = std(temp(f,:,:),0,2);
 subplot(211);boundedline(xs',(c(f,:)'),permute(temps,[3 2 1]),'cmap',cc(f,:));axis tight;
-subplot(212);boundedline(xs',bsxfun(@rdivide,c(f,:),max(c(f,:),[],2))',permute(temps,[3 2 1])/10,'cmap',cc(f,:));axis tight;
-set(gca,'fontsize',16);xlabel 'position'; ylabel 'activation';drawnow;
+subplot(212);
+boundedline(xs',bsxfun(@rdivide,c(f,:),max(c(f,:),[],2))',permute(temps,[3 2 1])/10,'cmap',cc(f,:));axis tight;
+set(gca,'fontsize',16,'color',[0 0 0]);xlabel 'position'; ylabel 'activation';drawnow;
 end
 ca = c;
 for i = 1:size(ca,1)

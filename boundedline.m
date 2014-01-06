@@ -306,7 +306,7 @@ for iln = 1:nline
         alpha{iln} = trans;
     else
         lncol{iln} = plotdata{iln,5};
-        ptchcol{iln} = interp1([0 1], [1 1 1; lncol{iln}], trans);
+        ptchcol{iln} = interp1([0 1], [0 0 0; lncol{iln}], trans);
         alpha{iln} = 1;
     end
 end
