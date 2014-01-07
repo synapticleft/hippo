@@ -3,7 +3,7 @@ function [A,W,Z] = runTriggerICA(pos,Xf,thresh)
 %% convert demodulated complex data to real valued w/ 2x dimensionality, 
 %% run fastICA
 %warning off all;
-%dec = 1;
+dec = 1;
 %bounds = [.1 .9];
 pos(pos == -1) = nan;
 %figure;plot(pos(:,1));hold all;
