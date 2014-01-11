@@ -1,6 +1,6 @@
 function [f, g] = objfun_a(x0, phi, I, lambda);
 
-prior = 'laplace';%'cauchy';
+prior = 'cauchy';%'laplace';%
 
 [L M] = size(phi);
 

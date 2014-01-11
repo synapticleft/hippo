@@ -5,7 +5,7 @@ function ripChans=rippledet(file,allchan,detchan)%,minuschan)
 % minuschan: one channel where you don't expect ripples. This will be substracted
 % from detch, in order to eliminate systematic noise in the ripple frequency band.
 % outputext: extension for the output file, i.e.: '.rpl'.
-rootDir = '/media/Expansion Drive/redwood/';
+rootDir = '/media/storage/hippocampus/';%'/media/Expansion Drive/redwood/';
 file = [rootDir file '/' file '.eeg'];
 %parameters
 sz = 100000;

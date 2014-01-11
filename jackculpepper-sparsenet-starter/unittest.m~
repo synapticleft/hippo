@@ -1,10 +1,15 @@
+%L = 144;
+%M = 4*L;
 L =  size(Xf,1);
-M = 256;
+M = 64;
+%Mrows = sqrt(L);
+
+%Lsz = sqrt(L);
 
 tol_coef = 0.01;
 
 display_every = 10;
-save_every = 100;% 100;
+save_every = 0;% 100;
 test_every = 100;
 
 %% sparse penalty
@@ -45,21 +50,21 @@ end
 mintype_lrn = 'gd';
 
 target_angle_init = 0.05;
-%target_angle = target_angle_init;
+target_angle = target_angle_init;
 
 paramstr = sprintf('L=%03d_M=%03d_%s',L,M,datestr(now,30));
 
 
 reinit
 
-eta = 0.5;
-num_trials = 400;%400;
+eta = 0.1;
+num_trials = 200;%400;
 
 % for B = 10:10:100
 %     sparsenet
 % end
 
-for target_angle = target_angle_init:-0.01:0.01 %
+for iter = 1:10%:-0.01:0.01 %
     %lambda = min(1,lambda + .1);
     sparsenet
 end

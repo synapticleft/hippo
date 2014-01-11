@@ -51,19 +51,15 @@ for t = 1:num_trials
             end
         case 'batch'
             
-            lb  = zeros(1,B*M); % lower bound
-            ub  = zeros(1,B*M); % upper bound
-            nb  = ones(1,B*M);  % bound type (lower only)
-            nb  = zeros(1,B*M); % bound type (none)
-            a = phi\X;
-            [a,fx,exitflag,userdata] = lbfgs(@objfun_a,a(:),lb,ub,nb,opts,phi,X,lambda);
+            a = zeros(M,B);%phi\X;
+            [a] = lbfgs(@objfun_a,a(:),lb,ub,nb,opts,phi,X,lambda);
             a = reshape(a,M,B);
     end
     time_inf = toc;
     E = X - phi*a;
     snr = 10 * log10 ( sum(X(:).^2) / sum(E(:).^2) );
 
-    snr_log = snr_log(1:update-1);
+    %snr_log = snr_log(1:update-1);
     snr_log = [ snr_log ; snr ];
 
 
@@ -92,8 +88,8 @@ for t = 1:num_trials
 
             phi = phi1;
 
-            eta_log = eta_log(1:update-1);
-            eta_log = [ eta_log ; eta ];
+            eta_log = eta_log(1:update-1,:);
+            eta_log = [ eta_log ; [eta angle_phi]];
 
 
     end
@@ -113,12 +109,12 @@ for t = 1:num_trials
                 end
                 %atest0 = atest1;
             case 'batch'
-                atest1 = phi\Xtest;
-                lb  = zeros(1,numel(atest1)); % lower bound
-                ub  = zeros(1,numel(atest1)); % upper bound
-                nb  = ones(1,numel(atest1));  % bound type (lower only)
-                nb  = zeros(1,numel(atest1)); % bound type (none)
-                [atest1,fx,exitflag,userdata] = lbfgs(@objfun_a,atest1(:),lb,ub,nb,opts,phi,Xtest,lambda);
+                atest1 = zeros(M,Btest);%phi\Xtest;
+                %lb  = zeros(1,numel(atest1)); % lower bound
+                %ub  = zeros(1,numel(atest1)); % upper bound
+                %nb  = ones(1,numel(atest1));  % bound type (lower only)
+                %nb  = zeros(1,numel(atest1)); % bound type (none)
+                [atest1] = lbfgs(@objfun_a,atest1(:),lb,ub,nb,opts,phi,Xtest,lambda);
                 atest1 = reshape(atest1,M,numel(atest1)/M);
         end
         fprintf('\n');
@@ -179,33 +175,34 @@ for t = 1:num_trials
         xlabel('Iteration');
         ylabel('SNR');
 
-        if save_every == 1 || mod(update,save_every) == 0
-            array_frame = uint8(255*((array+1)/2)+1);
-
-            [sucess,msg,msgid] = mkdir(sprintf('state/%s', paramstr));
- 
-            imwrite(array_frame, ...
-                sprintf('state/%s/phi_up=%06d.png',paramstr,update), 'png');
-            eval(sprintf('save state/%s/phi.mat phi',paramstr));
-
-            saveparamscmd = sprintf('save state/%s/params.mat', paramstr);
-            saveparamscmd = sprintf('%s lambda', saveparamscmd);
-            saveparamscmd = sprintf('%s gamma', saveparamscmd);
-            saveparamscmd = sprintf('%s eta', saveparamscmd);
-            saveparamscmd = sprintf('%s eta_log', saveparamscmd);
-            saveparamscmd = sprintf('%s objtest_log', saveparamscmd);
-            saveparamscmd = sprintf('%s L', saveparamscmd);
-            saveparamscmd = sprintf('%s M', saveparamscmd);
-            saveparamscmd = sprintf('%s mintype_inf', saveparamscmd);
-            saveparamscmd = sprintf('%s update', saveparamscmd);
-
-            eval(saveparamscmd);
-    
-
-        end
         drawnow;
 
     end
+        if save_every == 1 || mod(update,save_every) == 0
+            phis(floor(update/save_every),:,:) = phi;
+%             array_frame = uint8(255*((array+1)/2)+1);
+% 
+%             [sucess,msg,msgid] = mkdir(sprintf('state/%s', paramstr));
+%  
+%             imwrite(array_frame, ...
+%                 sprintf('state/%s/phi_up=%06d.png',paramstr,update), 'png');
+%             eval(sprintf('save state/%s/phi.mat phi',paramstr));
+% 
+%             saveparamscmd = sprintf('save state/%s/params.mat', paramstr);
+%             saveparamscmd = sprintf('%s lambda', saveparamscmd);
+%             saveparamscmd = sprintf('%s gamma', saveparamscmd);
+%             saveparamscmd = sprintf('%s eta', saveparamscmd);
+%             saveparamscmd = sprintf('%s eta_log', saveparamscmd);
+%             saveparamscmd = sprintf('%s objtest_log', saveparamscmd);
+%             saveparamscmd = sprintf('%s L', saveparamscmd);
+%             saveparamscmd = sprintf('%s M', saveparamscmd);
+%             saveparamscmd = sprintf('%s mintype_inf', saveparamscmd);
+%             saveparamscmd = sprintf('%s update', saveparamscmd);
+% 
+%             eval(saveparamscmd);
+    
+
+        end
 
     %% renormalize columns of phi to have unit length
     phi = phi*diag(1./sqrt(sum(phi.^2)));

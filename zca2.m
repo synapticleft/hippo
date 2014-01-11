@@ -1,5 +1,5 @@
 function [Z,V,E,D] = zca2(X)
-eps = 1e-10;
+eps = 1e-4;%10
 % Calculate the eigenvalues and eigenvectors of the new covariance matrix.
 covarianceMatrix = X*X'/size(X,2);
 [E, D] = eig(covarianceMatrix);
