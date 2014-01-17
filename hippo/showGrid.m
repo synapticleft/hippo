@@ -24,7 +24,6 @@ else
     sz = size(grid);
     grid = grid-min(grid(:)) + 1;
 end
-max(grid(:))
 A1 = zeros(size(A,1),sz(1),sz(2));
 A1(:,:) = A(:,grid(:));
 else
