@@ -21,12 +21,17 @@ else
 end
 a = ceil(a/d.SampleRate*1000/bin);
 if ~exist('subSet','var')
-    subSet = max(a);
+    subSet = [0 max(a)];
 else
-    subSet = subSet*1000/bin;
+%    subSet = subSet*1000/bin;
 end
 mb = max(b);
-b(a > subSet) = [];a(a > subSet) = [];
+b(a < subSet(1)) = [];a(a < subSet(1)) = [];
+if numel(subSet) == 2
+    b(a > subSet(2)) = [];
+    a(a > subSet(2)) = [];
+end
+a = a - subSet(1);
 spikeMat = zeros(max(b),max(a));
 %cellInfo = -20*ones(1,max(b));
 %shankInfo = c(:,2);
