@@ -1,0 +1,71 @@
+function [actMean,absMean] = runTriggerView2dHigh(pos,Xf,scale,binSize,thresh,r)
+%% binning of 2-d data in open maze
+
+pos = fixPos(pos);
+pos = pos(:,1:2);
+for i = 1:2    
+    pos(:,i) = pos(:,i) - min(pos(:,i))+eps;
+%    pos(:,i) = pos(:,i)/(max(pos(:,i)));
+%    pos(:,i) = min(pos(:,i),.9999);
+%     veld(:,i) = veld(:,i) - min(veld(:,i));
+%     veld(:,i) = veld(:,i)/max(veld(:,i));
+%     veld(:,i) = min(veld(:,i),.9999);
+     posd(:,i) = ceil(pos(:,i)/binSize);%floor(pos(:,i)*accumbins(min(numel(accumbins),i)))+1;
+%     veld(:,i) = floor(veld(:,i)*accumbins(min(numel(accumbins),i)))+1;
+end
+inds = bwmorph(inds,'dilate',20);
+Xf = Xf(:,inds);posd = posd(inds,:);%veld = veld(inds,:);
+vel = vel(inds);%pos = pos(inds,:);
+%if exist('posInds','var') && ~isempty(posInds)
+%    r = r(:,posInds); %% IS THIS RIGHT??
+%end
+if exist('r','var')
+    Xf = r*Xf;
+end
+actMean = zeros(size(Xf,1),max(posd(:,1)),max(posd(:,2)));
+absMean = actMean;
+for i = 1:size(Xf,1)
+%    actMean(i,:,:) = accumarray(posd,Xf(i,:),[],@mean);
+    absMean(i,:,:) = accumarray(posd,abs(Xf(i,:)),[],@mean);
+end
+%complexAct = 0;
+%if ~complexAct
+%    t = Xf;%r*zscore(Xf,0,2);
+%    clear Xf;
+%    sk = sign(skewness(r));%
+%%    t = bsxfun(@times,t,sk');
+%    r = bsxfun(@times,r,sk);
+%else
+%    Xf = zscore(Xf,0,2);Xf = complex(Xf(1:end/2,:),Xf(end/2+1:end,:));
+%    t = complex(r(:,1:end/2),r(:,end/2+1:end))*conj(Xf);
+%end
+% %2d stuff
+%if ~exist('posInds','var') || isempty(posInds)
+%    posInds = 1:size(r,1);
+%end
+%xdim = ceil(sqrt(numel(posInds)));ydim = ceil(numel(posInds)/xdim);
+%f1 = figure;f2 = figure;
+%t = bsxfun(@times,t, sign(skewness(t,0,2)));
+%t = zscore(t,0,2);
+% for i = 1:numel(posInds)
+%     u = r(:,i);%complex(r1(1:size(Xf,1)/2-1,i),r1(size(Xf,1)/2+1:end-1,i));%r1(1:size(Xf,1)-1,posInds(i));%
+%     if exist('probes','var') && ~isempty(probes)
+%         up1 = probes;
+%         for ii = 1:size(probes,1)
+%             for j = 1:size(probes,2)
+%                 up1(ii,j) = u(probes(ii,j)+1);%-256
+%             end
+%         end
+%         %    up1 = up1(:,[1:4 6 5 8 7]);
+%         up1 = up1(:,[1:12 14 13 16 15]);
+%         %up1 = diff(up1);
+%         up1 = [up1(:,1:8) zeros(size(up1,1),1) up1(:,9:16)];
+%     else
+%         up1 = reshape(u,[8 8]);
+%     end
+%     figure(f1);subplot(xdim,ydim,i);imagesc(complexIm(up1,0,1));axis off;
+%     temp = accumarray(posd,t(i,:),accumbins,@mean,nan);
+%     temp(isnan(temp)) = prctile(temp(:),20);
+%     figure(f2);subplot(xdim,ydim,i);imagesc(imfilter(temp,fspecial('gaussian',5,1),'replicate'));axis off;
+% end
+% sPlot([10*vel';t;abs(v(inds,1)')/1000]);
