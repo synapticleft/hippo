@@ -14,7 +14,7 @@ function [spikeMat cellInfo] = hipSpikesTony(file,dec,subSet)%a b c badUnits
 %if exist('someShanks','var') && ~isempty(someShanks)
 %    [a,b,c,d] = LoadCluRes([d file],someShanks);
 %else
-    [a,b,c,d] = LoadCluRes([file]);
+    [a,b,c,d] = LoadCluRes([file],1);
 %end
 a = ceil(a/d.SampleRate*1250);
 if ~exist('subSet','var')
@@ -25,12 +25,13 @@ end
 b(a <= subSet(1)*32) = [];a(a <= subSet(1)*32) = [];
 b(a > subSet(2)*32) = [];a(a > subSet(2)*32) = [];
 a = a-subSet(1)*32;
+%spikeMat = zeros(max(b),max(a));
 cellInfo = -20*ones(1,max(b));
 for i = max(b):-1:1
     tic;
 %    temp = hist(a(b==i),1:(max(a)+1));
 %    spikeMat(i,:) = temp(1:(end-1));
-    temp = hist(a(b == i),1:(diff(subSet)*32+1));
+    temp = hist(a(b == i)/dec,1:(diff(subSet)*32+1));
     spikeMat(i,:) = decimate(temp(1:(end-1)),dec);
     if c(i,3) == 0 || c(i,3) == 1
         cellInfo(i) = c(i,3) - 2;

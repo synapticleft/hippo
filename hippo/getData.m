@@ -61,7 +61,7 @@ end
         toc
         if dec > 1
             tic;
-            X(i,:) = decimate(double(temp),dec);%X(i,:),dec);
+            X(i,:) = decimate(double(temp),dec,4);%X(i,:),dec);
             toc
         else
             X(i,:) = temp;
