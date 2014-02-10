@@ -55,5 +55,5 @@ w = w-1;
 m = accumarray(w'+1,[0; diff(pos(:,1))],[],@mean);
 posd(ismember(w+1,find(m>0))) = 1+posd(ismember(w+1,find(m>0)));
 fast = vel > thresh*max(vel);
-w = floor(w/2);w = w-min(w) + 1;
+w = floor(w/2);w = double(w-min(w) + 1);
 end
