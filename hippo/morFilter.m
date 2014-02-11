@@ -22,16 +22,17 @@ psi = mf_cmorlet(Fc,Fs);
 %inds = abs(psi) > .001*max(abs(psi));
 %psi = psi(inds);x = x(inds);
 %psi = psi/sqrt(sqrt(sum(abs(psi).^2)));
-Xf = zeros(size(X));
-for i = 1:size(X,1)
-    Xf(i,:) = fliplr(filter(conj(psi),1,fliplr(filter(psi,1,X(i,:)))));
-end
+Xf = fconv(X,psi);
+%  Xf = zeros(size(X));
+%  for i = 1:size(X,1)
+%      Xf(i,:) = fliplr(filter(conj(psi),1,fliplr(filter(psi,1,X(i,:)))));
+%  end
 
 function y = mf_cmorlet(f0,fs)
 ts = 1/fs; %sample period, second
-SD_f = f0/4;  
+SD_f = f0/5;  
 SD_t = 1/(2*pi*SD_f);
-t = [0:ts:5*SD_t];
+t = [0:ts:4*SD_t];
 t = [-t(end:-1:2) t];
 y = exp( -t.^2/(2*SD_t^2) ).* exp( 1i*2*pi*f0*t );
 y = y/sqrt(SD_t*sqrt(pi));%(sqrt(0.5*sum( real(y).^2 + imag(y).^2 )));%

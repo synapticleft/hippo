@@ -18,20 +18,25 @@ function [spikeMat cellInfo] = hipSpikesTony(file,dec,subSet)%a b c badUnits
 %end
 a = ceil(a/d.SampleRate*1250);
 if ~exist('subSet','var')
-    subSet = max(a);
+    subSet = [0 ceil(max(a))];
 else
-    %subSet = subSet*1000/bin;
+    subSet = subSet*32;%1000/bin;
 end
-b(a <= subSet(1)*32) = [];a(a <= subSet(1)*32) = [];
-b(a > subSet(2)*32) = [];a(a > subSet(2)*32) = [];
-a = a-subSet(1)*32;
+b(a <= subSet(1)) = [];a(a <= subSet(1)) = [];
+b(a > subSet(2)) = [];a(a > subSet(2)) = [];
+a = a-subSet(1);
 cellInfo = -20*ones(1,max(b));
 for i = max(b):-1:1
     tic;
 %    temp = hist(a(b==i),1:(max(a)+1));
 %    spikeMat(i,:) = temp(1:(end-1));
-    temp = hist(a(b == i),1:(diff(subSet)*32+1));
-    spikeMat(i,:) = decimate(temp(1:(end-1)),dec);
+
+    temp = hist(a(b == i),1:(diff(subSet)+1));
+    if dec > 1
+        spikeMat(i,:) = decimate(temp(1:(end-1)),dec);
+    else
+        spikeMat(i,:) = logical(temp(1:(end-1)));
+    end
     if c(i,3) == 0 || c(i,3) == 1
         cellInfo(i) = c(i,3) - 2;
     else
