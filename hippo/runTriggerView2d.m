@@ -1,35 +1,36 @@
-function [actMean,absMean] = runTriggerView2d(pos,v,Xf,binSize,thresh,r)
+function [absMean] = runTriggerView2d(pos,Xf,binSize,thresh,r) %,v actMean,
 %% binning of 2-d data in open maze
 
-if isempty(v)
-    v = Xf(1,:)';
-end
-if size(v,1) < size(pos,1)
-    pos = pos(1:size(v,1),:);
-end
-pos(pos == -1) = nan;
-reject = 1;
-while sum(reject)
-reject = 0;
-for i = 1:4
-    reject = reject | min([0; diff(pos(:,i))],flipud([0; diff(flipud(pos(:,i)))])) < -20;
-end
-pos(reject,:) = nan;
-for i = 1:4
-    nanInds = find(~isnan(pos(:,i)));
-    pos(:,i) = interp1(nanInds,pos(nanInds,i),1:size(pos,1));
-end
-end
-nanInds = isnan(pos(:,1)) | isnan(pos(:,3));
-pos = pos(~nanInds,:);v = v(~nanInds,:);Xf = Xf(:,~nanInds);%sp = sp(:,~nanInds);
+% if isempty(v)
+%     v = Xf(1,:)';
+% end
+%if size(v,1) < size(pos,1)
+%    pos = pos(1:size(v,1),:);
+%end
+pos = fixPos(pos);
+% pos(pos == -1) = nan;
+% reject = 1;
+% while sum(reject)
+% reject = 0;
+% for i = 1:4
+%     reject = reject | min([0; diff(pos(:,i))],flipud([0; diff(flipud(pos(:,i)))])) < -20;
+% end
+% pos(reject,:) = nan;
+% for i = 1:4
+%     nanInds = find(~isnan(pos(:,i)));
+%     pos(:,i) = interp1(nanInds,pos(nanInds,i),1:size(pos,1));
+% end
+% end
+% nanInds = isnan(pos(:,1)) | isnan(pos(:,3));
+% pos = pos(~nanInds,:);v = v(~nanInds,:);Xf = Xf(:,~nanInds);%sp = sp(:,~nanInds);
 vel = angVel(pos);
 vel = [zeros(1,2); vel(:,1:2)];
 for i = 1:2
     vel(:,i) = filtLow(vel(:,i),1250/32,1);
 end
 %veld = [ vel(:,1:2)];
-vel = vel(:,1);
-vel = vel/max(vel);inds = vel > thresh;
+%vel = vel(:,1);
+%vel = vel/max(vel);inds = vel > thresh;
 %pos = bsxfun(@minus,pos,mean(pos));
 %[a,~,~] = svd(pos(:,1:2),'econ');pos = a;
 pos = pos(:,1:2);
@@ -44,18 +45,18 @@ for i = 1:2
 %     veld(:,i) = floor(veld(:,i)*accumbins(min(numel(accumbins),i)))+1;
 end
 %Xf = [bsxfun(@times,Xf,exp(1i*angle(v(:,1))).')];
-inds = bwmorph(inds,'dilate',20);
-Xf = Xf(:,inds);posd = posd(inds,:);%veld = veld(inds,:);
-vel = vel(inds);%pos = pos(inds,:);
+%inds = bwmorph(inds,'dilate',20);
+%Xf = Xf(:,inds);posd = posd(inds,:);%veld = veld(inds,:);
+%vel = vel(inds);%pos = pos(inds,:);
 %if exist('posInds','var') && ~isempty(posInds)
 %    r = r(:,posInds); %% IS THIS RIGHT??
 %end
 if exist('r','var')
     Xf = r*Xf;
 end
-Xf = bsxfun(@times,Xf,exp(1i*angle(v(:,1))).');
-actMean = zeros(size(Xf,1),max(posd(:,1)),max(posd(:,2)));
-absMean = actMean;
+%Xf = bsxfun(@times,Xf,exp(1i*angle(v(:,1))).');
+absMean = zeros(size(Xf,1),max(posd(:,1)),max(posd(:,2)));
+%absMean = actMean;
 for i = 1:size(Xf,1)
 %    actMean(i,:,:) = accumarray(posd,Xf(i,:),[],@mean);
     absMean(i,:,:) = accumarray(posd,abs(Xf(i,:)),[],@mean);

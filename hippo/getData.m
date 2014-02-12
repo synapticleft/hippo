@@ -22,8 +22,8 @@ a = memmapfile([data_root1 fname '.eeg'],'Format','int16');
 if ~exist('dec','var') || isempty(dec)
     dec = 1;
 end
-    Par = LoadPar([data_root1 fname]);
-    %Par.nChannels = 512;
+    %Par = LoadPar([data_root1 fname]);
+    Par.nChannels = 512;
     nSamples = [Par.nChannels numel(a.data)/Par.nChannels];
     
 if  ~exist('elecs','var') || isempty(elecs)

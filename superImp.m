@@ -12,7 +12,7 @@ function [im frameCol] = superImp(x,frames,rad,maxVal,numCol,bb)
 % else
 %     x = x(randperm(size(x,1)),:,:);
 % end
-if exist('frames','var')
+if exist('frames','var') && ~isempty(frames)
     x = x(frames,:,:);
 end
 allReg = zeros(size(x));
