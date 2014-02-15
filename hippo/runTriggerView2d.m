@@ -1,12 +1,12 @@
-function [absMean] = runTriggerView2d(pos,Xf,binSize,thresh,r) %,v actMean,
+function [actMean] = runTriggerView2d(pos,Xf,binSize,v,r) %,v actMean,
 %% binning of 2-d data in open maze
 
-% if isempty(v)
-%     v = Xf(1,:)';
-% end
-%if size(v,1) < size(pos,1)
-%    pos = pos(1:size(v,1),:);
-%end
+if isempty(v)
+    v = Xf(1,:)';
+end
+if size(v,1) < size(pos,1)
+   pos = pos(1:size(v,1),:);
+end
 pos = fixPos(pos);
 % pos(pos == -1) = nan;
 % reject = 1;
@@ -21,8 +21,8 @@ pos = fixPos(pos);
 %     pos(:,i) = interp1(nanInds,pos(nanInds,i),1:size(pos,1));
 % end
 % end
-% nanInds = isnan(pos(:,1)) | isnan(pos(:,3));
-% pos = pos(~nanInds,:);v = v(~nanInds,:);Xf = Xf(:,~nanInds);%sp = sp(:,~nanInds);
+nanInds = isnan(pos(:,1)) | isnan(pos(:,2));
+pos = pos(~nanInds,:);Xf = Xf(:,~nanInds);v = v(~nanInds,:);%sp = sp(:,~nanInds);
 vel = angVel(pos);
 vel = [zeros(1,2); vel(:,1:2)];
 for i = 1:2
@@ -44,7 +44,7 @@ for i = 1:2
      posd(:,i) = ceil(pos(:,i)/binSize);%floor(pos(:,i)*accumbins(min(numel(accumbins),i)))+1;
 %     veld(:,i) = floor(veld(:,i)*accumbins(min(numel(accumbins),i)))+1;
 end
-%Xf = [bsxfun(@times,Xf,exp(1i*angle(v(:,1))).')];
+Xf = bsxfun(@times,Xf,exp(1i*angle(v(:,1))).');
 %inds = bwmorph(inds,'dilate',20);
 %Xf = Xf(:,inds);posd = posd(inds,:);%veld = veld(inds,:);
 %vel = vel(inds);%pos = pos(inds,:);
@@ -55,11 +55,11 @@ if exist('r','var')
     Xf = r*Xf;
 end
 %Xf = bsxfun(@times,Xf,exp(1i*angle(v(:,1))).');
-absMean = zeros(size(Xf,1),max(posd(:,1)),max(posd(:,2)));
-%absMean = actMean;
+actMean = zeros(size(Xf,1),max(posd(:,1)),max(posd(:,2)));
+% = absMean;
 for i = 1:size(Xf,1)
-%    actMean(i,:,:) = accumarray(posd,Xf(i,:),[],@mean);
-    absMean(i,:,:) = accumarray(posd,abs(Xf(i,:)),[],@mean);
+    actMean(i,:,:) = accumarray(posd,Xf(i,:),[],@mean);
+%    absMean(i,:,:) = accumarray(posd,abs(Xf(i,:)),[],@mean);
 end
 %complexAct = 0;
 %if ~complexAct

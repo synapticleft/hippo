@@ -100,7 +100,7 @@ if isreal(array)
     imagesc(x,y,array,[0 1]);%[min(array(array~=-1)) max(array(array~=-1))]);colormap gray;%
     colormap gray;
 else
-    imagesc(x,y,complexIm(array,0,.5,[],1));
+    imagesc(x,y,complexIm(array,0,1,[],1));
 end
 if exist('in','var') && ~isempty(in) && in
     axis image;
