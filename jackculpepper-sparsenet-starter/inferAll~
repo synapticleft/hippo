@@ -1,0 +1,8 @@
+for i = 1:2
+    pos(:,i) = pos(:,i) - min(pos(:,i)) + eps;
+end
+pos = ceil(pos(:,i));
+posAccum = zeros(M,size);
+atest1 = zeros(M,Btest);
+                [atest1] = lbfgs(@objfun_a,atest1(:),lb,ub,nb,opts,phi,Xtest,lambda);
+                atest1 = reshape(atest1,M,numel(atest1)/M);

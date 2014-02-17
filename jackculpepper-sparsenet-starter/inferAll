@@ -1,0 +1,11 @@
+for i = 1:2
+    pos(:,i) = pos(:,i) - min(pos(:,i)) + eps;
+end
+pos = ceil(pos(:,i));
+posAccum = zeros(M,max(pos(:,1)),max(pos(:,2)));
+
+for i = 1:floor(size(Xf,2)/Btest
+    atest1 = zeros(M,Btest);
+    atest1 = lbfgs(@objfun_a,atest1(:),lb,ub,nb,opts,phi,Xf(:,(i-1)*Btest+(1:Btest)),lambda);
+    atest1 = reshape(atest1,M,numel(atest1)/M);
+end
