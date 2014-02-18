@@ -53,7 +53,7 @@ paramstr = sprintf('L=%03d_M=%03d_%s',L,M,datestr(now,30));
 reinit
 
 eta = 0.5;
-num_trials = 400;%400;
+num_trials = 500;%400;
 
 % for B = 10:10:100
 %     sparsenet

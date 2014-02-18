@@ -1,4 +1,4 @@
-function [f, g] = objfun_a(x0, phi, I, lambda);
+function [f, g] = objfun_a(x0, phi, I, lambda)
 
 prior = 'cauchy';%'laplace';%
 
