@@ -6,24 +6,27 @@ p.imszt=256;% number of time steps
 
 %% whitening params %%
 
-if p.whiten_patches
-    p.whitening.pixel_noise_fractional_variance = .001;
-    % the following seems redundant
-    p.whitening.pixel_noise_variance_cutoff_ratio = 1; %1.25; % 1 + var(signal)/var(noise)
-    p.whitening.X_noise_fraction = 5.;
-    p.whitening.X_noise_var = .01;
-    % run whitening
-    p.whitening.whiten_num_patches = 20000;%min(400*m.patch_sz,200000)/20;%160000; TEMPORARY /20
-    [m, p] = learn_whitening(m,p,Xf);
-    %m.N = m.M;
-else
-    m.M = m.patch_sz;%m.N;
-    m.I_noise_factors = 100*ones(m.M,1);%
-    m.imageMean = mean(Xf,2);
-    m.imageStd = std(Xf,0,2);
-    %p.var = sqrt(10*var(Xf(:)));
-end
+% if p.whiten_patches
+%     p.whitening.pixel_noise_fractional_variance = .001;
+%     % the following seems redundant
+%     p.whitening.pixel_noise_variance_cutoff_ratio = 1; %1.25; % 1 + var(signal)/var(noise)
+%     p.whitening.X_noise_fraction = 5.;
+%     p.whitening.X_noise_var = .01;
+%     % run whitening
+%     p.whitening.whiten_num_patches = 20000;%min(400*m.patch_sz,200000)/20;%160000; TEMPORARY /20
+%     %[m, p] = learn_whitening(m,p,Xf);
+%     %m.N = m.M;
+% else
+%     m.M = m.patch_sz;%m.N;
+%     m.I_noise_factors = 100*ones(m.M,1);%
+%     m.imageMean = mean(Xf,2);
+%     m.imageStd = std(Xf,0,2);
+%     %p.var = sqrt(10*var(Xf(:)));
+% end
 %% init basis functions %%
+[~,m.whitenMatrix] = zca2(Xf);
+m.dewhitenMatrix = pinv(m.whitenMatrix);
+m.zerophaseMatrix = m.whitenMatrix;
 m.A = init_complex(m.M,m.N);
 
 %% first layer %%
@@ -31,7 +34,7 @@ p.firstlayer.use_GS = 1;
 switch p.firstlayer.basis_method
     case 'steepest_adapt'
         p.firstlayer.A_eta=.01;
-        p.firstlayer.eta_dA_target = .1;
+        p.firstlayer.eta_dA_target = .05;%1;
         p.firstlayer.up_factor = 1.02;
         p.firstlayer.down_factor = .95;
         
@@ -48,8 +51,11 @@ switch p.firstlayer.prior
         p.firstlayer.a_thresh  = exp(-4);
     case 'cauchy'        
         % a
-        p.firstlayer.a_cauchy_beta = 1;%10; % 2.2%1;%
-        p.firstlayer.a_cauchy_sigma = .4; % .1
+        p.firstlayer.a_cauchy_beta = .2;%1;%10; % 2.2%1;%
+        p.firstlayer.a_cauchy_sigma = .06;%.4; % .1    case 'cauchy'        
+    case 'cauchy_Z'
+        p.firstlayer.a_cauchy_beta = .2;%1;%10; % 2.2%1;%
+        p.firstlayer.a_cauchy_sigma = .06;%.4; % .1
     case 'laplace'
         p.firstlayer.a_laplace_beta = 1000;
     case 'l1l2'

@@ -16,15 +16,15 @@ Aold = m.A;
 for trial = 1:num_trials
     F = load_datachunk(m,p,Xf);
     X = crop_chunk(F,m,p);
-    if strcmp(p.firstlayer.prior,'laplace_AR')
-        x1 = X(:,2:end); X = X(:,1:end-1);  
-        m.AR = x1(:).'/X(:).';
-    end
+%     if strcmp(p.firstlayer.prior,'laplace_AR')
+%         x1 = X(:,2:end); X = X(:,1:end-1);  
+%         m.AR = x1(:).'/X(:).';
+%     end
     exit_flag=0;
     while ~exit_flag
-        if p.use_gpu
-            X = gsingle(X);
-        end
+%         if p.use_gpu
+%             X = gsingle(X);
+%         end
         % calculate coefficients for these data via gradient descent
         [Z I_E exit_flag]=infer_Z(X,m,p);
     end

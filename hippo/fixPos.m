@@ -10,6 +10,9 @@ function [posa posd fast w] = fixPos(file)
 thresh = .05;
 bounds = [.15 .85];
 if isstr(file)%strcmp(file,'char')
+    load('/media/work/hippocampus/KenjiData.mat');
+    whichDay = strcmp(file,Beh(:,4));
+    file = ['/media/Kenji_data/' Beh{whichDay,3} '/' Beh{whichDay,1} '/' file '/' file '.whl'];
     pos = importdata(file);
 else
     pos = file;

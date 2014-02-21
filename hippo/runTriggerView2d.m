@@ -1,7 +1,7 @@
 function [actMean] = runTriggerView2d(pos,Xf,binSize,v,r) %,v actMean,
 %% binning of 2-d data in open maze
 
-if isempty(v)
+if ~exist('v','var') || isempty(v)
     v = Xf(1,:)';
 end
 if size(v,1) < size(pos,1)
@@ -23,11 +23,11 @@ pos = fixPos(pos);
 % end
 nanInds = isnan(pos(:,1)) | isnan(pos(:,2));
 pos = pos(~nanInds,:);Xf = Xf(:,~nanInds);v = v(~nanInds,:);%sp = sp(:,~nanInds);
-vel = angVel(pos);
-vel = [zeros(1,2); vel(:,1:2)];
-for i = 1:2
-    vel(:,i) = filtLow(vel(:,i),1250/32,1);
-end
+%vel = angVel(pos);
+%vel = [zeros(1,2); vel(:,1:2)];
+%for i = 1:2
+%    vel(:,i) = filtLow(vel(:,i),1250/32,1);
+%end
 %veld = [ vel(:,1:2)];
 %vel = vel(:,1);
 %vel = vel/max(vel);inds = vel > thresh;

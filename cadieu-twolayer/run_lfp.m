@@ -1,4 +1,4 @@
-function m = run_lfp(pos,v,Xf,thresh)
+function m = run_lfp(Xf)%pos,v,Xf,thresh)
 
 %% driver script for learning a model
 %%%   
@@ -28,36 +28,36 @@ function m = run_lfp(pos,v,Xf,thresh)
 %%%       6. Learn second layer amplitude components
 %%%       7. Display the results
 
-pos(pos == -1) = nan;
-reject = 0;
-for i = 1:4
-    reject = reject | min([0; diff(pos(:,i))],flipud([0; diff(flipud(pos(:,i)))])) < -20;
-end
-pos(reject,:) = nan;
-if size(v,1) < size(pos,1)
-    pos = pos(1:size(v,1),:);
-end
-for i = 1:4
-    nanInds = find(~isnan(pos(:,i)));
-    pos(:,i) = interp1(nanInds,pos(nanInds,i),1:size(pos,1));
-end
-nanInds = isnan(pos(:,1)) | isnan(pos(:,3));
-pos = pos(~nanInds,:);v = v(~nanInds,:);Xf = Xf(:,~nanInds);
-vel = angVel(pos);
-vel = [0; vel(:,1)];
-pos = bsxfun(@minus,pos,mean(pos));
-[a,~,~] = svd(pos(:,1:2),'econ');pos = a;
-for i = 1:2    
-    pos(:,i) = pos(:,i) - min(pos(:,i));
-    pos(:,i) = pos(:,i)/(max(pos(:,i)));
-    pos(:,i) = min(pos(:,i),.9999);
-end
-offSet = 1;
-Xf = [bsxfun(@times,Xf,exp(1i*angle(v(:,1).')));...
-     [zeros(offSet,1); v(1+offSet:end,1).*conj(v(1:end-offSet,1))./abs(v(1:end-offSet,1))].'];
-%Xf = [real(Xf);imag(Xf)];
-vel = filtLow(vel,1250/32,1);
-vel = vel/max(vel);inds = vel > thresh;
+% pos(pos == -1) = nan;
+% reject = 0;
+% for i = 1:4
+%     reject = reject | min([0; diff(pos(:,i))],flipud([0; diff(flipud(pos(:,i)))])) < -20;
+% end
+% pos(reject,:) = nan;
+% if size(v,1) < size(pos,1)
+%     pos = pos(1:size(v,1),:);
+% end
+% for i = 1:4
+%     nanInds = find(~isnan(pos(:,i)));
+%     pos(:,i) = interp1(nanInds,pos(nanInds,i),1:size(pos,1));
+% end
+% nanInds = isnan(pos(:,1)) | isnan(pos(:,3));
+% pos = pos(~nanInds,:);v = v(~nanInds,:);Xf = Xf(:,~nanInds);
+% vel = angVel(pos);
+% vel = [0; vel(:,1)];
+% pos = bsxfun(@minus,pos,mean(pos));
+% [a,~,~] = svd(pos(:,1:2),'econ');pos = a;
+% for i = 1:2    
+%     pos(:,i) = pos(:,i) - min(pos(:,i));
+%     pos(:,i) = pos(:,i)/(max(pos(:,i)));
+%     pos(:,i) = min(pos(:,i),.9999);
+% end
+% offSet = 1;
+% Xf = [bsxfun(@times,Xf,exp(1i*angle(v(:,1).')));...
+%      [zeros(offSet,1); v(1+offSet:end,1).*conj(v(1:end-offSet,1))./abs(v(1:end-offSet,1))].'];
+% %Xf = [real(Xf);imag(Xf)];
+% vel = filtLow(vel,1250/32,1);
+% vel = vel/max(vel);inds = vel > thresh;
 
 %% Initialize parameters
 
@@ -69,7 +69,7 @@ m.patch_sz =  size(Xf,1); % num elecs size
 m.N = 60;  % firstlayer basis functions
 
 % specify priors
-p.firstlayer.prior = 'laplace_Z';%'l1l2';%'slow_cauchy';% changed per jascha's suggestion %slow_
+p.firstlayer.prior = 'cauchy_Z';%'laplace_Z';%'l1l2';%'slow_cauchy';% changed per jascha's suggestion %slow_
 
 % specify outerloop learning method
 p.firstlayer.basis_method = 'steepest_adapt';%'steepest';%
@@ -85,7 +85,7 @@ p.whiten_patches=1;
 p.p_every = 0;
 p.show_p = 1;
 p.quiet = 0;
-Xf = Xf(:,inds);
+%Xf = Xf(:,inds);
 %% Init
 [m, p] = init(m,p,Xf);%(:,inds)
 
@@ -93,12 +93,12 @@ Xf = Xf(:,inds);
 fname=[strrep(datestr(now),' ','_') sprintf('patchsz%d_A%dx%d',m.patch_sz,m.M) '_%s.mat'];
 
 % display parameters
-display_every= 10
+display_every= 10;
 
 %% learn firstlayer A
-num_trials = 2000;
+num_trials = 500;
 save_every= num_trials;%100;
 for i = 1:4
     learn_firstlayer
-    p.firstlayer.eta_dA_target = p.firstlayer.eta_dA_target /2;
+    p.firstlayer.eta_dA_target = p.firstlayer.eta_dA_target -.01;%/2;
 end

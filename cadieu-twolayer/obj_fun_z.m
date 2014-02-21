@@ -49,8 +49,12 @@ switch p.firstlayer.prior
         sparseDer = p.firstlayer.a_lambda_S*SlowDer(a);
         slowTheta = .5*p.firstlayer.p_lambda_S*thetaSlow(phase);%
         E= mse + a_sparsity + sum(sparseDer(:)) + sum(slowTheta(:));
+    case 'cauchy_Z'
+        mse = sum(sum(.5*Ierror.*conj(Ierror)));%bsxfun(@times,0.5*m.I_noise_factors,Ierror.*conj(Ierror))));
+        a_sparsity = sum(S_cauchyZ(Z(:),p.firstlayer.a_cauchy_beta,p.firstlayer.a_cauchy_sigma));
+        E= mse + a_sparsity;
     case 'laplace_Z'
-        mse = sum(sum(bsxfun(@times,0.5*m.I_noise_factors,Ierror.*conj(Ierror))));
+        mse = sum(sum(bsxfun(@times,0.5,Ierror.*conj(Ierror))));%*m.I_noise_factors
         a_sparsity = sum(S_laplaceZ(Z,p.firstlayer.a_laplace_beta));
         if p.firstlayer.a_lambda_S
             a_sparsity = a_sparsity + .5*p.firstlayer.a_lambda_S*sum(sum((Slow(abs(Z)))));
@@ -66,7 +70,7 @@ switch p.firstlayer.prior
 end
 E = double(E);
 if nargout>1
-    weight_dEdz = conj(m.A'*bsxfun(@times,-m.I_noise_factors,Ierror));%
+    weight_dEdz = conj(m.A'*-Ierror);%bsxfun(@times,-m.I_noise_factors,Ierror));%
     %cosPhase = cos(phase);sinPhase = sin(phase);
     %grada = cosPhase.*real(weight_dEdz) + sinPhase.*imag(weight_dEdz);
     %gradphase = a.*(cosPhase.*imag(weight_dEdz) - sinPhase.*real(weight_dEdz));%
@@ -92,6 +96,10 @@ if nargout>1
             grada = grada + dS_laplace(a,p.firstlayer.a_laplace_beta) ...
                           + dSlowDer(a)*p.firstlayer.a_lambda_S;%
             gradphase = gradphase + dthetaSlow(phase)*p.firstlayer.p_lambda_S;
+        case 'cauchy_Z'
+            absGrad = dS_cauchyZ(Z,p.firstlayer.a_cauchy_beta,p.firstlayer.a_cauchy_sigma);
+            gradZ = weight_dEdz + absGrad;%[p.firstlayer.a_laplace_beta(1)*absGrad(1,:); ...
+                %p.firstlayer.a_laplace_beta(end)*absGrad(2:end,:)];%p.firstlayer.a_laplace_beta*
         case 'laplace_Z'
             absGrad = dS_laplaceZ(Z,p.firstlayer.a_laplace_beta);
             gradZ = weight_dEdz + [p.firstlayer.a_laplace_beta(1)*absGrad(1,:); ...

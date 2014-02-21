@@ -6,18 +6,21 @@ function [X whiteningMatrix dewhiteningMatrix] = getData(fname,dec,elecs,rind,sz
 % you store the data files.
 
 %data_root = '/media/Expansion Drive/redwood/';%'/media/work/hippocampus/';%
-%data_root1 = '';%'/clusterfs/cortex/scratch/gagarwal/';%'/media/Expansion Drive/KenjiMizuseki/';
+data_root1 = '';%'/clusterfs/cortex/scratch/gagarwal/';%'/media/Expansion Drive/KenjiMizuseki/';
 %fname = 'hippo.h5';%'96elec.h5';%
 %padding = 0;%20000;
 %info = hdf5info([data_root fname '.h5']);
 %nSamples = info.GroupHierarchy.Datasets(1).Dims;
 
 load('/media/work/hippocampus/KenjiData.mat');
-whichDay = strcmp(fname,Beh(:,4));
+whichDay = strcmp(file,Beh(:,4));
+dayID = Beh(whichDay,2);
+dayCells = PyrIntMap.Map(:,1) == find(strcmp(dayID,PyrIntMap.fileBase)) & Region  == 1;%> 3;%
+someShanks = unique(PyrIntMap.Map(dayCells,3));
 %%old way
 if ~exist('d','var') || isempty(d)
     %d = ['/media/work/hippocampus/' file '/'];%['/media/Expansion Drive/KenjiMizuseki/'];%
-    data_root1 = ['/media/Kenji_data/' Beh{whichDay,3} '/' Beh{whichDay,1} '/' fname '/'];
+    d = ['/media/Kenji_data/' Beh{whichDay,3} '/' Beh{whichDay,1} '/' file '/'];
 end
 a = memmapfile([data_root1 fname '.eeg'],'Format','int16');
 %nSamples(1) = 64;

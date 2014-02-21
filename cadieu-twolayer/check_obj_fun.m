@@ -1,14 +1,15 @@
-clear
+%clear
 
 % check the gradients
 % specify model dimensions
-m.patch_sz = 96; % image patch size
+%m.patch_sz = 96; % image patch size
+m.M = 64;
 m.N =       4;  % firstlayer basis functions
 m.L =        2;  % phasetrans basis functions
 m.K =        2;  % ampmodel basis functions
 
 % specify priors
-p.firstlayer.prior = 'laplace_AR';
+p.firstlayer.prior = 'cauchy_Z';
 p.ampmodel.prior = 'laplace';
 p.phasetrans.prior = 'slow_cauchy';
 
@@ -36,8 +37,9 @@ p.p_every = 0;
 p.show_p = 0;
 p.quiet = 0;
 
+Xf = randn(m.M,1000);
 %% Init
-[m, p] = init(m,p);
+[m, p] = init(m,p,Xf);
 Z_store = complex(randn(m.N,1024),randn(m.N,1024));
 
 %[m, p] = init_phasetrans(Z_store,m,p);
@@ -45,7 +47,7 @@ Z_store = complex(randn(m.N,1024),randn(m.N,1024));
 
 
 %% setup 
-F = load_datachunk(m,p);
+F = load_datachunk(m,p,Xf);
 
 I = crop_chunk(F,m,p);
 
