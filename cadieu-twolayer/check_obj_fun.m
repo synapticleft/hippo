@@ -2,8 +2,8 @@
 
 % check the gradients
 % specify model dimensions
-%m.patch_sz = 96; % image patch size
-m.M = 64;
+m.patch_sz = 64; % image patch size
+%m.M = 64;
 m.N =       4;  % firstlayer basis functions
 m.L =        2;  % phasetrans basis functions
 m.K =        2;  % ampmodel basis functions
@@ -66,13 +66,6 @@ a = abs(Z);
 phase = angle(Z);
 
 
-%% check dA
-% X0 = zeros(2*m.M*m.N,1);
-% check('obj_fun_A',X0, 0.01, I, a, phase, m, p)
-% 
-% X0 = randn(2*m.M*m.N,1);
-% check('obj_fun_A',X0, 0.01, I, a, phase, m, p)
-
 
 %% check dZ
 p.firstlayer.natural_gradient = 0;
@@ -81,6 +74,14 @@ check('obj_fun_z',X0, 0.001, I, m, p)
 
 X0 = randn(2*numel(a),1);
 check('obj_fun_z',X0, 0.001, I, m, p)
+
+
+%% check dA
+X0 = zeros(2*m.M*m.N,1);
+check('obj_fun_A',X0, 0.01, I, a, phase, m, p)
+
+X0 = randn(2*m.M*m.N,1);
+check('obj_fun_A',X0, 0.01, I, a, phase, m, p)
 
 % %% check dw
 % X0 = zeros(5*m.L,1);

@@ -1,4 +1,4 @@
-function [Z Ierror exit_flag]= infer_Z(I,m,p)
+function [Z Ierror exit_flag E]= infer_Z(I,m,p)
 % infer_Z.m - infer firstlayer latent variables
 
 sz = size(I,2);

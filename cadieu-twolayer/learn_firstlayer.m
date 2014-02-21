@@ -26,10 +26,10 @@ for trial = 1:num_trials
 %             X = gsingle(X);
 %         end
         % calculate coefficients for these data via gradient descent
-        [Z I_E exit_flag]=infer_Z(X,m,p);
+        [Z I_E exit_flag E]=infer_Z(X,m,p);
     end
     [m,p] = adapt_firstlayer(Z,I_E,m,p);
-    
+    m.E(end+1) = E;
     % display
     if (mod(m.t,display_every)==0)
         % Track some statistics of the inferred variables

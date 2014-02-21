@@ -3,7 +3,8 @@ function [m,p] = init(m,p,Xf)
 %% misc
 m.t = 0;
 p.imszt=256;% number of time steps
-
+m.M = m.patch_sz;
+m.E = [];
 %% whitening params %%
 
 % if p.whiten_patches
@@ -33,7 +34,7 @@ m.A = init_complex(m.M,m.N);
 p.firstlayer.use_GS = 1;
 switch p.firstlayer.basis_method
     case 'steepest_adapt'
-        p.firstlayer.A_eta=.01;
+        p.firstlayer.A_eta=.5;
         p.firstlayer.eta_dA_target = .05;%1;
         p.firstlayer.up_factor = 1.02;
         p.firstlayer.down_factor = .95;
@@ -54,7 +55,7 @@ switch p.firstlayer.prior
         p.firstlayer.a_cauchy_beta = .2;%1;%10; % 2.2%1;%
         p.firstlayer.a_cauchy_sigma = .06;%.4; % .1    case 'cauchy'        
     case 'cauchy_Z'
-        p.firstlayer.a_cauchy_beta = .2;%1;%10; % 2.2%1;%
+        p.firstlayer.a_cauchy_beta = .12;%1;%10; % 2.2%1;%
         p.firstlayer.a_cauchy_sigma = .06;%.4; % .1
     case 'laplace'
         p.firstlayer.a_laplace_beta = 1000;
@@ -82,7 +83,7 @@ switch p.firstlayer.inference_method
         
     case 'minFunc_ind'
         p.firstlayer.minFunc_ind_Opts.Method = 'bb';%'cg';%'bb';%'csd';%
-        p.firstlayer.minFunc_ind_Opts.Display = 'off';
+        p.firstlayer.minFunc_ind_Opts.Display = 'on';
         p.firstlayer.minFunc_ind_Opts.MaxIter = 30;%15;%
         p.firstlayer.minFunc_ind_Opts.MaxFunEvals = 60;%20;%
         p.firstlayer.natural_gradient = 1;%1 originally

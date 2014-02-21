@@ -18,7 +18,7 @@ switch p.firstlayer.basis_method
         else
             p.firstlayer.A_eta = p.firstlayer.A_eta*p.firstlayer.up_factor;
         end
-        
+        p.firstlayer.A_eta
     otherwise
         disp('WARNING, UNKOWN firstlayer.basis_method !!')
 end

@@ -40,7 +40,7 @@ if exist('Z_var','var')  && ~isempty(Z_var) && (max(Z_var(:)) > 0)
   title('Z variance')
   subplot(212)
   normA=sqrt(sum(abs(m.A).^2));
-  bar(double(normA)), axis([0 m.N+1 0 double(max(normA))])
+  plot(m.E);%bar(double(normA)), axis([0 m.N+1 0 double(max(normA))])
   title('basis norm (L2)')
 end
 
@@ -68,7 +68,7 @@ for c=1:m
       end
     clim=max(abs(A(:,k)));
     array(buf+(r-1)*(sz(1)+buf)+[1:sz(1)],buf+(c-1)*(sz(2)+buf)+[1:sz(2)])=...
-	reshape(A(1:end-1,k),sz(1),sz(2))/clim;
+	reshape(A(1:end,k),sz(1),sz(2))/clim;
     k=k+1;
   end
 end

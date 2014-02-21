@@ -14,7 +14,7 @@ Ierror = I - Ihat;
 % Compute Energy Terms
 %switch p.firstlayer.prior
 %    case 'slow_cauchy'
-        mse = sum(sum(bsxfun(@times,0.5*m.I_noise_factors,Ierror.*conj(Ierror))));
+        mse = sum(sum(.5*Ierror.*conj(Ierror)));%bsxfun(@times,0.5*m.I_noise_factors,
         E = mse;
 %end
 
