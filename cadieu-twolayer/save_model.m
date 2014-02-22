@@ -7,5 +7,5 @@ if p.use_gpu
     m.D = double(m.D);
 end
 %eval(['save /media/Expansion Drive/redwood/cadieu-twolayer/state/' fname ' m p']);
-save(['/media/Expansion Drive/redwood/cadieu-twolayer/state/' fname],'m','p');
+save(['/media/work/hippocampus/state/' fname],'m','p');
 fprintf(' Done.\n');

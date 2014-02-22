@@ -66,7 +66,7 @@ warning('off','MATLAB:divideByZero')
 warning('off','MATLAB:nearlySingularMatrix')
 
 m.patch_sz =  size(Xf,1); % num elecs size
-m.N = 256;  % firstlayer basis functions
+m.N = 64;  % firstlayer basis functions
 
 % specify priors
 p.firstlayer.prior = 'cauchy_Z';%'laplace_Z';%'l1l2';%'slow_cauchy';% changed per jascha's suggestion %slow_
