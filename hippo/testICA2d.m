@@ -34,7 +34,7 @@ pos1 = (pos(:,1)-1)*max(pos(:,2)) + pos(:,2);
             tic;
             act = max(0,imfilter(randn([max(pos) nSources]),fspecial('gaussian',smoothness,smoothness/2),'symmetric'));
             act = permute(act,[3 1 2]);act = act(:,:);acts = act(:,pos1);
-            noise = filtLow(randn(size(acts)),1250/4,2);
+            noise = filtLow(complex(randn(size(acts)),randn(size(acts))),1250/4,2);
             acts = acts.*max(0,1+noise/std(noise(:))*SNRs);
             mix = randn(nSources,prod(nChannels));
 %             for i = 1:nSources
