@@ -1,4 +1,4 @@
-function morFitFields(lfp,sp,pos,file)
+function morFitFieldsReg(lfp,sp,pos,file)
 %% from filtered fits of spike trains, make trials x position activity maps
 
 accumbins = 100;
@@ -15,12 +15,16 @@ runNum1 = max(1,min(max(runNum),round(interp(runNum,dec/decs))));
 pos1 = max(1,min(accumbins*2,round(pos1*accumbins)));
 pos1 = pos1(isFast1);
 runNum1 = runNum1(isFast1);
+lambdas = [0 2.^(-8:0)];
     
 for i = numel(levels):-1:1
     y = morFilter(sp,2^levels(i),1250/decs);
     X = morFilter(lfp,2^levels(i),1250/decs);
     X = double(X(:,isFast1));y = double(y(:,isFast1));
-    allWs(1,i,:,:) = y*X';
+    stds(i,:) = std(X,0,2);
+    X = bsxfun(@rdivide,X,stds(i,:));
+    [allWs(1,i,:,:,:) ccs(1,i,:,:)] = ridgeScan(y,X,[],[],lambdas);
+    %allWs(1,i,:,:) = y*X';
     allWs(2,i,:,:) = y*X'/(X*X' + 0*eye(size(X,1)));%y/X;
     inds = pos1 <=accumbins;
     allWs(3,i,:,:) = y(:,inds)*X(:,inds)'/(X(:,inds)*X(:,inds)' + 0*eye(size(X,1)));
@@ -40,8 +44,19 @@ for i = numel(levels):-1:1
     i
 end
 
-%save([file 'SpkFields.mat'],'allRuns','allWs','ccs');
+save([file 'SpkFields.mat'],'allRuns','allWs','ccs','stds');
 
+function [Ws,ccs] = ridgeScan(y,X,train,test,lambdas)%,pos,runNum),runs
+if isempty(test)
+    test = 1:size(X,2);
+    train = test
+yX = y(:,train)*X(:,train)';
+XX = X(:,train)*X(:,train)';
+for i = numel(lambdas):-1:1
+    Ws(i,:,:) = yX/(XX + lambdas(i));
+    ccs(i,:) = myCorr(y(:,test),squeeze(Ws(i,:,:)*X(:,test)));
+end
+%runs = makeBins(y,pos,runNum);
 
 function cc = myCorr(x,y)
 cc = sum(x.*conj(y),2)./(sqrt(sum(x.*conj(x),2)).*sqrt(sum(y.*conj(y),2)));

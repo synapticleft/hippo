@@ -49,7 +49,10 @@ drawnow
 function array = display_Ahelper(A,fig_num)
 
 [L M]=size(A);
-sz = [8 8];
+sz = [8 L/8];
+if sz(2) ~= round(sz(2))
+    sz = [L 1];
+end
 if L == 96
     sz = [16 6];
 end
