@@ -16,27 +16,29 @@ pos1 = max(1,min(accumbins*2,round(pos1*accumbins)));
 pos1 = pos1(isFast1);
 runNum1 = runNum1(isFast1)';
 lambdas = [0 4.^(-8:4)];
+ind = [5 17 1:4 6:16];
     
-for i = numel(levels):-1:1
-    y = morFilter(sp,2^levels(i),1250/decs);
-    X = morFilter(lfp,2^levels(i),1250/decs);
+for i = 1:numel(levels)
+    y = morFilter(sp,2^levels(ind(i)),1250/decs);
+    X = morFilter(lfp,2^levels(ind(i)),1250/decs);
     X = double(X(:,isFast1));y = double(y(:,isFast1));
-    stds(i,:) = std(X,0,2);
-    X = bsxfun(@rdivide,X,stds(i,:)');
-    allCorr(i,:,:) = y*X'/size(X,2);
-    [~,ccs(1,i,:,:)] = ridgeScan(y,X,[],lambdas);%allWs(1,i,:,:,:) 
-    [~,ccs(2,i,:,:)] = ridgeScan(y,X,pos1<=accumbins,lambdas);
-    [~,ccs(3,i,:,:)] = ridgeScan(y,X,mod(pos1,2) == 1,lambdas);
-    [~,ccs(4,i,:,:)] = ridgeScan(y,X,mod(runNum1,2) == 1,lambdas);
+    stds(ind(i),:) = std(X,0,2);
+    X = bsxfun(@rdivide,X,stds(ind(i),:)');
+    allCorr(ind(i),:,:) = y*X'/size(X,2);
+    [~,ccs(1,ind(i),:,:)] = ridgeScan(y,X,[],lambdas);%allWs(1,i,:,:,:) 
+    [~,ccs(2,ind(i),:,:)] = ridgeScan(y,X,pos1<=accumbins,lambdas);
+    [~,ccs(3,ind(i),:,:)] = ridgeScan(y,X,mod(pos1,2) == 1,lambdas);
+    [~,ccs(4,ind(i),:,:)] = ridgeScan(y,X,mod(runNum1,2) == 1,lambdas);
 %     allRuns(1,i,:,:,:) = makeBins(y,pos1,runNum1);
 %     allRuns(2,i,:,:,:) = makeBins(squeeze(allWs(2,i,:,:))*X,pos1,runNum1);
 %     allRuns(3,i,:,:,:) = makeBins(squeeze(allWs(3,i,:,:))*X,pos1,runNum1);
 %     allRuns(4,i,:,:,:) = makeBins(squeeze(allWs(4,i,:,:))*X,pos1,runNum1);
 %     allRuns(5,i,:,:,:) = makeBins(squeeze(allWs(5,i,:,:))*X,pos1,runNum1);
-    i
+    ind(i)
+    save([file 'SpkFields.mat'],'ccs');
 end
 
-save([file 'SpkFields.mat'],'allCorr','allRuns','ccs','stds');%,'allWs'
+%save([file num2str(i) 'SpkFields.mat'],'allCorr','ccs');%,'allWs','allRuns','stds'
 
 function [Ws,ccs] = ridgeScan(y,X,train,lambdas)%,pos,runNum),runs
 if isempty(train)
@@ -62,7 +64,7 @@ ccs = ccs/2;
 %runs = makeBins(y,pos,runNum);
 
 function mse = myMSE(y,yhat)
-mse = sum(abs(y-yhat).^2,2)/sum(y.*conj(y),2);
+mse = sum(abs(y-yhat).^2,2)./sum(y.*conj(y),2);
 
 function cc = myCorr(x,y)
 cc = sum(x.*conj(y),2)./(sqrt(sum(x.*conj(x),2)).*sqrt(sum(y.*conj(y),2)));
