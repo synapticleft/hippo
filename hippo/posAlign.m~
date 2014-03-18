@@ -1,0 +1,16 @@
+function allRuns = posAlign(pos,anchor)
+
+margin = [-250 100];
+[~,p1,~,tr] = fixPos(pos);
+allRuns = zeros(max(tr),range(margin)+1);
+figure;
+for i = 1:max(tr)
+    pt = p1(tr == i);
+    [~,ind] = min(abs(pt-anchor));
+    try
+    plot(p1(find(tr == i,ind+(margin(1):margin(2))));hold all;
+    allRuns(i,:) = p1(find(tr == i,1) + ind+(margin(1):margin(2)));
+    catch
+        i
+    end
+end

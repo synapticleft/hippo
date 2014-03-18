@@ -21,15 +21,16 @@ for i = 1:size(x,1)
         x(i,:,:) = imfilter(squeeze(x(i,:,:)),fspecial('gaussian',5,rad));
     end
     allReg(i,:,:) = x(i,:,:) > max(max(squeeze(x(i,:,:))))/2;%maxVal/4;%
-    if ~exist('maxVal','var')
-        x(i,:,:) = x(i,:,:)/max(max(max(x(i,:,:))));
+    if ~exist('maxVal','var') || isempty(maxVal)
+        x(i,:,:) = x(i,:,:)/prctile(x(i,:),99.9);%max(max(max(x(i,:,:))));
     else
         x(i,:,:) =  x(i,:,:)/maxVal;
     end
 end
 if exist('numCol','var') && ~isempty(numCol)
-    cols = sepCols(allReg,numCol);
-    cols = cols/numCol;
+    %cols = sepCols(allReg,numCol);
+    %cols = cols/numCol;
+    cols = mod((1:size(allReg))/size(allReg,1)*numCol,1);
 else
     cols = (1:size(allReg,1))/size(allReg,1);
 end
@@ -55,7 +56,8 @@ frameCol = hsv2rgb(frameCol);
 im = max(0,im);
 im = permute(im,[2 3 1]);
 im = hsv2rgb(im);
-figure;image(im);
+%figure;
+image(im);
 
 function s = sepCols(reg,numCol)
 for i = 1:size(reg,1)

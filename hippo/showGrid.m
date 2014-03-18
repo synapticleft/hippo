@@ -54,7 +54,7 @@ for j=1:m
     indsy = buf+(i-1)*(sz(2)+buf)+[1:sz(2)];
 %    [fx fy] = gradient(temp);
     if exist('in','var') && ~isempty(in) && in
-        temp = interp2(xin,yin,squeeze(A1(k,:,:)),xout,yout,'cubic');
+        temp = interp2(xin,yin,squeeze(A1(k,:,:)),xout,yout,'nearest');
         %array(indsx,indsy) = temp;
     else
         temp = squeeze(A1(k,:,:));%temp;

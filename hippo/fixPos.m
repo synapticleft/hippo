@@ -1,4 +1,4 @@
-function [posa posd fast w] = fixPos(file)
+function [posa posd fast w vel b] = fixPos(file,thresh)
 %% take position info from whl file and preprocess it
 % file is either a .whl file, or a tx4 array of positions
 % posa = position array with '-1' removed
@@ -7,12 +7,14 @@ function [posa posd fast w] = fixPos(file)
 %   for removing periods when there is no motion and theta shrinks)
 % w = trial number for linear track runs
 
-thresh = .05;
+if ~exist('thresh','var')
+    thresh = .05;
+end
 bounds = [.15 .85];
 if isstr(file)%strcmp(file,'char')
-    load('/media/work/hippocampus/KenjiData.mat');
-    whichDay = strcmp(file,Beh(:,4));
-    file = ['/media/Kenji_data/' Beh{whichDay,3} '/' Beh{whichDay,1} '/' file '/' file '.whl'];
+    %load('/media/work/hippocampus/KenjiData.mat');
+    %whichDay = strcmp(file,Beh(:,4));
+    %file = ['/media/Kenji_data/' Beh{whichDay,3} '/' Beh{whichDay,1} '/' file '/' file '.whl'];
     pos = importdata(file);
 else
     pos = file;
@@ -38,7 +40,9 @@ for i = 1:size(pos,2)
 end
 pos = bsxfun(@minus,pos,mean(pos));
 vel = angVel(pos);
-vel = filtLow(vel(:,1),1250/32,1);
+%vel1 = sqrt(sum(diff(pos(:,1:2)).^2,2));
+%vel1 = filtLow(vel1,1250/32,1);
+vel = filtLow(vel(:,1),1250/32,2);
 [a,b,c] = svd(pos(:,1:2),'econ');pos = a;
 for i = 1:2    
     pos(:,i) = pos(:,i) - prctile(pos(:,i),1);%min(pos(:,i));
@@ -57,6 +61,6 @@ w(w == 0) = w(find(w == 0)-1);
 w = w-1; 
 m = accumarray(w'+1,[0; diff(pos(:,1))],[],@mean);
 posd(ismember(w+1,find(m>0))) = 1+posd(ismember(w+1,find(m>0)));
-fast = vel > thresh*max(vel);
+fast = vel > thresh*prctile(vel,99);%max(vel);
 w = floor(w/2);w = double(w-min(w) + 1);
 end
