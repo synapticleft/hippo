@@ -10,7 +10,7 @@ function [posa posd fast w vel b] = fixPos(file,thresh)
 if ~exist('thresh','var')
     thresh = .05;
 end
-bounds = [.15 .85];
+bounds = [.05 .95];%[.15 .85];
 if isstr(file)%strcmp(file,'char')
     %load('/media/work/hippocampus/KenjiData.mat');
     %whichDay = strcmp(file,Beh(:,4));
