@@ -1,4 +1,4 @@
-function [allCorrccs stds] = morFitFieldsReg(lfp,sp,pos,file)% allWs 
+function [allCorr ccs stds] = morFitFieldsReg(lfp,sp,pos,file)% allWs 
 %% from filtered fits of spike trains, make trials x position activity maps
 
 accumbins = 100;

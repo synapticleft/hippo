@@ -1,15 +1,12 @@
-function [err,W,sp,spHat,Xcov] = multiRegress(X,sp,pos,file)%,dec)
+function [err,W,sp,spHat] = multiRegress(X,sp,pos,file)%,dec)
 % linear regression from wavelet-transformed LFP to spike trains
 % only uses timepoints when rat is running at the moment...
 
-sp(sum(sp,2) < 50,:) = [];
-size(sp,1)
+sp = 
 lambdas = [0 4.^(-8:4)];
 numCross = 2;
 dec = round(size(X,2)/size(pos,1));
 Fs = floor(log2(1250/32*dec/2)*2)/2;
-sp = bsxfun(@minus,sp,mean(sp,2));
-%sp = filtHigh(sp,1250/dec,2);
 levels = 1:.5:9;
 levels(levels > Fs) = [];
 if size(pos,1) > size(X,2)
@@ -63,17 +60,20 @@ yX = squeeze(sum(yX));
 for i = numel(lambdas):-1:1
     W(i,:,:) = yX/(Xcov+diag(diag(Xcov))*lambdas(i));
 end
-sp = sp(:,trial == max(trial));
+sp = sp(:,trial == i);
 [~,mini] = min(err);
 for i = numel(mini):-1:1
-    spHat(i,:) = squeeze(W(mini(i),i,:))'*Xtemp;
+    spHat(i,:) = squeeze(W(mini(i),:,:))*Xtemp;
 end
-if exist('file','var')
-    save([file 'multiRegress.mat'],'err','W','sp','spHat','yX','Xcov');
-end
-
 % yX = complex(yX(:,1:sz),yX(:,sz+1:end));
 % Xcov = complex(Xcov(1:sz,1:sz)+Xcov(sz+1:end,sz+1:end),Xcov(sz+1:end,1:sz)-Xcov(1:sz,sz+1:end));
 % for i = numel(lambdas):-1:1
 %     WC(i,:,:) = yX/(Xcov + diag(diag(real(Xcov)))*lambdas(i));
 % end
+
+if exist('file','var')
+    save([file 'multiRegress.mat'],'err','W','sp','spHat');
+end
+
+%
+%XcovC = complex(Xcov(1:sz,1:sz)+Xcov(sz+1:end,sz+1:end),Xcov(sz+1:end,1:sz)-Xcov(1:sz,sz+1:end));
