@@ -30,7 +30,7 @@ Xf = fconv(X,psi);
 
 function y = mf_cmorlet(f0,fs)
 ts = 1/fs; %sample period, second
-SD_f = f0/5;  
+SD_f = f0/5;
 SD_t = 1/(2*pi*SD_f);
 t = [0:ts:4*SD_t];
 t = [-t(end:-1:2) t];

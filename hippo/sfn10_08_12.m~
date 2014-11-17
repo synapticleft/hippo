@@ -25,7 +25,6 @@ set(gca,'xtick',[],'ytick',[],'ztick',[],'linewidth',2);
 %% panel 4/5
 inds = 52965:53140;
 inds = 55990:56230;%:56600;
-inds = 55995:56220;
 angCol = colormap('hsv');
 %temp = filtLow(angVel(pos)',1250/32,2);
 [posa,s,u] = svds(pos(:,1:2),1);
@@ -52,7 +51,7 @@ v2 = um*s*v1';
 %     scatter3((sub-min(sub))/1250*8,real(X1d(i,:)),imag(X1d(i,:))-sh,[],bsxfun(@times,angCol(c,:),abs(X1(i,sub)')/mA),'filled');
 % end
 % panel 5
-c = ceil((angle(-(v2))+pi)/(2*pi)*64);%+pi
+c = ceil((angle(v2)+pi)/(2*pi)*64);
 figure;subplot('position',[.1 .85 .9 .1]);plot(-temp*1250/32,'k','linewidth',2);axis tight;set(gca,'xtick',[],'fontsize',16);title('Velocity');ylabel('cm/s');
 subplot('position',[.1 .6 .9 .2]);imagesc(X(:,indsa));set(gca,'ytick',[1 64],'xtick',[],'fontsize',16);title('Raw LFP');
 subplot('position',[.1 .3 .9 .2]);imagesc(complexIm(X1,0,1));set(gca,'ytick',[1 64],'xtick',[],'fontsize',16);ylabel('Channel #');title('Filtered Theta');

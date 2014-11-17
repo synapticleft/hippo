@@ -10,9 +10,8 @@ end
 if newFig
     figure;hold all;
 end
-cc = colormap(hsv(size(data,1)));
-%cc = angCol(max(1,ceil(c*64)),:);
-set(gca,'nextPlot','add','ColorOrder',cc,'Color',[0 0 0]);%'add',
+cc = angCol(max(1,ceil(c*64)),:);
+subtightplot(3,1,2);set(gca,'nextPlot','ColorOrder',cc);%'add',
 if ~iscell(data)
     if exist('norm','var') && norm ~= 0
         data = bsxfun(@minus,data,mean(data,2));

@@ -1,3 +1,0 @@
-mplayer -frames 10 -vo jpeg:quality=92:outdir=tmp  ec014.277.mpg
-
-
