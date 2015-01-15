@@ -1,4 +1,13 @@
-function [allData allOut allOutShift] = preProcessRoberto(fn,inds,timePast,offSet,trs,whichDiff,startAlign,addClassic)
+function [allData, allOut, allOutShift] = preProcessRoberto(fn,inds,timePast,offSet,trs,whichDiff,startAlign,addClassic)
+%% function used to organize all data into a matrix that can be used for further analysis.
+%% inputs
+%% fn: filename, used to select subject / stimulus condition
+%% inds: which features to use for predictions
+%% timePast: how many samples should be used to make prediction (used 60, or .75 s)
+%% trs: sessions (default all)
+%% whichDiff: which ILD's to use for analysis
+%% startAlign: align to stimulus onset or offset.
+%% addClassic: add subject's choice and mean ILD as regressors for prediction
 
 window = [120 260];
 

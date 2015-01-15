@@ -1,17 +1,16 @@
 function [coeffs y yHat] = evolvePredictTraj2(fn,lambda,inds,timePast,offSet,trialHist,diff,startAlign,finalChoice) %sessNorm,
-% fit LDA and regularized linear regression of start- and end- aligned
-% trials, look at performance, and weights.
+% Time invariant regularized kernel fit
 
 % choices: 1) re-normalize measures in each session to correct for drifts
 % (sessNorm) NOW I DO THIS FOR EYE DATA BUT NOT OTHERS
-% 2) regularization of fit (lambda)
+% 2) lambda: regularization of fit (lambda)
 % 3) fit choice, previous choice, or right answer
 % 4) number of time steps in the past
 % 5) which measurements to include
 % 6) separate each difficulty level or combine them all
 
 diff = [-diff diff];
-if numel(inds) == 1 || exist('finalChoice','var')
+if numel(inds) == 1 || (exist('finalChoice','var') && finalChoice == 1)
     [allData allOut allOutShift] = preProcessRoberto(fn,inds,timePast,offSet,[],diff(:),startAlign,1);
 else
     [allData allOut allOutShift] = preProcessRoberto(fn,inds,timePast,offSet,[],diff(:),startAlign);

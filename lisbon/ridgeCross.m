@@ -1,4 +1,5 @@
 function [cc mse kern stats] = ridgeCross(y,x,numCross,ridge,bootStrap)
+%% cross-validated ridge regression. If you bootstrap, no cross-validation performed, use numCross = 1
 
 samples = size(x,1);
 scramble = randperm(numel(y));

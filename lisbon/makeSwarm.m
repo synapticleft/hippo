@@ -1,4 +1,5 @@
 function makeSwarm(fn,inds,trs,whichDiffs)
+%% visualize all hand and eye movements at once.
 
 if ~exist('whichDiffs','var')
     whichDiffs = [-4 -2 -.5 .5 2 4];

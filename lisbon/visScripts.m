@@ -1,4 +1,5 @@
 function visScripts(fn,tr)
+%% show trajectories of the eye, hand, and stimulus on a trial-by-trial basis
 
 file = dir('*.mat');
 load(file(fn).name,'data');

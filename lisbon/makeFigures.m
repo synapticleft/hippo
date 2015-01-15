@@ -1,3 +1,4 @@
+%% scripts for making figures for poster
 %% figure for correlation coefficients
 xs = ((1:140)-40)/80;figure;plot(xs,b,'linewidth',2);hold all;plot(xs,b1,'linewidth',2);plot(xs,b2,'linewidth',2);plot(xs,b3,'linewidth',2);
 plot(xs,[d.ccL],'k--');

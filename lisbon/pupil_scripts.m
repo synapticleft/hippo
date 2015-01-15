@@ -1,3 +1,5 @@
+%% various attempts at extracting features from pupil video
+
 file = '/media/Cruzer/Roberto Data/s1_video_EMG/cam2_s1_15.avi';
 
 % initial PCA run

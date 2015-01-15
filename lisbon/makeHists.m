@@ -1,4 +1,7 @@
 function makeHists(fn,inds,window)
+%% make 3 rows of 2-d histograms that show the joint distribution of two columns of data
+%% each of 3 rows has all, left choices, right choices
+%% each of 6 columns are for 6 ILD's.
 
 if ~exist('figsOn','var')
     figsOn = 1;
