@@ -46,27 +46,21 @@ for i = timePast+1:size(allData,2)
         X = X(:,:);
     end
     yHat(i,:) = X(:,:)*squeeze(coeff(k,i-timePast,:));
-    %%%yHat(i,:) = X*squeeze(coeff(k,i-timePast,:));
-%     coeff(i-timePast,:) = (X'*y')'/(X'*X + lambda*size(X,1)*eye(size(X,2)));%y/X';
-%     yHat = coeff(i-timePast,:)*X';
-%     mse(i-timePast) = mean(sqrt((y-yHat).^2));%sum(yHat'+1 ~=info(inds,class))/sum(inds);
-%     temp = corrcoef(y,yHat);
-%     cc(i-timePast) = temp(1,2);
     %if 0 % figsOn
     %if (i-timePast == 90) || (i-timePast == 120)
     %    figure;scatter(y,yHat,'filled');
     %end
     %end
 end
-%%%y = squeeze(allData(:,:,end));
 y = squeeze(allData(testInds,:,end));
 yHat = yHat';
+coeff = squeeze(coeff);
 
-if 0%figsOn
+if 1%figsOn
 %coeff = reshape(coeff,size(coeff,1),timePast,[]);
-figure;imagesc(coeff(:,:)');
+figure;imagesc(coeff(:,:)'./([stats.kernH]-[stats.kernL])*2,[-2 2]);
 %figure;plot(coeff(:,:));
-figure;plot(max(mse)-mse);hold all;plot(cc);ylim([0 1]);
+figure;plot(max(mse)-mse);hold all;plot(cc);ylim([0 1]);plot([stats.ccL]);plot([stats.ccH]);
 [~,m] = min(mse);
 %figure;plot(squeeze(coeff(90,:,:)));
 end
