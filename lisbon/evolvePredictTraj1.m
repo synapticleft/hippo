@@ -11,7 +11,7 @@ function [coeff,cc,mse,stats,y,yHat] = evolvePredictTraj1(fn,lambda,inds,timePas
 % 6) separate each difficulty level or combine them all
 
 diff = [-diff diff];
-if numel(inds) == 1 || exist('finalChoice','var')
+if numel(inds) == 1 || (exist('finalChoice','var') && finalChoice == 1)
     [allData allOut allOutShift] = preProcessRoberto(fn,inds,timePast,offSet,[],diff(:),startAlign,1);
 else
     [allData allOut allOutShift] = preProcessRoberto(fn,inds,timePast,offSet,[],diff(:),startAlign);
