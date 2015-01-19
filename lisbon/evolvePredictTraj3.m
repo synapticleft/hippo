@@ -1,6 +1,6 @@
-function [stats] = evolvePredictTraj3(fn,lambda,sigma,inds,timePast,offSet,trialHist,diff,startAlign,finalChoice) %sessNorm,
-% fit LDA and regularized linear regression of start- and end- aligned
-% trials, look at performance, and weights.
+function [stats yOrig yFits] = evolvePredictTraj3(fn,lambda,sigma,inds,timePast,offSet,trialHist,diff,startAlign,finalChoice) %sessNorm,
+% variant of evolvePredictTraj1 that incorporates smoothness of kernels
+% over time.
 
 % choices: 1) re-normalize measures in each session to correct for drifts
 % (sessNorm) NOW I DO THIS FOR EYE DATA BUT NOT OTHERS
@@ -9,19 +9,22 @@ function [stats] = evolvePredictTraj3(fn,lambda,sigma,inds,timePast,offSet,trial
 % 4) number of time steps in the past
 % 5) which measurements to include
 % 6) separate each difficulty level or combine them all
-
+frac = 1;%.95
 diff = [-diff diff];
-if numel(inds) == 1 || exist('finalChoice','var')
+if numel(inds) == 1 || (exist('finalChoice','var') && finalChoice == 1)
     [allData allOut allOutShift] = preProcessRoberto(fn,inds,timePast,offSet,[],diff(:),startAlign,1);
 else
     [allData allOut allOutShift] = preProcessRoberto(fn,inds,timePast,offSet,[],diff(:),startAlign);
 end
 
-
-scramble = randperm(size(allData,1));
+if frac == 1
+    scramble = 1:size(allData,1);
+else
+    scramble = randperm(size(allData,1));
+end
 allData = allData(scramble,:,:);
-trainInds = 1:floor(size(allData,1)*.95);
-testInds = floor(size(allData,1)*.95)+1:size(allData,1);
+trainInds = 1:floor(size(allData,1)*frac);
+%testInds = floor(size(allData,1)*.95)+1:size(allData,1);
 bootStrap = 100;
 for i = bootStrap:-1:1
         scrambles(i,:) = randperm(numel(trainInds));
@@ -43,7 +46,8 @@ for i = size(allData,2):-1:timePast+1
     XX(i,:,:) = X'*X;
     Xy(i,:,:) = X'*y(scrambles)';
 end
-
+yOrig = zeros(size(allData,1),size(allData,2)-timePast);
+yFits = yOrig;
 for i = timePast+1:size(allData,2)
     if numel(inds) == 1 || exist('finalChoice','var')
         X = allData(trainInds,i-timePast+1:i,3:end-1);
@@ -63,8 +67,10 @@ for i = timePast+1:size(allData,2)
     %Xytemp = reshape(weights*Xy(:,:),size(XX,2),[]);
     kernB = Xytemp'/(XXtemp + lambda*diag(diag(XXtemp)));
     yEst = squeeze(kernB)*X';
-    y = zscore(y(scrambles),[],2);
+    y = y(scrambles);%zscore(y(scrambles),[],2);
     yEst = zscore(yEst,[],2);
+    yOrig(:,i-timePast) = y(1,:);
+    yFits(:,i-timePast) = yEst(1,:);
     mseB = mean((y-yEst).^2,2);
     %mseB = mseB./mean(yEst.^2,2);
     ccB = mean(y.*yEst,2);%zscore(y(scrambles)).*zscore(yEst),2);

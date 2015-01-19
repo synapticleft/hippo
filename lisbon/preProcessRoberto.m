@@ -1,4 +1,4 @@
-function [allData, allOut, allOutShift] = preProcessRoberto(fn,inds,timePast,offSet,trs,whichDiff,startAlign,addClassic)
+function [allData, allOut, allOutShift,center_ILD] = preProcessRoberto(fn,inds,timePast,offSet,trs,whichDiff,startAlign,addClassic)
 %% function used to organize all data into a matrix that can be used for further analysis.
 %% inputs
 %% fn: filename, used to select subject / stimulus condition
