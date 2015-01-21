@@ -18,11 +18,15 @@ else
 end
 
 if frac == 1
-    scramble = 1:size(allData,1);
+   scramble = 1:size(allData,1);
 else
     scramble = randperm(size(allData,1));
 end
 allData = allData(scramble,:,:);
+% for i = 1:size(allData,2)
+%     f = find(squeeze(allData(i,:,end)) ~= 0);
+%     allData(i,f(1):f(end),end) = filtfilt(gausswin(5),sum(gausswin(5)),squeeze(allData(i,f(1):f(end),end)));
+% end
 trainInds = 1:floor(size(allData,1)*frac);
 %testInds = floor(size(allData,1)*.95)+1:size(allData,1);
 bootStrap = 100;
@@ -60,14 +64,14 @@ for i = timePast+1:size(allData,2)
         X = [X allOutShift(:,1)];% circshift([answer; binAnswer; choice;correct]',[-1 0])];
     end
     y = (squeeze(allData(trainInds,i,end)))';
-    weights = exp(-((1:size(XX,1))-i).^2/sigma.^2);
+    weights = exp(-((1:size(XX,1))-i).^2/max(.000001,sigma).^2);
     XXtemp = squeeze(sum(bsxfun(@times,XX(weights>.05,:,:),weights(weights >.05)'),1));
     Xytemp = squeeze(sum(bsxfun(@times,Xy(weights>.05,:,:),weights(weights>.05)'),1));
     %XXtemp = reshape(weights*XX(:,:),size(XX,2),[]);
     %Xytemp = reshape(weights*Xy(:,:),size(XX,2),[]);
     kernB = Xytemp'/(XXtemp + lambda*diag(diag(XXtemp)));
     yEst = squeeze(kernB)*X';
-    y = y(scrambles);%zscore(y(scrambles),[],2);
+    y = zscore(y(scrambles),[],2);%y(scrambles);%
     yEst = zscore(yEst,[],2);
     yOrig(:,i-timePast) = y(1,:);
     yFits(:,i-timePast) = yEst(1,:);
@@ -112,7 +116,7 @@ if 1%figsOn
 %coeff = reshape(coeff,size(coeff,1),timePast,[]);
 figure;imagesc((stats.kern./(stats.kernH-stats.kernL)*2)',[-2 2]);%coeff(:,:)'./([stats.kernH]-[stats.kernL])*2,[-2 2]);
 %figure;plot(coeff(:,:));
-figure;plot(stats.mse);hold all;plot(stats.cc);plot([stats.ccL; stats.ccH]');%max(mse)-mse);hold all;plot(cc);ylim([0 1]);
+figure;plot(stats.mse);hold all;plot(stats.cc);plot([stats.ccL; stats.ccH]');axis tight;%max(mse)-mse);hold all;plot(cc);ylim([0 1]);
 %[~,m] = min(mse);
 %figure;plot(squeeze(coeff(90,:,:)));
 end

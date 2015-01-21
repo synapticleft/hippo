@@ -79,7 +79,7 @@ answer = [data{2:end,5}];
 difficulty = [data{2:end,4}];
 
 
-f1 = find(ismember(inds,10:14));
+f1 = find(ismember(inds,[10:14 15])); %%%ADDED HAND 
 f = choice == 3 | ~ismember(difficulty,whichDiff);
 if ~isempty(f1)
    f = f | squeeze(~(allData(:,1,f1(1))))';
