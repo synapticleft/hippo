@@ -35,35 +35,42 @@ for j = 1:max(inds)
     yOrig = zeros(sum(testInds),size(allData,2)-timePast);
     yFits = yOrig;kern = [];
     for i = size(allData,2):-1:timePast+1
-        if numel(inds) == 1 || exist('finalChoice','var')
-            X = allData(:,i-timePast+1:i,3:end-1);
-            X = [squeeze(allData(:,i,1:2)) X(:,:)];
-        else
-            X = allData(:,i-timePast+1:i,1:end-1);
-            X = X(:,:);
-        end
-        if trialHist
-            X = [X allOutShift(:,1)];% circshift([answer; binAnswer; choice;correct]',[-1 0])];
-        end
+%         if numel(inds) == 1 || exist('finalChoice','var')
+%             X = allData(:,i-timePast+1:i,3:end-1);
+%             X = [squeeze(allData(:,i,1:2)) X(:,:)];
+%         else
+%            X = allData(:,i-timePast+1:i,1:end-1);
+        %end
+        %if trialHist
+        %    X = [X allOutShift(:,1)];% circshift([answer; binAnswer; choice;correct]',[-1 0])];
+        %end
         y = (squeeze(allData(:,i,end)))';%zscore(squeeze(allData(:,i,end)))';
-        XXtemp = X(trainInds,:)'*X(trainInds,:);
-        Xytemp = X(trainInds,:)'*y(trainInds)';
-        kernB = Xytemp'/(XXtemp + lambda*diag(diag(XXtemp)));
-        yEst = squeeze(kernB)*X(testInds,:)';
+        for k = 1:size(allData,3)
+            if k == size(allData,3)
+                X = allData(:,i-timePast+1:i,1:end-1);
+            else
+                X = allData(:,:,k);
+            end
+            XXtemp = X(trainInds,:)'*X(trainInds,:);
+            Xytemp = X(trainInds,:)'*y(trainInds)';
+            kernB = Xytemp'/(XXtemp + lambda*diag(diag(XXtemp)));
+            yEst = squeeze(kernB)*X(testInds,:)';
+            yFits(:,i-timePast,k) = yEst;
+        end
         %y = zscore(y,[],2);%y(scrambles);%
         %yEst = zscore(yEst,[],2);
-        yOrig(:,i-timePast) = y(testInds);
-        yFits(:,i-timePast) = yEst;
-        kern(i-timePast,:) = kernB;
+            yOrig(:,i-timePast) = y(testInds);
+            kern(i-timePast,:) = kernB;
         %mseB = mean((y-yEst).^2,2);
         %ccB = mean(y.*yEst,2);%zscore(y(scrambles)).*zscore(yEst),2);
         %stats.kern(i-timePast,:) = kernB;
         %stats.cc(i-timePast) = ccB;
         %stats.mse(i-timePast) = mseB;
     end
-    yFits1 = [yFits1; yFits];yOrig1 = [yOrig1; yOrig];
-    subplot(2,3,1);plot(yOrig','b');hold on;plot(mean(yFits),'r','linewidth',2);hold off;
-    subplot(2,3,4);plot(yFits');
+    yFits1(size(yFits1,1)+(1:size(yFits,1)),:,:) = yFits;
+    yOrig1 = [yOrig1; yOrig];
+    subplot(2,3,1);plot(yOrig','b');hold on;plot(squeeze(mean(yFits)),'linewidth',2);hold off;
+    subplot(2,3,4);plot(squeeze(yFits(:,:,end))');
     subplot(2,3,2);plot(squeeze(allData(testInds,:,1))');
     subplot(2,3,5);plot(squeeze(allData(testInds,:,2))');
     subplot(2,3,3);imagesc(kern',[-1 1]*.2);drawnow;
