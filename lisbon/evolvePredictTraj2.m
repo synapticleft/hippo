@@ -1,4 +1,4 @@
-function [coeffs y yHat] = evolvePredictTraj2(fn,lambda,inds,timePast,offSet,trialHist,diff,startAlign,finalChoice) %sessNorm,
+function [coeffs y yHat] = evolvePredictTraj2(fn,lambda,inds,timePast,offSet,diff,startAlign,finalChoice) %sessNorm,,trialHist
 % Time invariant regularized kernel fit
 
 % choices: 1) re-normalize measures in each session to correct for drifts

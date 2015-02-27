@@ -69,10 +69,19 @@ for j = 1:max(inds)
     end
     yFits1(size(yFits1,1)+(1:size(yFits,1)),:,:) = yFits;
     yOrig1 = [yOrig1; yOrig];
-    subplot(2,3,1);plot(yOrig','b');hold on;plot(squeeze(mean(yFits)),'linewidth',2);hold off;
-    subplot(2,3,4);plot(squeeze(yFits(:,:,end))');
-    subplot(2,3,2);plot(squeeze(allData(testInds,:,1))');
-    subplot(2,3,5);plot(squeeze(allData(testInds,:,2))');
-    subplot(2,3,3);imagesc(kern',[-1 1]*.2);drawnow;
-    %input('');
+    yOrig(:,40:52) = yOrig(1,53);
+    yOrig(yOrig == 0) = nan;
+    for i = 1:size(yFits,3)
+        temp = squeeze(yFits(:,:,i));temp(isnan(yOrig)) = nan;
+        yFits(:,:,i) = temp;
+    end
+%    yFits(yFits == 0) =  nan;
+    subplot(2,2,1);plot(yOrig','b');hold on;plot(squeeze(mean(yFits)),'linewidth',2);hold off;%axis tight;
+    subplot(2,2,3);plot(squeeze(yFits(:,:,end))');axis tight;
+    temp = squeeze(allData(testInds,1:size(yOrig,2),1)).*(~isnan(yOrig));temp(temp == 0) = nan;
+    subplot(2,2,2);plot(temp');axis tight;
+    temp = squeeze(allData(testInds,1:size(yOrig,2),2)).*(~isnan(yOrig));temp(temp == 0) = nan;
+    subplot(2,2,4);plot(temp');axis tight;
+    %subplot(2,3,3);imagesc(kern',[-1 1]*.2);drawnow;
+    input('');
 end

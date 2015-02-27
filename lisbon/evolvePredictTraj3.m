@@ -120,3 +120,4 @@ figure;plot(stats.mse);hold all;plot(stats.cc);plot([stats.ccL; stats.ccH]');axi
 %[~,m] = min(mse);
 %figure;plot(squeeze(coeff(90,:,:)));
 end
+stats.kern = (stats.kern./(stats.kernH-stats.kernL)*2);

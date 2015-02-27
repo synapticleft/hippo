@@ -11,7 +11,7 @@ end
 mat = mat(:,sum(mat == 0) == 0);
 
 mat = mat-cILD;
-neg = mat(:,1) < 0;
+neg = mean(mat,2) < 0;%mat(:,1) < 0;
 if dynamic
     mat(neg,:) = -mat(neg,:);
     %mat = bsxfun(@minus,mat,mat(:,1));
