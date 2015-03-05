@@ -16,7 +16,10 @@ if numel(inds) == 1 || (exist('finalChoice','var') && finalChoice == 1)
 else
     [allData allOut allOutShift] = preProcessRoberto(fn,inds,timePast,offSet,[],diff(:),startAlign);
 end
-
+%in order to look at the predictive power of the stimulus history, whether
+%it 'explains away' the physiological regressors.
+%allData(:,:,end+1) = allData(:,:,end);
+%allData(:,:,end-1) = circshift(allData(:,:,end-1),[0 1 0]) + .01*randn(size(allData(:,:,1)));
 if frac == 1
    scramble = 1:size(allData,1);
 else
