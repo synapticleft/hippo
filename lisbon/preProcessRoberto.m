@@ -66,7 +66,6 @@ if addClassic
     allData(:,:,end+1) = repmat(([data{2:end,5}]' > center_ILD),[1 size(allData,2) 1]);
     %allData(:,:,end+1) = allData(:,:,end-1).*allData(:,:,end);%repmat([data{2:end,9}]',[1 size(allData,2) 1]);
 end
-
 f = inds == 6;
 if startAlign
     allData(:,nanmean(abs(diff(allData(:,:,f),[],2))) == 0,f) = nan;
