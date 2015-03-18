@@ -1,6 +1,6 @@
-function [yOrig1 yFits1 allData kern] = evolvePredictTraj4(fn,lambda,inds,timePast,offSet,trialHist,diff,startAlign,finalChoice) %sessNorm,
-% variant of evolvePredictTraj1 that incorporates smoothness of kernels
-% over time.
+function [yOrig1, yFits1, allData, kern] = evolvePredictTraj4(fn,lambda,inds,timePast,offSet,diff,startAlign,finalChoice) %sessNorm,,trialHist
+% variant of evolvePredictTraj1 that cross-validates each batch of
+% responses for the same stimulus separately
 
 % choices: 1) re-normalize measures in each session to correct for drifts
 % (sessNorm) NOW I DO THIS FOR EYE DATA BUT NOT OTHERS
@@ -76,7 +76,7 @@ for j = 1:max(inds)
         yFits(:,:,i) = temp;
     end
 %    yFits(yFits == 0) =  nan;
-    subplot(2,2,1);plot(yOrig','b');hold on;plot(squeeze(mean(yFits)),'linewidth',2);hold off;%axis tight;
+    subplot(2,2,1);plot(yOrig','b');hold on;plot(squeeze(mean(yFits)),'linewidth',2);hold off;axis tight;
     subplot(2,2,3);plot(squeeze(yFits(:,:,end))');axis tight;
     temp = squeeze(allData(testInds,1:size(yOrig,2),1)).*(~isnan(yOrig));temp(temp == 0) = nan;
     subplot(2,2,2);plot(temp');axis tight;

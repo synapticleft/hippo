@@ -1,4 +1,4 @@
-function [stats yOrig yFits] = evolvePredictTraj3(fn,lambda,sigma,inds,timePast,offSet,trialHist,diff,startAlign,finalChoice) %sessNorm,
+function [stats yOrig yFits allData] = evolvePredictTraj3(fn,lambda,sigma,inds,timePast,offSet,trialHist,diff,startAlign,finalChoice,kern) %sessNorm,
 % variant of evolvePredictTraj1 that incorporates smoothness of kernels
 % over time.
 
@@ -12,6 +12,7 @@ function [stats yOrig yFits] = evolvePredictTraj3(fn,lambda,sigma,inds,timePast,
 frac = 1;%.95
 diff = [-diff diff];
 if numel(inds) == 1 || (exist('finalChoice','var') && finalChoice == 1)
+    3
     [allData allOut allOutShift] = preProcessRoberto(fn,inds,timePast,offSet,[],diff(:),startAlign,1);
 else
     [allData allOut allOutShift] = preProcessRoberto(fn,inds,timePast,offSet,[],diff(:),startAlign);
@@ -26,7 +27,7 @@ else
     scramble = randperm(size(allData,1));
 end
 allData = allData(scramble,:,:);
-% for i = 1:size(allData,2)
+% for i = 1:size(allData,1)
 %     f = find(squeeze(allData(i,:,end)) ~= 0);
 %     allData(i,f(1):f(end),end) = filtfilt(gausswin(5),sum(gausswin(5)),squeeze(allData(i,f(1):f(end),end)));
 % end
@@ -39,7 +40,7 @@ for i = bootStrap:-1:1
 end
 scrambles = [1:numel(trainInds); scrambles];
 for i = size(allData,2):-1:timePast+1
-    if numel(inds) == 1 || exist('finalChoice','var')
+    if numel(inds) == 1 || (exist('finalChoice','var') && finalChoice == 1)
         X = allData(trainInds,i-timePast+1:i,3:end-1);
         X = [squeeze(allData(trainInds,i,1:2)) X(:,:)];
     else
@@ -56,7 +57,7 @@ end
 yOrig = zeros(size(allData,1),size(allData,2)-timePast);
 yFits = yOrig;
 for i = timePast+1:size(allData,2)
-    if numel(inds) == 1 || exist('finalChoice','var')
+    if numel(inds) == 1 || (exist('finalChoice','var') && finalChoice == 1)
         X = allData(trainInds,i-timePast+1:i,3:end-1);
         X = [squeeze(allData(trainInds,i,1:2)) X(:,:)];
     else
@@ -74,10 +75,10 @@ for i = timePast+1:size(allData,2)
     %Xytemp = reshape(weights*Xy(:,:),size(XX,2),[]);
     kernB = Xytemp'/(XXtemp + lambda*diag(diag(XXtemp)));
     yEst = squeeze(kernB)*X';
-    y = zscore(y(scrambles),[],2);%y(scrambles);%
-    yEst = zscore(yEst,[],2);
     yOrig(:,i-timePast) = y(1,:);
     yFits(:,i-timePast) = yEst(1,:);
+    y = zscore(y(scrambles),[],2);%y(scrambles);%
+    yEst = zscore(yEst,[],2);
     mseB = mean((y-yEst).^2,2);
     %mseB = mseB./mean(yEst.^2,2);
     ccB = mean(y.*yEst,2);%zscore(y(scrambles)).*zscore(yEst),2);
