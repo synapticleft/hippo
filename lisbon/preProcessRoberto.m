@@ -18,7 +18,7 @@ if ~exist('inds','var')
     inds = 10:15;%21;
 end
 if ~exist('whichDiff','var') || isempty(whichDiff)
-    whichDiff = [-4 -2 -.5 .5 2 4];
+    whichDiff = [-6 -4 -2 -.5 .5 2 4 6];
 end
 if ~exist('timePast','var')
     timePast = 0;
@@ -83,7 +83,7 @@ f = choice == 3 | ~ismember(difficulty,whichDiff);
 if ~isempty(f1)
    f = f | squeeze(~(allData(:,1,f1(1))))';
    if fn == 1 || fn == 2
-       f = f | [data{2:end,2}] < 4;
+      f = f | [data{2:end,2}] < 4;
    end
 end
 allOut = [answer' double(answer' > 0)*2-1 choice'*2-3];
