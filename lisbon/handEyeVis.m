@@ -15,11 +15,11 @@ jj = find(inds == 2*i - k);
 for j = 1:numel(jj)
 f = find(squeeze(d(jj(j),:,end)) ~= 0);
 fmax = max(numel(f),fmax);
-scatter(d(jj(j),f,3),1:numel(f),[],cols(round(max(1,min(64,d(jj(j),f,1)*20+32))),:),'filled');%max(5,100*d(jj(j),f,2))
+scatter(d(jj(j),f,3),d(jj(j),f,4),[],cols(round(max(1,min(64,d(jj(j),f,1)*20+32))),:),'filled');%max(5,100*d(jj(j),f,2))
 hold on;axis tight;
 end
 hold off;
-subplot(1+showEye,6,2*k+[2 3]);set(gca,'ylim',[0 fmax]);
+%subplot(1+showEye,6,2*k+[2 3]);set(gca,'ylim',[0 fmax]);
 end
 for j = 1:numel(jj)    
 f = find(squeeze(d(jj(j),:,end)) ~= 0);
@@ -48,7 +48,7 @@ if showEye
         else
             %scatter(d(jj(j),f,l-1),d(jj(j),f,l),[],cols(min(64,1:numel(f)),:),'filled');hold on;
             %plot(d(jj(j),f,l-1),d(jj(j),f,l),'k');
-            scatter(d(jj(j),f,3),d(jj(j),f,4),[],cols(round(max(1,min(64,d(jj(j),f,1)*20+32))),:),'filled');%
+            scatter(d(jj(j),f,3),1:numel(f),[],cols(round(max(1,min(64,d(jj(j),f,1)*20+32))),:),'filled');%
         end
         hold on;axis tight;
     end
