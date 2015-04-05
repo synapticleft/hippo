@@ -32,8 +32,8 @@ axis tight;set(gca,'ylim',[0 fmax]);
 end
 hold off;
 subplot(1+showEye,6,1);hold on;plot([0 0],[0 fmax],'k--');set(gca,'xtick',[],'ytick',[0 60],'yticklabel',{'0','.75'});ylabel('Time (s)');hold off;
-subplot(1+showEye,6,[2 3]);hold on;plot([0 0],[0 fmax],'k--');set(gca,'xtick',[],'ytick',[]);hold off;
-subplot(1+showEye,6,[4 5]);hold on;plot([0 0],[0 fmax],'k--');set(gca,'xtick',[],'ytick',[]);hold off;
+%subplot(1+showEye,6,[2 3]);hold on;plot([0 0],[0 fmax],'k--');set(gca,'xtick',[],'ytick',[]);hold off;
+%subplot(1+showEye,6,[4 5]);hold on;plot([0 0],[0 fmax],'k--');set(gca,'xtick',[],'ytick',[]);hold off;
 subplot(1+showEye,6,6);hold on;plot([0 0],[0 fmax],'k--');set(gca,'xtick',[],'ytick',[]);hold off;
 if showEye
     for k = 0:1
