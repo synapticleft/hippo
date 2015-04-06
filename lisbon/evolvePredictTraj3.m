@@ -12,7 +12,6 @@ function [stats yOrig yFits allData] = evolvePredictTraj3(fn,lambda,sigma,inds,t
 frac = 1;%.95
 diff = [-diff diff];
 if numel(inds) == 1 || (exist('finalChoice','var') && finalChoice == 1)
-    3
     [allData allOut allOutShift] = preProcessRoberto(fn,inds,timePast,offSet,[],diff(:),startAlign,1);
 else
     [allData allOut allOutShift] = preProcessRoberto(fn,inds,timePast,offSet,[],diff(:),startAlign);
@@ -27,10 +26,10 @@ else
     scramble = randperm(size(allData,1));
 end
 allData = allData(scramble,:,:);
-% for i = 1:size(allData,1)
-%     f = find(squeeze(allData(i,:,end)) ~= 0);
-%     allData(i,f(1):f(end),end) = filtfilt(gausswin(5),sum(gausswin(5)),squeeze(allData(i,f(1):f(end),end)));
-% end
+for i = 1:size(allData,1)
+    f = find(squeeze(allData(i,:,end)) ~= 0);
+    allData(i,f(1):f(end),end) = filtfilt(gausswin(5),sum(gausswin(5)),squeeze(allData(i,f(1):f(end),end)));
+end
 trainInds = 1:floor(size(allData,1)*frac);
 %testInds = floor(size(allData,1)*.95)+1:size(allData,1);
 bootStrap = 100;

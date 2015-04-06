@@ -16,13 +16,9 @@ for i = 1:size(d,1)
     X = [X temp];temp = [];
     y = [y squeeze(d(i,f,1:2))'];
 end
-w = y/X
-w1 = pascal(ord+1,1);
-w1 = -w1(end,2:end);
-xx = [w1; zeros(size(w1))];
-yy = xx([2 1],:);
-w1 = [xx(:) yy(:)]';
-w = w1;
+w = y/X;
+yHat = w*X;
+sigmas = 
 for i = 2:ord
     w((i-1)*numel(inds)+(1:numel(inds)),(i-2)*numel(inds)+(1:numel(inds))) = eye(numel(inds));
 end
@@ -40,11 +36,11 @@ for i = 1:size(d,1)
         for k = 1:ord
             temp(numel(inds)*(k-1)+(1:numel(inds))) = squeeze(d(i,f(j)-k,1:end-1))';
         end
-        for k = j+(1:10)%numel(f)
+        for k = j+1:numel(f)
             temps(k,:) = temp(1:2);
             temp = temp*w';
         end
-        plot(temps(j+1:end,1),temps(j+1:end,2));drawnow;%pause(.5);
+        scatter(temps(:,1),temps(:,2),'filled');drawnow;pause(.5);
     end
     hold off;
     input('');
