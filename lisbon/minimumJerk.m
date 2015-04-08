@@ -1,4 +1,4 @@
-function [x,j] =  minimumJerk(x0, dx0, ddx0,xT,dxT,ddxT,T)
+function x =  minimumJerk(x0, dx0, ddx0,xT,dxT,ddxT,T)
 % Compute a point to point minimum jerk trajectory
 % x0 dx0 ddx0 are the location, velocity and acceleration at the
 % start point
@@ -24,4 +24,4 @@ a(4:6,1)=pinv(b)*c;
 for i = 1:T
     x(i) = sum(a'.*(i.^(0:5)));
 end
-j = sum(diff(x,2).^2);
+%j = sum(diff(x,3).^2);
