@@ -22,15 +22,19 @@ w1 = -w1(end,2:end);
 xx = [w1; zeros(size(w1))];
 yy = xx([2 1],:);
 w1 = [xx(:) yy(:)]';
-w = w1;
+%w = w1;
 for i = 2:ord
     w((i-1)*numel(inds)+(1:numel(inds)),(i-2)*numel(inds)+(1:numel(inds))) = eye(numel(inds));
 end
 figure;
 for i = 1:size(d,1)
     f = find(squeeze(d(i,:,end)) ~= 0);
-    plot(d(i,f,1),d(i,f,2),'k');set(gca,'xlim',[min(squeeze(d(i,f,1))) max(squeeze(d(i,f,1)))],...
-        'ylim',[min(squeeze(d(i,f,2))) max(squeeze(d(i,f,2)))]);
+    ds = squeeze(d(i,f,1:2));
+    for j = 1:2
+        ds(:,j) = filtfilt(gausswin(8),sum(gausswin(8)),ds(:,j));
+    end
+    plot(ds(:,1),ds(:,2),'k');set(gca,'xlim',[min(ds(:,1)) max(ds(:,1))],...
+        'ylim',[min(ds(:,2)) max(ds(:,2))]);
     hold on;
     %temp = [];
     %temp(1:ord,:) = squeeze(d(i,f(1:ord),1:2));
@@ -38,7 +42,7 @@ for i = 1:size(d,1)
         temps = [];
         temp = [];
         for k = 1:ord
-            temp(numel(inds)*(k-1)+(1:numel(inds))) = squeeze(d(i,f(j)-k,1:end-1))';
+            temp(numel(inds)*(k-1)+(1:numel(inds))) = squeeze(ds(j-k,1:2))';
         end
         for k = j+(1:10)%numel(f)
             temps(k,:) = temp(1:2);

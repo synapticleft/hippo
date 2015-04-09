@@ -16,9 +16,13 @@ for i = 1:size(d,1)
     X = [X temp];temp = [];
     y = [y squeeze(d(i,f,1:2))'];
 end
-w = y/X;
-yHat = w*X;
-sigmas = 
+w = y/X
+w1 = pascal(ord+1,1);
+w1 = -w1(end,2:end);
+xx = [w1; zeros(size(w1))];
+yy = xx([2 1],:);
+w1 = [xx(:) yy(:)]';
+w = w1;
 for i = 2:ord
     w((i-1)*numel(inds)+(1:numel(inds)),(i-2)*numel(inds)+(1:numel(inds))) = eye(numel(inds));
 end
@@ -33,14 +37,18 @@ for i = 1:size(d,1)
     for j = ord+1:numel(f)-1 %ord+1
         temps = [];
         temp = [];
+            ds = squeeze(d(i,f,1:2));
+            for k = 1:2
+                    ds(:,k) = filtfilt(gausswin(8),sum(gausswin(8)),ds(:,k));
+            end
         for k = 1:ord
-            temp(numel(inds)*(k-1)+(1:numel(inds))) = squeeze(d(i,f(j)-k,1:end-1))';
+            temp(numel(inds)*(k-1)+(1:numel(inds))) = squeeze(ds(j-k,1:2))';
         end
-        for k = j+1:numel(f)
+        for k = j+(1:10)%numel(f)
             temps(k,:) = temp(1:2);
             temp = temp*w';
         end
-        scatter(temps(:,1),temps(:,2),'filled');drawnow;pause(.5);
+        plot(temps(j+1:end,1),temps(j+1:end,2));drawnow;%pause(.5);
     end
     hold off;
     input('');

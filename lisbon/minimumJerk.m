@@ -21,7 +21,7 @@ b= [T3 T4 T5 ; 3*T2 4*T3 5*T4; 6*T 12* T2 20* T3];
 c = [ xT - a(1) - a(2)*T - a(3)*T2; dxT - a(2) - 2*a(3)*T; ddxT - 2*a(3)];
 a(4:6,1)=pinv(b)*c;
 
-for i = 1:T
-    x(i) = sum(a'.*(i.^(0:5)));
+for i = 0:T
+    x(i+1) = sum(a'.*(i.^(0:5)));
 end
 %j = sum(diff(x,3).^2);
