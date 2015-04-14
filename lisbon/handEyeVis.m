@@ -5,7 +5,7 @@ if ~exist('ILD','var')
     ILD = [.5 2 4];
 end
 cols = colormap('jet');
-[d,~,~,center_ILD] = preProcessRoberto(fn,[10 11 15 16 6],0,0,[],[-ILD ILD]);
+[d,center_ILD] = preProcessRoberto1(fn,[10 11 15 16 6],0,0,[],[-ILD ILD]);
 inds = groupILDs(d,center_ILD,1);
 for i = 1:max(inds)/2 %11
 fmax = 0;

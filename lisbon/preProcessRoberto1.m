@@ -9,7 +9,7 @@ function [allData,center_ILD] = preProcessRoberto1(fn,inds,timePast,offSet,trs,w
 %% startAlign: align to stimulus onset or offset.
 %% addClassic: add subject's choice and mean ILD as regressors for prediction
 
-window = [120 260];
+window = [120 300]; %was 260
 maxNan = 5;
 validSession = .3;
 
@@ -81,15 +81,17 @@ difficulty = [data{2:end,4}];
 
 
 f1 = find(ismember(inds,[10:14])); %%%15 ADDED HAND 
-f = choice == 3 | ~ismember(difficulty,whichDiff);
+f = choice == 3;
 %figure;
 if ~isempty(f1)
     for i = 2:size(data,1)
         tempa = bwlabel(isnan(data{i,24}));
-        ts = window(1) + [find(allData(i-1,1:60,end) == 0,1,'last')+1 60+find(allData(i-1,61:end,end) == 0,1)+1];
-        if numel(ts) == 1
-            ts(2) = window(1) + size(allData,2);
-        end
+        ts = [find(~isnan(data{i,6}),1) find(~isnan(data{i,6}),1,'last')];
+        %ts = window(1) + [find(allData(i-1,timePast + (1:60),end) == 0,1,'last')+1 60+find(allData(i-1,timePast + (61:end),end) == 0,1)+1];
+        %if numel(ts) == 1
+        %    ts(2) = window(1) + size(allData,2);
+        %end
+        %plot(ts(1):ts(2),data{i,6}(ts(1):ts(2)));input('');
         ts = data{i,22}(ts);
         temp1 = data{i,28} > ts(1) & data{i,28} < ts(2);
         temp1 = tempa.*temp1';
@@ -112,15 +114,16 @@ end
 running(running == 0) = nan;
 %figure;plot(running(:,end-1:end));
 %return
-% figure;plot(f);
 for i = 1:max(temp)
     if sum(~f(temp == i))/sum(temp == i) < validSession
         %sum(~f(temp == i))/sum(temp == i)
         f(temp == i) = 1;
     end
 end
+ f = f | ~ismember(difficulty,whichDiff);
 % hold all;plot(f,'r')
-[sum(f & choice ~= 3) sum(f) sum(choice == 3)]/numel(f)
+%[sum(f & choice ~= 3) sum(f) sum(choice == 3)]/numel(f)
+
 % allOut = [answer' double(answer' > 0)*2-1 choice'*2-3];
 % allOut = [allOut allOut(:,2).*allOut(:,3)];
 % allOut = [allOut  temp' difficulty'];
@@ -149,6 +152,9 @@ for j = 1:numel(inds)%size(allData,3)
                     %temp1 = filtfilt(gausswin(10),sum(gausswin(10)),temp1);
                     temp1 = smooth(temp1,19,'rloess');
                     allData(f1,:,j) = bsxfun(@minus,allData(f1,:,j),temp1);
+                    temp1 = squeeze(allData(f1,:,j));
+                     temp1 = temp1 / std(temp1(:));
+                    allData(f1,:,j) = temp1;
 %                    plot(f1,temp1);hold all;plot(find(i == temp & ~f),running(i == temp & ~f,1+inds(j)-9));hold off; pause(.5);
                 end
                 %%SMOOTH TO REMOVE IDIOSYNCRACIES
@@ -166,11 +172,11 @@ for j = 1:numel(inds)%size(allData,3)
     end
 end
 allData(f,:,:) = [];
-figure;subplot(211);plot(squeeze(mean(allData(:,:,1),2)));
-hold all;;plot(squeeze(mean(allData(:,:,2),2)));
-subplot(212);scatter(squeeze(allData(:,40,1)),squeeze(allData(:,100,1)));
-hold all;scatter(squeeze(allData(:,40,2)),squeeze(allData(:,100,2)));
-temp(f) = [];
+% figure;subplot(211);plot(squeeze(mean(allData(:,:,1),2)));
+% hold all;plot(squeeze(mean(allData(:,:,2),2)));
+% subplot(212);scatter(squeeze(allData(:,40,1)),squeeze(allData(:,100,1)));
+% hold all;scatter(squeeze(allData(:,40,2)),squeeze(allData(:,100,2)));
+% temp(f) = [];
 if addClassic
     allData = circshift(allData,[0 0 2]);
 end
