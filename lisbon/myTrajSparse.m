@@ -3,37 +3,44 @@ function [phi] = myTrajSparse(fn)%dewhiteningMatrix,phi) whiteningMatrix
 
 file = dir('*.mat');
 load(file(fn).name,'data');
-inds = [15 16];
+inds = [10:13 15 16];
 choice = [data{2:end,7}];
 f = choice ~= 3;
 X = [];reg = [];
-ord = 10;
-XCov = zeros(ord*2);Xy = zeros(2,2*ord);
-XFull = [];
+ord = 20;
+XCov = zeros(ord*numel(inds));Xy = zeros(2,numel(inds)*ord);
+X = [];
 for i = 2:size(data,1)
     if f(i-1)
         trialData = reshape([data{i,inds}],[numel(data{i,6}) numel(inds)])';
         trialData = trialData(:,~isnan(data{i,6}));
         %trialData = diff(trialData,[],2);
-        tempXX = [toeplitz(trialData(1,:),zeros(1,ord+1))';toeplitz(trialData(2,:),zeros(1,ord+1))'];
-        tempXX = tempXX(:,ord+1:end);
-        XFull = [XFull tempXX];
-        XCov = XCov + tempXX([2:ord+1 ord+3:end],:)*tempXX([2:ord+1 ord+3:end],:)';
-        Xy = Xy + tempXX([1 ord+2],:)*tempXX([2:ord+1 ord+3:end],:)';
+        tempXX=  [];
+        for j = 1:numel(inds)
+            tempXX = [tempXX; toeplitz(trialData(j,:),zeros(1,ord))'];
+        end
+        %;toeplitz(trialData(2,:),zeros(1,ord+1))'];
+        tempXX = tempXX(:,ord:end);
+        X = [X tempXX];
+%        XCov = XCov + tempXX([2:ord+1 ord+3:end],:)*tempXX([2:ord+1 ord+3:end],:)';
+%        Xy = Xy + tempXX([1 ord+2],:)*tempXX([2:ord+1 ord+3:end],:)';
         %X = [X trialData];
         reg = [reg (i-1)*ones(1,size(tempXX,2))];
     end
 end
-f = find(f);
-w = Xy/XCov;
-X = w*XFull([2:ord+1 ord+3:end],:) - XFull([1 ord+2],:);%XFull([1 ord+2],:);%
+%f = find(f);
+%w = Xy/XCov;
+%X = w*XFull([2:ord+1 ord+3:end],:) - XFull([1 ord+2],:);%XFull([1 ord+2],:);%
 X = bsxfun(@minus,X,mean(X,2));
 X = bsxfun(@rdivide,X,std(X,0,2));
+%% whiten all signals at once
+[X,V] = zca2(X);
+X = X(1:ord:end,:);
 %% whiten X
 %X = bsxfun(@minus,X,mean(X,2));
 %S = 64;		% time points in original sources 
 J = 32;		% number of basis functions for source generation
-R = 20;%20;		% number of time points in basis functions generating sources
+R = ord;%20;		% number of time points in basis functions generating sources
 % if J >= 1
 %     if ~exist('dewhiteningMatrix','var') || isempty(dewhiteningMatrix)
 %         numSamples = 50000;
