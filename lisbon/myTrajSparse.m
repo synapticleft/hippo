@@ -3,44 +3,54 @@ function [phi] = myTrajSparse(fn)%dewhiteningMatrix,phi) whiteningMatrix
 
 file = dir('*.mat');
 load(file(fn).name,'data');
-inds = [10:13 15 16];
+inds = [15 16];%10:13 
 choice = [data{2:end,7}];
 f = choice ~= 3;
 X = [];reg = [];
-ord = 20;
-XCov = zeros(ord*numel(inds));Xy = zeros(2,numel(inds)*ord);
+ord = 3;%20;
+arWhite = 1;
+%XCov = zeros(ord*numel(inds));Xy = zeros(2,numel(inds)*ord);
 X = [];
 for i = 2:size(data,1)
     if f(i-1)
         trialData = reshape([data{i,inds}],[numel(data{i,6}) numel(inds)])';
-        trialData = trialData(:,~isnan(data{i,6}));
-        %trialData = diff(trialData,[],2);
+        fs = [find(~isnan(data{i,6}),1) find(~isnan(data{i,6}),1,'last')];
+        trialData = trialData(:,fs(1)-ord+1:fs(end));
+        %trialData = diff(trialData,[],2);%;toeplitz(trialData(2,:),zeros(1,ord+1))'];
         tempXX=  [];
         for j = 1:numel(inds)
             tempXX = [tempXX; toeplitz(trialData(j,:),zeros(1,ord))'];
         end
-        %;toeplitz(trialData(2,:),zeros(1,ord+1))'];
         tempXX = tempXX(:,ord:end);
         X = [X tempXX];
 %        XCov = XCov + tempXX([2:ord+1 ord+3:end],:)*tempXX([2:ord+1 ord+3:end],:)';
 %        Xy = Xy + tempXX([1 ord+2],:)*tempXX([2:ord+1 ord+3:end],:)';
-        %X = [X trialData];
         reg = [reg (i-1)*ones(1,size(tempXX,2))];
     end
 end
-%f = find(f);
+f = find(f);
 %w = Xy/XCov;
-%X = w*XFull([2:ord+1 ord+3:end],:) - XFull([1 ord+2],:);%XFull([1 ord+2],:);%
-X = bsxfun(@minus,X,mean(X,2));
-X = bsxfun(@rdivide,X,std(X,0,2));
+X = zscore(X,0,2);%X = w*XFull([2:ord+1 ord+3:end],:) - XFull([1 ord+2],:);%XFull([1 ord+2],:);%
+%temp = X(1:ord:end,abs(reg-32) < 3);
 %% whiten all signals at once
-[X,V] = zca2(X);
-X = X(1:ord:end,:);
+% for i = 1:numel(inds)
+%    myInds = (i-1)*ord + (1:ord);
+%    [X(myInds,:),V(myInds,:)] = zca2(X(myInds,:));
+% end
+if arWhite
+    [X V] = arWhiten(X,numel(inds));
+else
+    [X,V] = zca2(X); %   X = X(1:ord:end,:);
+end
+
+%temp = [temp;X(:,abs(reg-32) < 3)];
+%sPlot(temp);
+%return
 %% whiten X
 %X = bsxfun(@minus,X,mean(X,2));
 %S = 64;		% time points in original sources 
-J = 32;		% number of basis functions for source generation
-R = ord;%20;		% number of time points in basis functions generating sources
+J = 8;		% number of basis functions for source generation
+R = 20;		% number of time points in basis functions generating sources
 % if J >= 1
 %     if ~exist('dewhiteningMatrix','var') || isempty(dewhiteningMatrix)
 %         numSamples = 50000;
@@ -107,7 +117,7 @@ for j = 1:J
     phi(:,j,:) = phi(:,j,:) / sqrt(sum(sum(phi(:,j,:).^2)));
 end
 
-num_trials = 400;
+num_trials = 100;
 % if J == 1
 %     lambda = [.2 .25];
 % else
@@ -120,7 +130,7 @@ num_trials = 400;
 for q = 1:20
     totResp = zeros(J,1);
     sparsenet
-%    phi = timeshift_phi(phi,totResp);
+    phi = timeshift_phi(phi,totResp);
 %    if lambda < 5
 %        lambda = lambda + .5;
 %    else

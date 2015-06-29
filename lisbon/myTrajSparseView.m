@@ -1,4 +1,4 @@
-function [phi] = myTrajSparseView(fn,phi)%dewhiteningMatrix,phi) whiteningMatrix
+function [Xsamp,AFull,reg] = myTrajSparseView(fn,phi)%dewhiteningMatrix,phi) whiteningMatrix
 %% run convolutional sparse coding, then bin and render activations.
 
 file = dir('*.mat');
@@ -7,30 +7,47 @@ inds = [15 16];
 choice = [data{2:end,7}];
 f = choice ~= 3;
 X = [];reg = [];
-ord = 10;
-XCov = zeros(ord*2);Xy = zeros(2,2*ord);
-XFull = [];
+ord = 3;%size(phi,3);
+arWhite = 1;
+%XCov = zeros(ord*2);Xy = zeros(2,2*ord);
+X = [];
 for i = 2:size(data,1)
     if f(i-1)
         trialData = reshape([data{i,inds}],[numel(data{i,6}) numel(inds)])';
-        trialData = trialData(:,~isnan(data{i,6}));
-        %trialData = diff(trialData,[],2);
-        tempXX = [toeplitz(trialData(1,:),zeros(1,ord+1))';toeplitz(trialData(2,:),zeros(1,ord+1))'];
-        tempXX = tempXX(:,ord+1:end);
-        XFull = [XFull tempXX];
-        XCov = XCov + tempXX([2:ord+1 ord+3:end],:)*tempXX([2:ord+1 ord+3:end],:)';
-        Xy = Xy + tempXX([1 ord+2],:)*tempXX([2:ord+1 ord+3:end],:)';
-        %X = [X trialData];
+        fs = [find(~isnan(data{i,6}),1) find(~isnan(data{i,6}),1,'last')];
+        trialData = trialData(:,fs(1)-ord+1:fs(end));
+        %%tempXX = [toeplitz(trialData(1,:),zeros(1,ord+1))';toeplitz(trialData(2,:),zeros(1,ord+1))'];
+        tempXX=  [];
+        for j = 1:numel(inds)
+            tempXX = [tempXX; toeplitz(trialData(j,:),zeros(1,ord))'];
+        end
+        tempXX = tempXX(:,ord:end);%+  1
+        X = [X tempXX];
+        %%XCov = XCov + tempXX([2:ord+1 ord+3:end],:)*tempXX([2:ord+1 ord+3:end],:)';
+        %%Xy = Xy + tempXX([1 ord+2],:)*tempXX([2:ord+1 ord+3:end],:)';
         reg = [reg (i-1)*ones(1,size(tempXX,2))];
     end
 end
 f = find(f);
-w = Xy/XCov;
-X = w*XFull([2:ord+1 ord+3:end],:) - XFull([1 ord+2],:);%XFull([1 ord+2],:);%
-X = bsxfun(@minus,X,mean(X,2));
-X = bsxfun(@rdivide,X,std(X,0,2));
-J = 32;		% number of basis functions for source generation
-R = 20;%20;		% number of time points in basis functions generating sources
+%w = Xy/XCov;
+XFull = X;
+X = zscore(X,0,2);
+%temp = X(1:ord+1:end,abs(reg-32) < 3);
+%[X,V] = zca2(X);
+%
+if arWhite
+    [X V] = arWhiten(X,2);
+else
+    [X V] = zca2(X);
+    X = X(1:ord:end,:);
+end
+%w = X([1 ord+2],:)/X([2:ord+1 ord+3:end],:);
+%X = w*X([2:ord+1 ord+3:end],:) - X([1 ord+2],:);%XFull([1 ord+2],:);%
+%temp = [temp;zscore(X(:,abs(reg-32) < 3),0,2)];
+%sPlot(temp);
+%return
+J = size(phi,2);		% number of basis functions for source generation
+R = size(phi,3);%20;		% number of time points in basis functions generating sources
 whiteningMatrix = eye(size(X,1));
 N = size(X,1);		% number of sources
 randn('seed',1);
@@ -75,12 +92,13 @@ end
      %lambda = [.1 3/50]; tried l(1) = .1, .05
      %lambda = [.1 3/50]; [.05 3/50];
      lambda = [.5 .15];%%[.1 .5]
-     cols = [1 0 0; 0 1 0];
+     cols = colormap('jet');%[1 0 0; 0 1 0];
 AFull = [];     
 counts = [];
 ctrs = [];
-useInds = 1:32;
+useInds = 1:J;
 %lambda = 5;
+f1 = figure;f2 = figure;
 for t = 1:numel(f)
     %% select data
     Xsamp = X(:,reg == f(t));
@@ -100,7 +118,7 @@ for t = 1:numel(f)
 %    ctrs(t) = ctr;
     a1 = reshape(a1, J, P);a1 = a1(:,R/2+(1:S));
     AFull = [AFull a1];
-    figure(1);imagesc(a1);%plot(ctrs);
+    figure(f1);imagesc(a1);%plot(ctrs);
 %    counts(t,1) = max(abs(a1(:)));
 %        a0 = randn(J, P);
 %    opts.x0 = a0(:);
@@ -108,17 +126,17 @@ for t = 1:numel(f)
 %    a1 = lbfgsb(callF,Inf*ones(1,J*P)',Inf*ones(1,J*P)',opts);
 %    counts(t,2) = max(abs(a1(:)));
 %	imagesc(a1(:,R/2+(1:S)));
-     figure(2);
-    for j = 1:32
-        subplot(4,8,j);
+     figure(f2);
+    for j = 1:J
+        subplot(4,ceil(J/4),j);
         inds = reg == f(t);
         temp = XFull([1 ord+2],inds);
-        ff = abs(a1(useInds(j),:)) > .5;
+        ff = abs(a1(useInds(j),:)) > .1;
         if sum(ff)
-        plot(temp(1,min(numel(ff),max(1,find(ff,1)+(-10:10)))),temp(2,min(numel(ff),max(1,find(ff,1)+(-10:10)))),'k--','linewidth',.5);hold all;
-        scatter(temp(1,ff),temp(2,ff),[],cols(sign(a1(useInds(j),ff))/2+1.5,:),'filled');hold all;
+            actI = max(1,min(64,32+round(20*a1(useInds(j),ff))));
+        %plot(temp(1,min(numel(ff),max(1,find(ff,1)+(-10:10)))),temp(2,min(numel(ff),max(1,find(ff,1)+(-10:10)))),'k--','linewidth',.5);hold all;
+        scatter(temp(1,ff),temp(2,ff),abs(a1(useInds(j),ff))*40,cols(actI,:),'filled');hold all;axis tight;%sign(a1(useInds(j),ff))/2+1.5
         end
     end
-    drawnow;
-%scatter(counts(:,1),counts(:,2));drawnow;
+     drawnow;%scatter(counts(:,1),counts(:,2));drawnow;
 end
