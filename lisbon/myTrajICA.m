@@ -2,7 +2,7 @@ function [wx Xor trialNum stimOr X] = myTrajICA(fn,ILD)
 
 inds = [15 16];
 if ~exist('ILD','var')
-    ILD = [.5 2 4];
+    ILD = [.5 2 4 6];
 end
 %[linspace(0,1,64);linspace(0,1,64);linspace(1,0,64)]';
 %cols = colormap('jet');
@@ -25,8 +25,9 @@ for i = 2:size(data,1)%1:size(d,1)
     %trialData = trialData(:,~isnan(data{i,6}));
     %traj = squeeze(d(i,:,1) + 1i*d(i,:,2));%
     if version == 1
-        trajcwt = [cwt(real(diff(traj,[],2)),scales,'cgau1'); cwt(imag(diff(traj,[],2)),scales,'cgau1')];
-        trajcwt = [zeros(size(trajcwt,1),1) trajcwt];
+        %trajcwt = [cwt(real(diff(traj,[],2)),scales,'cgau1'); cwt(imag(diff(traj,[],2)),scales,'cgau1')];
+        %trajcwt = [zeros(size(trajcwt,1),1) trajcwt];
+        trajcwt = [cwt(real(traj),scales,'cgau1'); cwt(imag(traj),scales,'cgau1')];
     elseif version == 2
             trajcwt = [cwt(real(traj),scales,'cgau1'); cwt(imag(traj),scales,'cgau1')];
     else
