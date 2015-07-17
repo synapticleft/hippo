@@ -1,21 +1,23 @@
-
 for t = 1:num_trials
 
     %% select data
     
-    j = ceil(max(reg)*rand);
-    Xsamp = X(:,reg == j);
+    j = ceil(numel(f)*rand);
+    Xsamp = X(:,reg == f(j));
     %% compute the map estimate
     tic
     S = size(Xsamp,2);
     P = S+R-1;	% number of selection locations for source generation
-    a0 = zeros(J, P);
-    %% no bounds
-    lb  = zeros(1,J*P); % lower bound
-    ub  = zeros(1,J*P); % upper bound
-    nb  = 0*ones(1,J*P); % bound type (none)
-    
-    [a1,fx,exitflag,userdata] = lbfgs(@objfun_a_conv, a0(:), lb, ub, nb, opts_lbfgs_a, Xsamp, phi, lambda);
+    a0 = randn(J, P);
+%     %% no bounds
+%     lb  = zeros(1,J*P); % lower bound
+%     ub  = zeros(1,J*P); % upper bound
+%     nb  = 0*ones(1,J*P); % bound type (none)
+%     
+    %[a1,fx,exitflag,userdata] = lbfgs(@objfun_a_conv, a0(:), lb, ub, nb, opts_lbfgs_a, Xsamp, phi, lambda);
+    opts.x0 = a0(:);
+    callF   = @(x) objfun_a_conv(x,Xsamp,phi,lambda);
+    [a1 energy] = lbfgsb(callF,Inf*ones(1,J*P)',Inf*ones(1,J*P)',opts);
     a1 = reshape(a1, J, P);
     time_inf = toc;
 
@@ -72,7 +74,8 @@ for t = 1:num_trials
     eta_log = eta_log(1:update-1);
     %% append
     eta_log = [ eta_log ; eta ];
-
+    snrs = [snrs snr];
+    energies = [energies energy];
     %% renormalize basis functions to have unit length
     for j = 1:J
         phi(:,j,:) = phi(:,j,:) / sqrt(sum(sum(phi(:,j,:).^2)));
@@ -98,16 +101,16 @@ for t = 1:num_trials
         subplot(3,1,3); imagesc(E, [mn mx]); %axis image off; colorbar;
 
         %% display coefficients
-        figure(6); if min(size(a1)) == 1 plot(a1); else imagesc(a1); end
+        figure(6); if min(size(a1)) == 1 plot(a1); else imagesc(a1);colorbar; end
 
         %% display basis functions
-        array = render_phi(phi, Jrows,dewhiteningMatrix); %render_phi_2d(phi,Jrows);
+        array = render_phi(phi, Jrows); %render_phi_2d(phi,Jrows);,dewhiteningMatrix
 
         figure(7); imagesc(array);% axis image off; colormap(gray);
 
         %% plot our dynamic eta
         figure(8);
-        plot(eta_log)
+        subplot(311);plot(eta_log);subplot(312);plot(snrs);subplot(313);plot(energies);
 
         drawnow;
     end
@@ -131,15 +134,18 @@ for t = 1:num_trials
         saveparamscmd = sprintf('save state/%s/params.mat', paramstr);
         saveparamscmd = sprintf('%s lambda', saveparamscmd);
        % saveparamscmd = sprintf('%s gamma', saveparamscmd);
-        saveparamscmd = sprintf('%s dewhiteningMatrix', saveparamscmd);
-        saveparamscmd = sprintf('%s whiteningMatrix', saveparamscmd);
-        saveparamscmd = sprintf('%s zerophaseMatrix', saveparamscmd);
+       % saveparamscmd = sprintf('%s dewhiteningMatrix', saveparamscmd);
+       % saveparamscmd = sprintf('%s whiteningMatrix', saveparamscmd);
+       % saveparamscmd = sprintf('%s zerophaseMatrix', saveparamscmd);
         saveparamscmd = sprintf('%s eta', saveparamscmd);
         saveparamscmd = sprintf('%s eta_up', saveparamscmd);
         saveparamscmd = sprintf('%s eta_down', saveparamscmd);
         saveparamscmd = sprintf('%s eta_log', saveparamscmd);
         saveparamscmd = sprintf('%s J', saveparamscmd);
         saveparamscmd = sprintf('%s R', saveparamscmd);
+        saveparamscmd = sprintf('%s scales', saveparamscmd);%V
+        saveparamscmd = sprintf('%s wname', saveparamscmd);%ord
+        saveparamscmd = sprintf('%s inds', saveparamscmd);
        % saveparamscmd = sprintf('%s datatype', saveparamscmd);
         saveparamscmd = sprintf('%s mintype_inf', saveparamscmd);
         saveparamscmd = sprintf('%s mintype_lrn', saveparamscmd);

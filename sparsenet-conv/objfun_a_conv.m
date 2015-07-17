@@ -1,6 +1,6 @@
 function [f,g] = objfun_a_conv(a0,I,phi,lambda)
 
-prior = 'laplace';%'gaussian';%'cauchy';%
+prior = 'laplace';%'cauchy';%'gaussian';%
 [N J R] = size(phi);
  
 S = size(I,2);

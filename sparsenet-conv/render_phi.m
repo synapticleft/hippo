@@ -1,7 +1,7 @@
 function array = render_phi(phi, m, dewhiteningMatrix)
 
 [N J R] = size(phi);
-N1 = size(dewhiteningMatrix,1);
+% N1 = size(dewhiteningMatrix,1);
 % if N1 > N
 %     ratio = N1/N;
 %     dewhiteningMatrix = dewhiteningMatrix((ratio-1)*N+(1:N),:);
