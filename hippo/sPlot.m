@@ -2,7 +2,7 @@ function sPlot(data,xaxis,newFig,norm,spread)
 %spaced out plot of 2-d data
 data = squeeze(data);
 if ~exist('spread','var')
-    spread = 5;
+    spread = 3;%5;
 end
 if ~exist('newFig','var') || isempty(newFig)
     newFig = 1;

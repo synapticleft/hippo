@@ -6,7 +6,7 @@ if ~exist('ratio','var') || isempty(ratio)
     ratio = [1 1];
 end
 
-buf=1;
+buf=3;
 %if ndims(A) == 2 %&& numel(A) ~= prod(size(A))
 %    A = A.';
 %end
@@ -66,7 +66,7 @@ for j=1:m
         temp = temp - prctile(temp(:),5);%min(temp(:));
     end
     if ~exist('clim','var') || isempty(clim)
-        clima= prctile(abs(temp(:)),99.95);%max(abs(temp(:)));
+        clima= prctile(abs(temp(:)),99.5);%max(abs(temp(:)));
     else
         clima = clim;
     end
@@ -97,8 +97,12 @@ end
 %array = imfilter(array,fspecial('gaussian',5,1));
 
 if isreal(array)
+%     if (min(array(:)) >= 0)
+%         imagesc(x,y,array,[0 1]);
+%     else
     imagesc(x,y,array,[0 1]);%[min(array(array~=-1)) max(array(array~=-1))]);colormap gray;%
-    colormap gray;
+%    end
+%    colormap gray;
 else
     imagesc(x,y,complexIm(array,0,1,[],1));
 end

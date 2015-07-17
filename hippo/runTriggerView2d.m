@@ -7,7 +7,7 @@ end
 if size(v,1) < size(pos,1)
    pos = pos(1:size(v,1),:);
 end
-pos = fixPos(pos);
+% pos = fixPos(pos); %removed for human work
 % pos(pos == -1) = nan;
 % reject = 1;
 % while sum(reject)

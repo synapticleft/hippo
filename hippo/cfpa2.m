@@ -34,7 +34,7 @@ while (norm(abs(Wold'*W)-eye(m),'fro') >(m*1e-4)) && k < maxcounter %(k<15*m)
     W = (v'*(y.* abs(y).^2))/N - 2*W - conj(PhatW)*D;
     [Q,Lam] = eig(W'*W);
     W = W*(Q*diag(diag(real(Lam)).^(-1/2))*Q');
-    imagesc(showGrid(dewhiteningMatrix*W,[8 4]));drawnow;
+    %imagesc(showGrid(dewhiteningMatrix*W,[8 4]));drawnow;
 end
 W = (whiteningMatrix*W).';
 A = pinv(W);
