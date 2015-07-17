@@ -1,29 +1,43 @@
-function xmas2014a(moviename, pixelFormat, maxThreads)
-global accumInd
-global state
-global lastAudio
-global transform
-global turn
-
-accumInd = 0;
-lastAudio = 0;
-gain = 1;
-%VIDSIZE = [720 1280];% [240 320];
-%state = zeros(VIDSIZE(1),VIDSIZE(2),3);
-% PlayMoviesDemo(moviename [, backgroundMaskOut][, tolerance][, pixelFormat=4][, maxThreads=-1])
-%
+function vidTutor(moviename)
 % This demo accepts a pattern for a valid moviename, e.g.,
-% moviename=`*.mpg`, then it plays all movies in the current working
+% moviename=`*.avi`, then it plays all movies in the current working
 % directory whose names match the provided pattern, e.g., the `*.mpg`
 % pattern would play all MPEG files in the current directory.
-%
-% This demo uses automatic asynchronous playback for synchronized playback
-% of video and sound. Each movie plays until end, then rewinds and plays
-% again from the start. Pressing the Cursor-Up/Down key pauses/unpauses the
+
+% This demo introduces distortions onto an ongoing video stream that are
+% scaled by the volume of the sound picked up by the microphone.
+
+% Pressing the Cursor-Up/Down key pauses/unpauses the
 % movie and increases/decreases playback rate.
-% The left- right arrow keys jump in 1 seconds steps. SPACE jumps to the
+% The right arrow key jumps in 1 seconds steps. SPACE jumps to the
 % next movie in the list. ESC ends the demo.
-if isempty(moviename)
+% qwerty toggles different effects.
+
+global accumInd     % keeps track of elapsed time
+global state        % stores a video frame and any transforms applied to it
+global lastAudio    % memory of audio history, used to detect sudden volume increase (aka beats)
+global transform    % which transform is currrently used?
+global shrink         % 2-d spatial gradient used to warp image (tunnel effect)
+
+accumInd = 0;
+lastAudio = 0;      
+gain = 1;           %controls sensitivity to sound
+audiodata = 0;      %mean volume of current audio sample
+% Setup key mapping:
+space=KbName('SPACE');
+esc=KbName('ESCAPE');
+right=KbName('RightArrow');
+left=KbName('LeftArrow');
+up=KbName('UpArrow');
+down=KbName('DownArrow');
+shift=KbName('RightShift');
+
+ts = 'qwerty';
+for i = 1:numel(ts)
+    tforms(i) = KbName(ts(i));
+end
+
+if ~exist('moviename','var') || isempty(moviename)
     moviename = '*.avi';
 end
 
@@ -43,40 +57,13 @@ PsychPortAudio('GetAudioData', pahandle, 10);
 % We set the number of 'repetitions' to zero,
 % i.e. record until recording is manually stopped.
 PsychPortAudio('Start', pahandle, 0, 0, 1);
-% We retrieve status once to get access to SampleRate:
-%s = PsychPortAudio('GetStatus', pahandle);
-audiodata = 0;
-% Setup key mapping:
-space=KbName('SPACE');
-esc=KbName('ESCAPE');
-right=KbName('RightArrow');
-left=KbName('LeftArrow');
-up=KbName('UpArrow');
-down=KbName('DownArrow');
-shift=KbName('RightShift');
-
-ts = 'qwerty';
-for i = 1:numel(ts)
-    tforms(i) = KbName(ts(i));
-end
 
 try
     % Open onscreen window with gray background:
     screen = max(Screen('Screens'));
     scrsz = get(screen,'ScreenSize');
     win = PsychImaging('OpenWindow', screen, [0, 0, 0]);
-    %PsychImaging('AddTask', 'General', 'UsePanelFitter',VIDSIZE);
-     shader = [];
-    % Use default pixelFormat if none specified:
-    if nargin < 4
-        pixelFormat = [];
-    end
-    
-    % Use default maxThreads if none specified:
-    if nargin < 5
-        maxThreads = [];
-    end
-    
+
     % Initial display and sync to timestamp:
     Screen('Flip',win);
     iteration = 0;
@@ -84,9 +71,6 @@ try
     
     % Use blocking wait for new frames by default:
     blocking = 1;
-    
-    % Default preload setting:
-    preloadsecs = [];
     
     % Return full list of movie files from directory+pattern:
     moviefiles=dir(moviename);
@@ -103,25 +87,21 @@ try
     while (abortit<2)
         moviename = moviefiles(mod(iteration, moviecount)+1).name;
         iteration = iteration + 1;
-        fprintf('ITER=%i::', iteration);
         
         % Open movie file and retrieve basic info about movie:
-        [movie, movieduration, fps, imgw, imgh] = Screen('OpenMovie', win, moviename, [], preloadsecs, 2, pixelFormat, maxThreads);
+        [movie, movieduration, fps, imgw, imgh] = Screen('OpenMovie', win, moviename, [], [], 2, [], []);
+        
+        % reset state and shrink to match the dimensions of new video
         state = zeros(imgh,imgw,3);
         [dx dy] = meshgrid(1:imgw,1:imgh);
         dx = dx-mean(dx(:));dy = dy-mean(dy(:));
-        turn = [];turn(:,:,1) = -dx/10;turn(:,:,2) = -dy/10;
+        shrink = [];shrink(:,:,1) = -dx/10;shrink(:,:,2) = -dy/10;
         fprintf('Movie: %s  : %f seconds duration, %f fps, w x h = %i x %i...\n', moviename, movieduration, fps, imgw, imgh);
-        
-        i=0;
         
         % Start playback of movie. This will start
         % the realtime playback clock and playback of audio tracks, if any.
-        % Play 'movie', at a playbackrate = 1, with endless loop=1 and
-        % 1.0 == 100% audio volume.
+        % Play 'movie', at a playbackrate = 1, with endless loop=1.
         Screen('PlayMovie', movie, rate, 1);
-        
-        t1 = GetSecs;
         
         % Infinite playback loop: Fetch video frames and display them...
         while 1
@@ -190,19 +170,18 @@ try
                     elseif transform == 4
                         I = shiftss(I,audiodata,gain);
                     elseif transform == 5
+                        I = shiftRGB(I,audiodata,gain);
+                    elseif transform == 6
                         I = tunnel(I,audiodata,gain);
                     end
                     tex = Screen('MakeTexture',win,I);
                 end
-                Screen('DrawTexture', win, tex);%, [], scrsz);%, [], [], [], [], shader);
                 Screen('DrawTexture', win, tex,[],scrsz);
-                %toc;
+                
                 % Update display:
                 Screen('Flip', win);
                 % Release texture:
                 Screen('Close', tex);
-                % Framecounter:
-                i=i+1;
             end;
             
             % Further keyboard checks...
@@ -213,8 +192,6 @@ try
             end;
             
             if (keyIsDown==1 && keyCode(left))
-                % Rewind movietime by one second:
-                %Screen('SetMovieTimeIndex', movie, Screen('GetMovieTimeIndex', movie) - 1);
                 gain = 1;
             end;
             
@@ -226,9 +203,6 @@ try
                 gain = gain / 1.2;
             end;
         end;
-        
-        telapsed = GetSecs - t1;
-        fprintf('Elapsed time %f seconds, for %i frames.\n', telapsed, i);
         
         Screen('Flip', win);
         KbReleaseWait;
@@ -248,7 +222,7 @@ try
     PsychPortAudio('Close', pahandle);
     % Done.
     return;
-catch %#ok<*CTCH>
+catch
     % Error handling: Close all windows and movies, release all ressources.
     Screen('CloseAll');
     % Stop capture:
@@ -264,36 +238,33 @@ Screen('SetMovieTimeIndex', movie, mod(Screen('GetMovieTimeIndex', movie) + gain
 
 
 function dat = shiftss(dat,ind,gain)
-%sh = round(ind*gain*100);
 [x, y] = gradient(double(rgb2gray(dat)));
-%x = imfilter(x,fspecial('gaussian',10,10));y = imfilter(y,fspecial('gaussian',10,10));
 x(:,:,2) = y;
 dat = imwarp(dat,x*ind*gain);
 clear x y;
-%dat(:,:,1) = circshift(dat(:,:,1),[sh 0 0]);
-%dat(:,:,2) = circshift(dat(:,:,2),[0 sh 0]);
-%dat(:,:,3) = circshift(dat(:,:,3),[-sh -sh 0]);
+
+function dat = shiftRGB(dat,ind,gain)
+sh = round(ind*gain);
+dat(:,:,1) = circshift(dat(:,:,1),[sh 0 0]);
+dat(:,:,2) = circshift(dat(:,:,2),[0 sh 0]);
+dat(:,:,3) = circshift(dat(:,:,3),[-sh -sh 0]);
 
 function dat = smearUpdate(dat,ind,gain)
 global state
-state = state*.9;%(amt+1)/2;
-indbool = state < ind*gain;%*dat %narrower parameter space
+state = state*.9;
+indbool = state < ind*gain;
 state(indbool) = dat(indbool);
 dat = state;
 
 function dat = tunnel(dat,ind,gain)
 global state
-global turn
+global shrink
 norm = min(1,ind*gain);
-state = max(.9*imwarp(state,norm*turn),double(dat)/255);
-%state = (norm)*imwarp(state,turn) + (1-norm)*double(dat)/255;%imrotate(,norm*360/8,'crop')
+%state = max(.9*imwarp(state,norm*shrink),double(dat)/255);
+state = (norm)*imwarp(state,shrink) +(1-norm)*double(dat)/255;%imrotate(,norm*360/8,'crop') (other variants)
 dat = state;
 
 function dat = cosColor(dat,ind,gain)
 global accumInd
-%dat = (cos(2*pi*(double(dat)/256 + ind)) + 1)/2;
 accumInd = accumInd + 1;% + ind*gain;
 dat = (cos(2*pi*(double(dat)*(ind*gain)+accumInd ))+1)/2;
-%dat = rgb2hsv(double(dat)/256);
-%dat(:,:,1) = (cos(2*pi*(double(dat(:,:,1))*(ind*gain)+accumInd ))+1)/2;%+ toc*time
-%dat = hsv2rgb(dat);
