@@ -1,4 +1,4 @@
-function [A,W] = gfastica(mixedsig, varargin) %Out1, Out2, Out3] 
+function [A,W,icasig] = gfastica(mixedsig, varargin) %Out1, Out2, Out3] 
 %FASTICA - Fast Independent Component Analysis
 %
 % FastICA for Matlab 7.x and 6.x

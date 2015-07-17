@@ -1,4 +1,4 @@
-function [Out1, Out2, Out3] = fastica(mixedsig, varargin)
+function [Out1, Out2, Out3] = fastica(mixedsig, varargin) %, Out4, Out5
 %FASTICA - Fast Independent Component Analysis
 %
 % FastICA for Matlab 7.x and 6.x
@@ -483,7 +483,7 @@ if only > 2
     if b_verbose
       fprintf('Adding the mean back to the data.\n');
     end
-    icasig = W * mixedsig + (W * mixedmean) * ones(1, NumOfSampl);
+    icasig = W * mixedsig;% + (W * mixedmean) * ones(1, NumOfSampl);
     %icasig = W * mixedsig;
     if b_verbose && ...
 	  (max(abs(W * mixedmean)) > 1e-9) && ...
@@ -520,5 +520,7 @@ else      % ICA
     Out1 = icasig;
     Out2 = A;
     Out3 = W;
+    %Out4 = dewhiteningMatrix;
+    %Out5 = whiteningMatrix;
   end
 end
