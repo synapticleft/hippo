@@ -68,19 +68,17 @@ figure;imagesc(Vd);
 Ve = NaN(N-1, g_num,x_num*2+1);
 Vd = Vd(2:end,:,:);
 for i = N-1:-1:1
-    for j = 1:2*x_num+1
-        % compute next value, V(g, t(i) + dt)
-        if i == N-1
-            % in the last step, there is no next Ve
-            Vt = Vd(i,:,j);
-        else
-            Vt = max(Vd(i,:), Ve(i+1,:));
-        end
-        % based on this, compute current value for accumulating more evidence
-        gg = squeeze(ggOr(i,:,:));%belieftrans(invgs, dt / (ts(i) + sig2));
-        % Vt1 * gg' results in the expected future value
-        Ve(i, :,j) = Vt * gg' - c * dt;
+    % compute next value, V(g, t(i) + dt)
+    if i == N-1
+        % in the last step, there is no next Ve
+        Vt = Vd(i,:,:);
+    else
+        Vt = max(Vd(i,:), Ve(i+1, :));
     end
+    % based on this, compute current value for accumulating more evidence
+    gg = squeeze(ggOr(i,:,:));%belieftrans(invgs, dt / (ts(i) + sig2));
+    % Vt1 * gg' results in the expected future value
+    Ve(i, :) = Vt * gg' - c * dt;
 end
 
 function dat = binFun(dat,nBins)
