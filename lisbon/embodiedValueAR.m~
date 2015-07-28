@@ -1,4 +1,4 @@
-function [Vd,Vm,runs,p] = embodiedValue(x_num, x_cost, t_cost)
+function [Vd,Vm,runs] = embodiedValueAR(x_num, x_cost, t_cost, runs1)
 %% plots an example of a value function and the associated bound, when you ...
 %% have to move to the target
 %
@@ -18,16 +18,17 @@ function [Vd,Vm,runs,p] = embodiedValue(x_num, x_cost, t_cost)
 
 %% settings
 % task difficulty
-if nargin < 1, x_num = 1; end%number of steps needed to move to either L or R target
+if nargin < 1, x_num = 1; end %number of steps needed to move to either L or R target
 % cost for moving
-if nargin < 2, x_cost = 0.1; end;
+if nargin < 2, x_cost = [0.1 .1]; end;
 % cost of time proceeding
 if nargin < 3, t_cost = .1; end
 % discretisation of belief and time (coarse, as only visualisation)
-g_num = 50; %100
+g_num = 10; %100
 T = 1;
 sig2 = .5^2;
 dt = 0.0125;
+ord = 1;
 
 %% compute the value function
 makeFlat = @(x) x(:);
@@ -54,6 +55,7 @@ for i = 1:numAccum
         %min(g_num,max(1,round((makeFlat(runs(:,1:end-1))/scale+.5)*g_num))) ...
         %min(g_num,max(1,round((makeFlat(runs(:,2:end))/scale+.5)*g_num)))],ones(1,(N-1)*nInstances));
 end
+%Vhist = repmat(Vhist,[1 1 x_num*2+1]);
 Vd(:,:,end) = squeeze(Vd(:,:,end))./Vhist;
 %runs = binFun(runs,g_num);
 %for i = 1:size(ggOr,2)
@@ -66,31 +68,37 @@ Vd(isnan(Vd)) = 0.5;
 for i = 1:size(Vd,2)
     Vd(:,i,end) = filtfilt(gausswin(.25/dt),sum(gausswin(.25/dt)),Vd(:,i,end));
 end
+%% should only still endings be rewarded, or is it OK to keep moving?
+%% I think only still, since other values would require an overshoot in x (which is bounded)
+%Vd(:,:,1:end-1,end) = repmat(Vd(:,:,end,end),[1 1 size(Vd,3)-1]);
 Vd(:,:,1) = 1-Vd(:,:,end);
 ggOr = bsxfun(@rdivide, ggOr, sum(ggOr, 3)+eps);
-Vm = NaN(N-1, g_num,x_num*2+1);
-
+Vm = NaN(N-1, g_num,x_num*2+1,x_num*2+1);
+Vdd = Vm;
 for i = N-1:-1:1
     evidence = squeeze(ggOr(i,:,:))*squeeze(Vd(i+1,:,:));
-    timeCosts = -t_cost*dt*[0 ones(1,2*x_num-1) 0];    
+    timeCosts = -t_cost*dt*[0 ones(1,2*x_num-1) 0];   
     for j = 2:2*x_num
-        moveCosts = -x_cost*((1:2*x_num+1)-j).^2/(x_num).^2;%
-        [Vd(i,:,j) Vm(i,:,j)] = max(evidence+repmat(moveCosts+timeCosts,[g_num 1]),[],2);
-    end
-end
-
-
-%% make some example runs
-runsBin = binFun(runs,g_num);%round((tanh(runs)+1)/2*(50-1)+1);
-p = nan*ones(size(runs,1),size(runs,2));
-p(:,1) = x_num+1;
-for i = 2:size(runsBin,2)
-    for j = 1:size(runsBin,1)
-        if ~isnan(p(j,i-1))
-            p(j,i) = Vm(i-1,runsBin(j,i),p(j,i-1));
+        for k = 2:2*x_num
+            moveCosts = -x_cost(1)*((1:2*x_num+1)-j).^2/(x_num).^2 - x_cost(2)*((1:2*x_num+1)-2*j+k).^2/x_num^2;%
+            [Vdd(i,:,j,k) Vm(i,:,j,k)] = max(evidence+repmat(moveCosts+timeCosts,[g_num 1]),[],2);
         end
     end
 end
+
+%% make some example runs
+runsBin = binFun(runs,g_num);%round((tanh(runs)+1)/2*(50-1)+1);
+p = nan*ones(size(runs,1),size(runs,2),ord);
+p(:,1,:) = x_num+1;
+for i = 2:size(runsBin,2)
+    for j = 1:size(runsBin,1)
+        if ~isnan(p(j,i-1,end))
+            p(j,i,1:end-1) = p(j,i-1,2:end);
+            p(j,i,end) = Vm(i-1,runsBin(j,i),p(j,i-1,1),p(j,i-1,2));
+        end
+    end
+end
+
 
 function dat = binFun(dat,nBins)
 dat = round((tanh(dat)+1)/2*(nBins-1)+1);
