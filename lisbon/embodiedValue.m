@@ -1,4 +1,4 @@
-function [Vd,Vm,runs,p] = embodiedValue(x_num, x_cost, t_cost)
+function [Vd,Vm,runsBin,p] = embodiedValue(x_num, x_cost, t_cost)
 %% plots an example of a value function and the associated bound, when you ...
 %% have to move to the target
 %
@@ -27,7 +27,7 @@ if nargin < 3, t_cost = .1; end
 g_num = 50; %100
 T = 1;
 sig2 = .5^2;
-dt = 0.0125;
+dt = .0125;%0.0125;
 
 %% compute the value function
 makeFlat = @(x) x(:);
@@ -37,12 +37,12 @@ ts = 0:dt:T;
 N = length(ts);
 
 nInstances = 1000;
-numAccum = 10;
+numAccum = 100;
 x = meshgrid((1:N)-1,1:nInstances);
 Vd = zeros(N,g_num,x_num*2+1);
 ggOr = 0;Vhist = 0;
 for i = 1:numAccum
-    runs = randn(nInstances,length(ts)-1)*dt;
+    runs = randn(nInstances,length(ts)-1)*sqrt(dt);
     rates = randn(nInstances,1)*sqrt(sig2)*dt;%(floor(rand(nInstances,1)*2)-.5)*dt/3;%
     runs = [zeros(nInstances,1) bsxfun(@plus,runs,rates)];
     runs = cumsum(runs,2);
@@ -58,7 +58,7 @@ Vd(:,:,end) = squeeze(Vd(:,:,end))./Vhist;
 %runs = binFun(runs,g_num);
 %for i = 1:size(ggOr,2)
 %     for j = 1:size(ggOr,3)
-%         ggOr(:,i,j) = filtfilt(gausswin(7),sum(gausswin(7)),ggOr(:,i,j));
+%         ggOr(:,i,j) = filtfilt(gausswin(7),sum(gausswin(75)),ggOr(:,i,j));
 %
 %end
 
@@ -87,7 +87,7 @@ p(:,1) = x_num+1;
 for i = 2:size(runsBin,2)
     for j = 1:size(runsBin,1)
         if ~isnan(p(j,i-1))
-            p(j,i) = Vm(i-1,runsBin(j,i),p(j,i-1));
+            p(j,i) = Vm(i-1,runsBin(j,i-1),p(j,i-1));
         end
     end
 end

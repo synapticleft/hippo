@@ -1,4 +1,4 @@
-function [Vd,Vm,runs] = embodiedValueAR(x_num, x_cost, t_cost, runs1)
+function [Vd,Vm,runsBin,p] = embodiedValueAR(x_num, x_cost, t_cost, runs1)
 %% plots an example of a value function and the associated bound, when you ...
 %% have to move to the target
 %
@@ -24,7 +24,7 @@ if nargin < 2, x_cost = [0.1 .1]; end;
 % cost of time proceeding
 if nargin < 3, t_cost = .1; end
 % discretisation of belief and time (coarse, as only visualisation)
-g_num = 10; %100
+g_num = 50; %100
 T = 1;
 sig2 = .5^2;
 dt = 0.0125;
@@ -38,12 +38,12 @@ ts = 0:dt:T;
 N = length(ts);
 
 nInstances = 1000;
-numAccum = 10;
+numAccum = 100;
 x = meshgrid((1:N)-1,1:nInstances);
 Vd = zeros(N,g_num,x_num*2+1);
 ggOr = 0;Vhist = 0;
 for i = 1:numAccum
-    runs = randn(nInstances,length(ts)-1)*dt;
+    runs = randn(nInstances,length(ts)-1)*sqrt(dt);
     rates = randn(nInstances,1)*sqrt(sig2)*dt;%(floor(rand(nInstances,1)*2)-.5)*dt/3;%
     runs = [zeros(nInstances,1) bsxfun(@plus,runs,rates)];
     runs = cumsum(runs,2);
@@ -55,7 +55,6 @@ for i = 1:numAccum
         %min(g_num,max(1,round((makeFlat(runs(:,1:end-1))/scale+.5)*g_num))) ...
         %min(g_num,max(1,round((makeFlat(runs(:,2:end))/scale+.5)*g_num)))],ones(1,(N-1)*nInstances));
 end
-%Vhist = repmat(Vhist,[1 1 x_num*2+1]);
 Vd(:,:,end) = squeeze(Vd(:,:,end))./Vhist;
 %runs = binFun(runs,g_num);
 %for i = 1:size(ggOr,2)
@@ -74,27 +73,32 @@ end
 Vd(:,:,1) = 1-Vd(:,:,end);
 ggOr = bsxfun(@rdivide, ggOr, sum(ggOr, 3)+eps);
 Vm = NaN(N-1, g_num,x_num*2+1,x_num*2+1);
-Vdd = Vm;
+%Vdd = Vm;
+Vdd = repmat(Vd,[1 1 1 size(Vd,3)]);
 for i = N-1:-1:1
-    evidence = squeeze(ggOr(i,:,:))*squeeze(Vd(i+1,:,:));
     timeCosts = -t_cost*dt*[0 ones(1,2*x_num-1) 0];   
     for j = 2:2*x_num
+        evidence = squeeze(ggOr(i,:,:))*squeeze(Vdd(i+1,:,:,j));
         for k = 2:2*x_num
-            moveCosts = -x_cost(1)*((1:2*x_num+1)-j).^2/(x_num).^2 - x_cost(2)*((1:2*x_num+1)-2*j+k).^2/x_num^2;%
+            moveCosts = -x_cost(1)*((1:2*x_num +1)-j).^2/(x_num).^2 - x_cost(2)*((1:2*x_num+1)-2*j+k).^2/x_num^2;%
             [Vdd(i,:,j,k) Vm(i,:,j,k)] = max(evidence+repmat(moveCosts+timeCosts,[g_num 1]),[],2);
         end
     end
 end
 
 %% make some example runs
-runsBin = binFun(runs,g_num);%round((tanh(runs)+1)/2*(50-1)+1);
-p = nan*ones(size(runs,1),size(runs,2),ord);
+if exist('runs1','var')
+    runsBin = runs1;
+else
+    runsBin = binFun(runs,g_num);%round((tanh(runs)+1)/2*(50-1)+1);
+end
+p = nan*ones(size(runs,1),size(runs,2),ord+1);
 p(:,1,:) = x_num+1;
 for i = 2:size(runsBin,2)
     for j = 1:size(runsBin,1)
-        if ~isnan(p(j,i-1,end))
+        if ~isnan(p(j,i-1,end)) %&& ~isnan(p(j,i-1,1))
             p(j,i,1:end-1) = p(j,i-1,2:end);
-            p(j,i,end) = Vm(i-1,runsBin(j,i),p(j,i-1,1),p(j,i-1,2));
+            p(j,i,end) = Vm(i-1,runsBin(j,i-1),p(j,i-1,1),p(j,i-1,2));
         end
     end
 end
