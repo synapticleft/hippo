@@ -1,4 +1,6 @@
 function testICA3FigRender(varExp,widths,cs)
+%% this function is fed variables created by testICA3, in order to generate
+%% example plots, as shown in a supplementary figure of the paper.
 
 if ndims(widths) == 4
     for i = 1:11
@@ -28,8 +30,8 @@ subplot(122);
 temp = mean(squeeze(xcInt(:,:,1)));
 set(gca,'nextPlot','add','ColorOrder',jet(11));
 for i= 11:-1:1
-inds = varExp(i,:) > 1/3;
-plot(temp(inds)/10,xcInt(i,inds,2)/10,'linewidth',2);hold all;
+indsa = varExp(i,:) > 1/3;
+plot(temp(indsa)/10,xcInt(i,indsa,2)/10,'linewidth',2);hold all;
 end
 %freezeColors;
 %subplot(122);freezeColors;colormap(flipud(jet(64)));

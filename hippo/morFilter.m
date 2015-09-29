@@ -17,16 +17,18 @@ function Xf = morFilter(X,Fc,Fs)%,win
 %Fc = 8.4 for hippocampus
 %Fb = 1/500, win = 1 for hippocampal LFP
 %Fb = 1/5000, Fc = 160, win = 5 for ripples
-psi = mf_cmorlet(Fc,Fs);
-%[psi,x] = cmorwavf(-win,win,Fs*2*win,Fb,Fc);
-%inds = abs(psi) > .001*max(abs(psi));
-%psi = psi(inds);x = x(inds);
-%psi = psi/sqrt(sqrt(sum(abs(psi).^2)));
-Xf = fconv(X,psi);
-%  Xf = zeros(size(X));
-%  for i = 1:size(X,1)
-%      Xf(i,:) = fliplr(filter(conj(psi),1,fliplr(filter(psi,1,X(i,:)))));
-%  end
+%psi = mf_cmorlet(Fc,Fs);
+Fb = 1/500;
+win = 1;
+[psi,x] = cmorwavf(-win,win,Fs*2*win,Fb,Fc);
+inds = abs(psi) > .001*max(abs(psi));
+psi = psi(inds);x = x(inds);
+psi = psi/sqrt(sqrt(sum(abs(psi).^2)));
+%Xf = fconv(X,psi);
+ Xf = zeros(size(X));
+ for i = 1:size(X,1)
+     Xf(i,:) = fliplr(filter(conj(psi),1,fliplr(filter(psi,1,X(i,:)))));
+ end
 
 function y = mf_cmorlet(f0,fs)
 ts = 1/fs; %sample period, second
