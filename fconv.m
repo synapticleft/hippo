@@ -23,5 +23,5 @@ X=fft(x, Ly2,2);		   % Fast Fourier transform
 H=fft(h, Ly2);	           % Fast Fourier transform
 Y=X.*repmat(H,[size(X,1) 1]);        	           % 
 y=(ifft(Y, Ly2,2));      % Inverse fast Fourier transform
-y=y(:,(length(h)-1)/2+(1:size(x,2)));               % Take just the first N elements
+y=y(:,round((length(h)-1)/2)+(1:size(x,2)));               % Take just the first N elements
 %y=y/max(abs(y));           % Normalize the output
