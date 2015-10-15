@@ -1,48 +1,50 @@
 function [Vdd,Vm,runsBin,p] = embodiedValueAR(x_num, x_cost, t_cost, runs1)
 %% plots an example of a value function and the associated bound, when you ...
 %% have to move to the target
-%
-% sig2 is the overall task difficulty (variance of prior on mu), c is the
-% evidence accumulation cost, and t is the time until which the values are
-% to be computed. The function computes until 5*t that time, but only
-% displays the value function / bounds until t.
-%
-% If not given, the arguments default to sig2 = 0.5^2, c = 0.1, and t = 3.
-% 1) implement uncertainty about when the trial will be over... quick &
-% dirty, have a supralinear cost associated with waiting too long.
-% 2) implement uncertainty about where action places you in next time step
-% 3) implement finer resolution x-position, to make derivatives (e.g.jerk)
-% less bumpy -- done!
-% 4) implement higher-dimensional state -- done!
-% 5) implement costs that include higher-order costs (e.g. ^2, ^3)
-% 6) implement y- dimension
+%% this function simulates trajectories in 1 dimension in response to a 
+%% stimulus of constant intensity, sampled from a normal distribution with 
+%% variance sig2. Evidence is accumulated with variance 1.
+
+%% parameters:
+%% x_num = number of steps it takes to reach either of the two targets from starting point.
+%% x_cost = 2-element vector specifying cost of changing position or velocity
+%% t_cost = specifies cost of elapsed time.
+%% runs1 = an N trials x T timesteps matrix of evidence accumulation trajectories, 
+%%          allowing one to compare different parameter settings for trials with the same noise
+%% To do:
+%% 1) Implement y-direction
+%% 2) implement uncertainty about where action places you in next time step
+%% 3) Implement contribution of change in acceleration to movement cost
 
 %% settings
-% task difficulty
 if nargin < 1, x_num = 1; end %number of steps needed to move to either L or R target
-% cost for moving
-if nargin < 2, x_cost = [0.1 .1]; end;
-% cost of time proceeding
-if nargin < 3, t_cost = .1; end
-% discretisation of belief and time (coarse, as only visualisation)
-g_num = 50; %100
-T = 1;
-sig2 = .5^2;
-dt = 0.0125;
-ord = 1;
+if nargin < 2, x_cost = [0.1 0.1]; end;% cost for changing position and velocity
+if nargin < 3, t_cost = .1; end % cost of time proceeding
+g_num = 50; % discretisation of belief
+T = 1; %Time limit on trial
+sig2 = .5^2; %prior on variance of input intensity
+dt = 0.0125; %time step
+ord = 1; %number of time steps in the past that contribute to cost (not yet implemented for ord > 1)
 
-%% compute the value function
+%% inline function to change a matrix into a vector
 makeFlat = @(x) x(:);
 
 %% time steps
 ts = 0:dt:T;
 N = length(ts);
 
+%% First run many simulated trials to generate evidence accumulation trajectories,
+%% used to tabulate the probability of making the correct choice, given the current
+%% level of evidence and time. It is also used to tabulate the probability of attaining
+%% a level of evidence, given the current level of evidence and time.
 nInstances = 1000;
-numAccum = 100;
-x = meshgrid((1:N)-1,1:nInstances);
-Vd = zeros(N,g_num,x_num*2+1);
-ggOr = 0;Vhist = 0;
+numAccum = 100; %number of times to sample nInstances trajectories
+x = meshgrid((1:N)-1,1:nInstances); %index passage of time for each trajectory
+Vd = zeros(N,g_num,x_num*2+1); %Value of being at a certrain time+evidence+position
+ggOr = 0; %The probability of transitioning from evidence_t to evidence_t+1
+Vhist = 0; 
+
+
 for i = 1:numAccum
     runs = randn(nInstances,length(ts)-1)*sqrt(dt);
     rates = randn(nInstances,1)*sqrt(sig2)*dt;%(floor(rand(nInstances,1)*2)-.5)*dt/3;%
@@ -52,9 +54,7 @@ for i = 1:numAccum
     Vd(:,:,end) = squeeze(Vd(:,:,end)) + accumarray([x(:)+1 binFun(makeFlat(runs(:)),g_num)],isRight(:),[N g_num],@sum);
     Vhist = Vhist + accumarray([x(:)+1 binFun(makeFlat(runs(:)),g_num)],ones(1,numel(isRight)),[N g_num]);
     ggOr = ggOr + accumarray([makeFlat(x(:,1:end-1))+1 binFun(makeFlat(runs(:,1:end-1)),g_num) ...
-        binFun(makeFlat(runs(:,2:end)),g_num)],ones(1,(N-1)*nInstances),[N-1 g_num g_num]);%...
-        %min(g_num,max(1,round((makeFlat(runs(:,1:end-1))/scale+.5)*g_num))) ...
-        %min(g_num,max(1,round((makeFlat(runs(:,2:end))/scale+.5)*g_num)))],ones(1,(N-1)*nInstances));
+        binFun(makeFlat(runs(:,2:end)),g_num)],ones(1,(N-1)*nInstances),[N-1 g_num g_num]);
 end
 Vd(:,:,end) = squeeze(Vd(:,:,end))./Vhist;
 %runs = binFun(runs,g_num);
@@ -68,9 +68,7 @@ Vd(isnan(Vd)) = 0.5;
 for i = 1:size(Vd,2)
     Vd(:,i,end) = filtfilt(gausswin(.25/dt),sum(gausswin(.25/dt)),Vd(:,i,end));
 end
-%% should only still endings be rewarded, or is it OK to keep moving?
-%% I think only still, since other values would require an overshoot in x (which is bounded)
-%Vd(:,:,1:end-1,end) = repmat(Vd(:,:,end,end),[1 1 size(Vd,3)-1]);
+
 Vd(:,:,1) = 1-Vd(:,:,end);
 ggOr = bsxfun(@rdivide, ggOr, sum(ggOr, 3)+eps);
 Vm = NaN(N-1, g_num,x_num*2+1,x_num*2+1);
