@@ -3,6 +3,8 @@ function dataOut = getKeyStrokes(file1,file2)
 data = loadjson(file1);
 data = data.data;
 
+startFile1 = data{1}{2}/86400/1000 + datenum(1970,1,1);
+
 for i = 3:length(data)-1
     if ~iscell(data{i})
         dataOut(i-2,:) = data{i};
@@ -32,17 +34,32 @@ dataOut(dataOut(:,3) == 0,3) = 8;
 
 fid = fopen(['down_time' file2]);
 temp = textscan(fid,'%s %f-%f-%fT%f:%f:%f+01:00');
+if isdst(datetime(temp{2}(1),temp{3}(1),temp{4}(1),'TimeZone','Europe/London'))
+    startFile1 = startFile1 + 1/24;
+end
 bonsDown = getTime(temp);
 downKeys = temp{1};
 fclose(fid);
-bonsDown = getKey(downKeys,bonsDown,dataOut(:,2));
-figure;plot(bonsDown(2:end)-dataOut(dataOut(:,2) < 0,1))
-dataOut(:,1) = dataOut(:,1) -bonsDown(1);
+%% the following is to find the accuracy of bonsai key-logging vs. game
+%bonsDown = 24*3600*getKey(downKeys,bonsDown,dataOut(:,2),startFile1);
+%figure;plot(bonsDown(2:end)-dataOut(dataOut(:,2) < 0,1))
+%dataOut(:,1) = dataOut(:,1) -bonsDown(1);
+%% the following is to get game keylog w.r.t. initiation of data collection
+dataOut(:,1) = dataOut(:,1) + getDiff(downKeys,bonsDown)*24*3600;
 
 function out = getTime(struc)
-out = struc{5}*3600+struc{6}*60+struc{7};
+out = datenum([struc{2} struc{3} struc{4} struc{5} struc{6} struc{7}]);
+%out = struc{5}*3600+struc{6}*60+struc{7};
 
-function bt = getKey(bk,bt,gk)
+function dif = getDiff(bk,bt)
+for i = 1:length(bk)
+    if streq('D1',bk(i))
+        break
+    end
+end
+dif = bt(i) - bt(1);
+
+function bt = getKey(bk,bt,gk,gameTimeRef)
 gk(gk >= 0) = [];
 gk = gk*-1;
 for i = 1:length(bk)
@@ -57,6 +74,6 @@ for j = 1:length(gk)
         return
     end
 end
-bt = bt - bt(i);
+bt = bt - gameTimeRef;%- bt(i);
 bt(2:i) = [];
 bt(j+2:end) = [];
