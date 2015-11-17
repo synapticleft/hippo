@@ -2,7 +2,7 @@ function [a,d] = adStructToMatrix(signal)
 %% convert the acquisition board signal struct into 2 matrices for analog and digital signals
 
 %names = fieldnames(signal);
-
+a = [];d = [];
 for i = 0:10
     try
         a(i+1,:) = eval(['signal.A' num2str(i)]);
@@ -21,6 +21,9 @@ for i = 0:10
     end
 end
 
-a = a(:,1:(size(d,2)*10));
+if numel(d)
+    a = a(:,1:(size(d,2)*10));
+end
 a = double(a) - 2^15;
+
 d = double(d);
