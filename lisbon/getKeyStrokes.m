@@ -4,7 +4,7 @@ isReversed = 1;
 
 data = loadjson(file1);
 data = data.data;
-
+num = [-40,-39,-38,-37,37,38,39,40];
 startFile1 = data{1}{2}/86400/1000 + datenum(1970,1,1);
 
 for i = 3:length(data)-1
@@ -26,22 +26,24 @@ for i = 3:length(data)-1
         end
     end
 end
+dataOut(~ismember(dataOut(:,2),num),:) = [];
 dataOut(dataOut(:,3) == 0,3) = 8;
 
 fid = fopen(['up_time' file2]);
-temp = textscan(fid,'%s %f-%f-%fT%f:%f:%f+01:00');
+temp = textscan(fid,'%s %f-%f-%fT%f:%f:%f+%f:00');
 bonsUp = getTime(temp);
 upKeys = temp{1};
 fclose(fid);
 
 fid = fopen(['down_time' file2]);
-temp = textscan(fid,'%s %f-%f-%fT%f:%f:%f+01:00');
+temp = textscan(fid,'%s %f-%f-%fT%f:%f:%f+%f:00');
 if isdst(datetime(temp{2}(1),temp{3}(1),temp{4}(1),'TimeZone','Europe/London'))
     startFile1 = startFile1 + 1/24;
 end
 bonsDown = getTime(temp);
 downKeys = temp{1};
 fclose(fid);
+
 if isReversed
     tempt = bonsUp;
     tempk = upKeys;
@@ -50,6 +52,7 @@ if isReversed
     bonsDown = tempt;
     downKeys = tempk;
 end
+
 [bonsDown,downKeys] = fixPress(bonsUp,upKeys,bonsDown,downKeys);
 for i = 1:numel(upKeys)
     upKeys{i} = ['R' upKeys{i}];
@@ -63,10 +66,15 @@ bonsKeys = bonsKeys(ind);
 %figure;plot(bonsDown(2:end)-dataOut(dataOut(:,2) < 0,1))
 %dataOut(:,1) = dataOut(:,1) -bonsDown(1);
 %% the following is to get game keylog w.r.t. initiation of data collectiondataOut(:,1) = dataOut(:,1) + getDiff(downKeys,bonsDown)*24*3600;
-bonsDown = 24*3600*getKey(bonsKeys,bonsTimes,dataOut(:,2),startFile1,0);
+[bonsDown,keys] = getKey(bonsKeys,bonsTimes,dataOut(:,2),startFile1);
+
+dataOut(ismember(dataOut(:,2),num),2) = keys(:,1);
+dataOut(:,1) = dataOut(:,1)-bonsDown(1)*24*3600; %% THIS IS NOT VERIFIED TO BE THE RIGHT APPROACH
+bonsDown = 24*3600*(bonsDown(2:end) - bonsDown(1));
+bonsDown(:,2) = keys(:,2);
 %bonsUp = 24*3600*getKey(downKeys,bonsDown,dataOut(:,2),startFile1,1);
 %% the following is to find the accuracy of bonsai key-logging vs. game
-bonsDown = bonsDown(2:end) - bonsDown(1);
+%bonsDown = bonsDown(2:end) - bonsDown(1);
 
 function [downTimeN,downKeyN] = fixPress(upTime,upKey,downTime,downKey)
 keys = {'D1','Left','Right','Down','Up'};
@@ -95,24 +103,36 @@ for i = 1:length(bk)
 end
 dif = bt(i) - bt(1);
 
-function bt = getKey(bk,bt,gk,gameTimeRef,isUp)
+function [bt,k] = getKey(bk,bt,gk,gameTimeRef)
 %isUp = 1-2*isUp;
 gk(gk == 0) = [];
 %gk = gk*-1;
+
+let = {'RDown','RRight','RUp','RLeft','Left','Up','Right','Down'};
+num = [-40,-39,-38,-37,37,38,39,40];
 for i = 1:length(bk)
-    if streq('RD1',bk(i))
+    if ismember(bk(i+1),let)%streq('RD1',bk(i))
         break
     end
 end
+gk1 = [];bk1 = [];
 for j = 1:length(gk)
-    if ~((gk(j) == 37 && streq(bk(i+j),'Left')) || (gk(j) == 39 && streq(bk(i+j),'Right')) ...
-            || (gk(j) == 38 && streq(bk(i+j),'Up')) || (gk(j) == 40 && streq(bk(i+j),'Down')) ...
-            || (gk(j) == -37 && streq(bk(i+j),'RLeft')) || (gk(j) == -39 && streq(bk(i+j),'RRight')) ...
-            || (gk(j) == -38 && streq(bk(i+j),'RUp')) || (gk(j) == -40 && streq(bk(i+j),'RDown')))
-        'Error!!! key identities from bonsai and game dont match!!!'
-        return
+    if numel(find(gk(j) == num,1))
+        gk1(end+1) = find(gk(j) == num,1);
+    end
+    if numel(find(streq(bk(i+j),let),1))
+        bk1(end+1) = find(streq(bk(i+j),let),1);
     end
 end
+k = [gk1' bk1'];
+%     if ~((gk(j) == 37 && streq(bk(i+j),'Left')) || (gk(j) == 39 && streq(bk(i+j),'Right')) ...
+%             || (gk(j) == 38 && streq(bk(i+j),'Up')) || (gk(j) == 40 && streq(bk(i+j),'Down')) ...
+%             || (gk(j) == -37 && streq(bk(i+j),'RLeft')) || (gk(j) == -39 && streq(bk(i+j),'RRight')) ...
+%             || (gk(j) == -38 && streq(bk(i+j),'RUp')) || (gk(j) == -40 && streq(bk(i+j),'RDown')))
+%         'Error!!! key identities from bonsai and game dont match!!!'
+%         return
+%     end
+% end
 bt = bt - gameTimeRef;%- bt(i);
 bt(2:i) = [];
 bt(j+2:end) = [];
