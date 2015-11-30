@@ -18,7 +18,7 @@ function [Vdd,Vm,runsBin,p] = embodiedValueAR(x_num, x_cost, t_cost, runs1)
 
 %% settings
 if nargin < 1, x_num = 1; end %number of steps needed to move to either L or R target
-if nargin < 2, x_cost = [0.1 0.1]; end;% cost for changing position and velocity
+if nargin < 2, x_cost = [0.1 0]; end;% cost for changing position and velocity
 if nargin < 3, t_cost = .1; end % cost of time proceeding
 g_num = 50; % discretisation of belief
 T = 1; %Time limit on trial
