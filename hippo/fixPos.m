@@ -62,5 +62,7 @@ w = w-1;
 m = accumarray(w'+1,[0; diff(pos(:,1))],[],@mean);
 posd(ismember(w+1,find(m>0))) = 1+posd(ismember(w+1,find(m>0)));
 fast = vel > thresh*prctile(vel,99);%max(vel);
-w = floor(w/2);w = double(w-min(w) + 1);
+w = floor(w/2);%w = double(w-min(w) + 1); G removed this 1/10/2015
+w(w == max(w)) = 0;%%G added this 1/10/2015
+fast(w == 0) = 0;
 end
