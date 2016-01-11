@@ -11,7 +11,7 @@ for i = 3:length(data)-1
     if ~iscell(data{i})
         dataOut(i-2,:) = data{i};
     else
-        for j = 1:5
+        for j = 1:6
             if iscell(data{i}{j})
                 if data{i}{j}{1}(1) == 'R'
                     dataOut(i-2,j) = -1*str2num(data{i}{j}{1}(2:end));
@@ -29,13 +29,15 @@ end
 dataOut(~ismember(dataOut(:,2),num),:) = [];
 dataOut(dataOut(:,3) == 0,3) = 8;
 
-fid = fopen(['up_time' file2]);
+pre = 'keydown_time';%up_time
+fid = fopen([pre file2]);
 temp = textscan(fid,'%s %f-%f-%fT%f:%f:%f+%f:00');
 bonsUp = getTime(temp);
 upKeys = temp{1};
 fclose(fid);
 
-fid = fopen(['down_time' file2]);
+pre = 'keyup_time';%down_time
+fid = fopen([pre file2]);
 temp = textscan(fid,'%s %f-%f-%fT%f:%f:%f+%f:00');
 if isdst(datetime(temp{2}(1),temp{3}(1),temp{4}(1),'TimeZone','Europe/London'))
     startFile1 = startFile1 + 1/24;

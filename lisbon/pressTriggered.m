@@ -1,5 +1,5 @@
-function [y, yHat, kern, xY] = pressTriggered(keyDat,board,sr)
-%% predict keypresses from physiological data
+function [ST, y, yHat, kern, xY] = pressTriggered(keyDat,board,sr)
+%% predict keypresses from physiological data. Newer than predictKeys (preserves spike-triggered data).
 
 %keyDat(keyDat(:,2) == 0,:) = [];
 keysPressed = unique(keyDat(:,2));
@@ -15,11 +15,12 @@ end
 %press = cumsum(down,2)-cumsum(up,2);
 
 y = [down];%;up];%;press
-board = filtHigh(board,sr,.1);
+%board = filtHigh(board,sr,.1);
 X = makeToeplitz(board,sr*1,1);
 for i = 1:size(y,1)
     ST{i} = X(:,y(i,:) > 0);
 end
+return
 xY = y*X';
 %y = zscore(y,0,2);
 ridges = [0 10.^(-4:4)];
