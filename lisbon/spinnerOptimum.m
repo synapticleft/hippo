@@ -1,9 +1,10 @@
 function spinnerOptimum(fname,wavenum)
 %use dynamic programming to determine each state's value and optimum action
 
-
+%r =  [.1 .2 .3 .4 .5 .4 .3 .2];%[.1 .3 .1 .2 .1 .4 .5 .6];
 dat = importdata(fname);
 dat = dat(dat(:,3) == wavenum,1:2);
+%dat = [];dat(:,1) = ones(1,8)+r;dat(:,2) = 0:7;%+rand(1,8)
 numStates = numel(unique(dat(:,2)));
 dt = .01;
 growtime = 5;
@@ -31,9 +32,12 @@ for i = 1:size(dat,1)
 end
 dpValues = zeros(size(rawValues,1),size(rawValues,2)+1);
 isPopped = cell(size(rawValues,1),size(rawValues,2)+1);
+act = zeros(size(rawValues));
+flags = act;
 %act(:,end) = 1:numStates;dpValues = rawValues(:,end);
 %act(:,end) = 0;dpValues(:,end) = 0;
 numActs= 4;
+%%MAKE ALL CASHES UNIQUE AcTIons
 for i = size(rawValues,2):-1:1
     for j = 1:numStates
         valNext(1) = dpValues(mod(j-1-1,numStates)+1,round(min(size(dpValues,2),i+1+slidertime/dt))) - travelcost;
@@ -65,17 +69,23 @@ for i = size(rawValues,2):-1:1
             elseif flag == 2
                 isPopped{j,i} = union(theBubble(j,i),isPopped{mod(j+1-1,numStates)+1,round(min(size(dpValues,2),i+1+slidertime/dt))});
             end
+            flags(j,i) = flag;
         elseif act(j,i) == 3
             isPopped{j,i} = isPopped{j,i+1};
+            flags(j,i) = 0;
         elseif act(j,i) == 2
             isPopped{j,i} = isPopped{mod(j+1-1,numStates)+1,round(min(size(dpValues,2),i+1+slidertime/dt))};
+            flags(j,i) = 0;
         elseif act(j,i) == 1
             isPopped{j,i} = isPopped{mod(j-1-1,numStates)+1,round(min(size(dpValues,2),i+1+slidertime/dt))};
+            flags(j,i) = 0;
         end
     end
 end
 figure;subplot(311);imagesc(rawValues);
 subplot(312);imagesc(dpValues);
 subplot(313);imagesc(act);
+figure;hist(act(:),0:6);
+figure;plot(dpValues');
 end
 
