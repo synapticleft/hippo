@@ -150,7 +150,7 @@ xlabel time; ylabel('position (LMDP)');axis tight;
 subplot(122);plot(squeeze(p(1:20,:,end))');
 title(['xcost=' num2str(x_cost(1)) ', tcost=' num2str(t_cost)]);
 xlabel time;ylabel('position (MDP)');axis tight;
-%figure;subplot(211);plot(-vls(:,:)');axis tight;subplot(212);plot(Vtest(:,:)');axis tight;
+figure;subplot(211);plot(-vls(:,:)');axis tight;subplot(212);plot(Vtest(:,:)');axis tight;
 temp = permute(reshape(-vls,size(Vtest)),[1 3 2]);
 figure;subplot(211);plot(temp(:,:)');axis tight;title LMDP
 temp = permute(Vtest,[1 3 2]);
