@@ -13,5 +13,5 @@ for i = 1:2
 end
 absMean = zeros(size(Xf,1),max(posd(:,1)),max(posd(:,2)));
 for i = 1:size(Xf,1)
-    absMean(i,:,:) = accumarray(posd,abs(Xf(i,:)),[],@mean);
+    absMean(i,:,:) = accumarray(posd,(Xf(i,:)),[],@mean);
 end

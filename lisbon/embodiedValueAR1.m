@@ -63,7 +63,7 @@ Vd(:,:,end) = squeeze(Vd(:,:,end))./Vhist;
 %         ggOr(:,i,j) = filtfilt(gausswin(7),sum(gausswin(7)),ggOr(:,i,j));
 %
 %end
-
+Vd(:,:,end) = meshgrid((1:size(Vd,2))-1,1:size(Vd,1))/(size(Vd,2)-1); %ADDED TO SIMPLIFY VISUALIZATION
 Vd(isnan(Vd)) = 0.5;
 % for i = 1:size(Vd,2)
 %     Vd(:,i,end) = filtfilt(gausswin(.25/dt),sum(gausswin(.25/dt)),Vd(:,i,end));
@@ -151,11 +151,13 @@ subplot(122);plot(squeeze(p(1:20,:,end))');
 title(['xcost=' num2str(x_cost(1)) ', tcost=' num2str(t_cost)]);
 xlabel time;ylabel('position (MDP)');axis tight;
 figure;subplot(211);plot(-vls(:,:)');axis tight;subplot(212);plot(Vtest(:,:)');axis tight;
-temp = permute(reshape(-vls,size(Vtest)),[1 3 2]);
-figure;subplot(211);plot(temp(:,:)');axis tight;title LMDP
-temp = permute(Vtest,[1 3 2]);
-subplot(212);plot(temp(:,:)');axis tight;title MDP
-ylabel Value; xlabel('Position / evidence');
+figure;subplot(211);plot(-vls(:,:));axis tight;subplot(212);plot(Vtest(:,:));axis tight;
+figure;subplot(211);imagesc(-vls(:,:));subplot(212);imagesc(Vtest(:,:));
+% temp = permute(reshape(-vls,size(Vtest)),[1 3 2]);
+% figure;subplot(211);plot(temp(:,:)');axis tight;title LMDP
+% temp = permute(Vtest,[1 3 2]);
+% subplot(212);plot(temp(:,:)');axis tight;title MDP
+% ylabel Value; xlabel('Position / evidence');
 return
 %% try to reconstruct value function
 sz = size(Vdd);sz = size(Vdd,1:3);
