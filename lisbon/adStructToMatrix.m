@@ -1,4 +1,4 @@
-function [a,d] = adStructToMatrix(signal)
+function [a,d] = adStructToMatrix(signal,interGSR)
 %% convert the acquisition board signal struct into 2 matrices for analog and digital signals
 
 %names = fieldnames(signal);
@@ -9,6 +9,11 @@ for i = 0:10
     catch
         break
     end
+end
+
+if exist('interGSR','var')
+    a = a(:,1:(floor(size(a,2)/interGSR)*interGSR));
+    a = reshape(a,size(a,1),interGSR,[]);
 end
 
 for i = 0:10

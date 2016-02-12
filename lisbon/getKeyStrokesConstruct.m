@@ -20,7 +20,7 @@ function fullData = getKeyStrokesConstruct %[dataOut,pos]
 %graphicBank
 %waveTime
 %L = lose, V = vertex, B = bubble
-num = [-40,-39,-38,-37,0,1,37,38,39,40];
+num = [-40,-39,-38,-37,0,1,37,38,39,40,.1,.2,.3];
 files = dir('*.txt');
 %cols = ['b','r'];
 fullData.users = {};
@@ -29,10 +29,14 @@ for k = 1:numel(files)
     data = data.data;
     eq = [];
     for l = 1:numel(fullData.users)
-        eq(l) = streq(data{1}{1},fullData.users{l}{1}) && streq(data{1}{3},fullData.users{l}{2});
+        eq(l) = streq(data{1}{1},fullData.users{l}.name) && streq(data{1}{3},fullData.users{l}.system);
     end
     if ~sum(eq)%~ismember(data{1,1}{1},names)
-        l = l+1;
+        if isempty(l)
+            l = 1;
+        else
+            l = l+1;
+        end
         fullData.users{l}.session = [];
     else
         l = find(eq);
@@ -41,28 +45,30 @@ for k = 1:numel(files)
     fullData.users{l}.system = data{1}{3};
     fullData.users{l}.session{end+1}.time = data{1}{2};
     fullData.users{l}.session{end}.numVertices = data{1}{4};
-    fullData.users{l}.session{end}.keyPress = [];
-    fullData.users{l}.session{end}.keyRelease = [];
-    fullData.users{l}.session{end}.keyposition = [];
-    fullData.users{l}.session{end}.lose = [];
-    fullData.users{l}.session{end}.pop = [];
+    fullData.users{l}.session{end}.event = [];
+%     fullData.users{l}.session{end}.keyPress = [];
+%     fullData.users{l}.session{end}.keyRelease = [];
+%     fullData.users{l}.session{end}.position = [];
+%     fullData.users{l}.session{end}.lose = [];
+%     fullData.users{l}.session{end}.pop = [];
     %startFile1 = data{1}{2}/86400/1000 + datenum(1970,1,1);
     
     for i = 3:length(data)-1
         if ~iscell(data{i})
-            if data{i}(2) > 0
-                fullData.users{l}.session{end}.keyPress(end+1) = data{i};
-            else
-                fullData.users{l}.session{end}.keyRelease(end+1) = data{i};
-            end
+%             if data{i}(2) > 0
+%                 fullData.users{l}.session{end}.keyPress(end+1,:) = data{i}';
+%             else
+%                 fullData.users{l}.session{end}.keyRelease(end+1,:) = data{i}';
+%             end
             %        dataOut(i-2,:) = data{i};
+            fullData.users{l}.session{end}.event(end+1,:) = data{i};
         else
             if data{i}{2}{1} == 'V'
-                fullData.users{l}.session{end}.position(end+1) = data{i}([1 .1 3:end]);
+                fullData.users{l}.session{end}.event(end+1,:) = [cell2mat(data{i}(1)) .1 cell2mat(data{i}(3:end))];%position
             elseif data{i}{2}{1} == 'L'
-                fullData.users{l}.session{end}.lose(end+1) = data{i}([1 .2 3:end]);
+                fullData.users{l}.session{end}.event(end+1,:) = [cell2mat(data{i}(1)) .2  cell2mat(data{i}(3:end))];%lose
             elseif data{i}{2}{1} == 'B'
-                fullData.users{l}.session{end}.pop(end+1) = data{i}([1 .3 3:end]);
+                fullData.users{l}.session{end}.event(end+1,:) = [cell2mat(data{i}(1)) .3 cell2mat(data{i}(3:end))];%pop
             end
             %         for j = 1:9
             %             if iscell(data{i}{j})
@@ -81,9 +87,11 @@ for k = 1:numel(files)
             %         end
         end
     end
-    fullData.users{l}.session{end}.position(:,6) = mod(fullData.users{l}.session{end}.position(:,6),360);
-    fullData.users{l}.session{end}.keyPress(~ismember(fullData.users{l}.session{end}.keyPress(:,2),num)) = [];
-dataOut(dataOut(:,9) == 0,:) = [];
+    fullData.users{l}.session{end}.event(:,6) = mod(fullData.users{l}.session{end}.event(:,6),360);
+    fullData.users{l}.session{end}.event(~ismember(fullData.users{l}.session{end}.event(:,2),num),:) = [];
+    fullData.users{l}.session{end}.event(fullData.users{l}.session{end}.event(:,9) == 0,:) = [];
+%    fullData.users{l}.session{end}.keyRelease(~ismember(fullData.users{l}.session{end}.keyRelease(:,2),num),:) = [];
+%dataOut(dataOut(:,9) == 0,:) = [];
 %dataOut(dataOut(:,6) == 360,6) = 0;
 %pos = dataOut(dataOut(:,2) == -1,:);
 %dataOut(dataOut(:,2) == -1,:) = [];

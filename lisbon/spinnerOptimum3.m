@@ -1,22 +1,24 @@
-function [traj, score, rawValues] = spinnerOptimum3(fname,wavenums)
+function [traj, score, rawValues,dpValues,act] = spinnerOptimum3(fname,wavenums)
 %use dynamic programming to determine each state's value and optimum action
-
-%r =  [.1 .2 .3 .4 .5 .4 .3 .2];%[.1 .3 .1 .2 .1 .4 .5 .6];
+%to do - correct trajectory (shift one earlier), plot better dpvalue, plot
+%better action, insert cost of initiating movement
 
 dat = importdata(fname);
 dat = dat(ismember(dat(:,3), wavenums),:);
 wavelen = 30;
 wavegap = 10;
 growtime = 5;
-poptime = .45;
-slidertime = .1;
+poppabletime = .45;
+slidertime = .25;
+poptime = .01;
 dat(:,1) = dat(:,1) + (dat(:,3)-1)*(wavelen+wavegap);
 numStates = numel(unique(dat(:,2)));
 dt = .01;
 totallen = (wavelen + wavegap)*numel(wavenums);
 
 travelcost = .01;
-spawnAccess = [poptime 1];
+movecost = .01;
+spawnAccess = [poppabletime 1];
 
 rawValues = zeros(numStates,totallen/dt);
 rampVal = linspace(spawnAccess(1),spawnAccess(2),diff(spawnAccess)*growtime/dt+1);
@@ -35,14 +37,7 @@ for i = size(rawValues,2):-1:1
         for k = 1:numStates
             indsX(k) = mod(j-k-1,numStates)+1;
             indsY(k) = round(min(size(dpValues,2),i+1+slidertime/dt*min(k,numStates-k)));
-%        end
-        %indsX = [mod(j-1-1,numStates)+1  j mod(j+1-1,numStates)+1];
-        %indsY = [round(min(size(dpValues,2),i+1+slidertime/dt))  i+1 round(min(size(dpValues,2),i+1+slidertime/dt))];
-%        for k = 1:3
             valNext(k) = dpValues(indsX(k),indsY(k))-travelcost*min(k,numStates-k);
-            %if k ~= numStates
-            %    valNext(k) = valNext(k) - travelcost;
-            %end
             if ~ismember(theBubble(j,i),isPopped{indsX(k),indsY(k)})
                 valNext(k+numStates) = valNext(k) + rawValues(j,i);
             else
@@ -83,12 +78,13 @@ while i <= size(traj,2)
     end
     i = i+1;
 end
-figure;plot(score);
+%figure;plot(score);
 figure;plot(traj);
 figure;subplot(311);imagesc(rawValues);hold all;plot(traj,'r','linewidth',2);scatter(find(acts > numStates),traj(acts > numStates),'r','filled');
-subplot(312);imagesc(dpValues);
-subplot(313);imagesc(act);
-figure;hist(act(:),0:numStates*2);
-figure;plot(dpValues');
+subplot(312);imagesc(bsxfun(@minus,dpValues,min(dpValues)));
+[~,y] = meshgrid(1:size(act,2),1:size(act,1));
+subplot(313);imagesc(mod(y-act,numStates));
+%figure;hist(act(:),0:numStates*2);
+figure;plot(dpValues');hold all;plot(score);
 end
 
