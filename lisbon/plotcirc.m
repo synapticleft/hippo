@@ -1,7 +1,7 @@
 function plotcirc(traj,im,acts,cols)
 
-f1 = figure;
-f2 = figure;
+% f1 = figure;
+% f2 = figure;
 offShifts = [];
 dt = .01;
 nVertices = 6;
@@ -28,8 +28,8 @@ if isstruct(traj)
                 offset(offset > .4 | offset == 0) = nan;
                 [~,offShift] = min(offset');
                 offShifts = [offShifts offShift];
-                 figure(f1);hold all;plot(shiftrange,offset,cols(j));
-             figure(f2);hold all;
+%                  figure(f1);hold all;plot(shiftrange,offset,cols(j));
+%              figure(f2);hold all;
             for m = [2 4]
                 inds = traj.users{j}.session{i}.event(:,2) == m+36;
                 scatter(time(inds),position(inds),cols(j),symbols(m),'filled');%-(offShift-1)*dt-min(shiftrange)
@@ -58,5 +58,5 @@ else
         %figure(2);hold all;plot(temp,dataOut(:,4)+dataOut(:,5),cols(find(eq)));drawnow;
     end
 end
-figure;plot(offShifts)
-figure;hist(shiftrange(offShifts),-.05:.01:1);
+% figure;plot(offShifts)
+% figure;hist(shiftrange(offShifts),-.05:.01:1);

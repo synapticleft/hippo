@@ -1,4 +1,4 @@
-function [traj,act, score, rawValues,dpValues] = spinnerOptimum4(fname,wavenums)
+function [dpValues,rawValues,traj,act, score] = spinnerOptimum4(fname,wavenums)
 %use dynamic programming to determine each state's value and optimum action
 
 dat = importdata(fname);
@@ -11,10 +11,10 @@ wavelen = 30;
 wavegap = 10;
 growtime = 5;
 poppabletime = .45;
-slidertime = 2/numStates;
+slidertime = .4;
 popTime = .0;
 dat(:,1) = dat(:,1) + (dat(:,3)-1)*(wavelen+wavegap);
-dt = .01;
+dt = .05;
 totallen = (wavelen + wavegap)*numel(wavenums);
 
 travelcost = .0; %cost of moving per vertex, 0 appears to be OK!!
@@ -22,7 +22,7 @@ movecost = .01; %cost of moving at all -- prevents agent from taking a break whi
 spawnAccess = [poppabletime 1];
 
 rawValues = zeros(numStates,totallen/dt);
-rampVal = linspace(spawnAccess(1),spawnAccess(2),diff(spawnAccess)*growtime/dt+1);
+rampVal = linspace(spawnAccess(1),spawnAccess(2),diff(spawnAccess)*growtime/dt);
 %rampTime = linspace(spawnAccess(1)*growtime,spawnAccess(2)*growtime,diff(spawnAccess)*growtime/dt+1);
 theBubble = rawValues;
 
