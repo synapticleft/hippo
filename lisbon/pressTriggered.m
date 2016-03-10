@@ -3,20 +3,20 @@ function [ST, y, yHat, kern, xY] = pressTriggered(keyDat,board,sr)
 
 %keyDat(keyDat(:,2) == 0,:) = [];
 keysPressed = unique(keyDat(:,2));
-keysPressed(keysPressed <= 0) = [];
+keysPressed(keysPressed <= .5) = [];
 up = zeros(numel(keysPressed),size(board,2));
 down = up;
 for i = 1:numel(keysPressed)
     down(i,round(keyDat(keyDat(:,2) == keysPressed(i),1)*sr)) = 1;
-%    up(i,round(keyDat(keyDat(:,2) == -keysPressed(i),1)*sr)) = 1;
+    up(i,round(keyDat(keyDat(:,2) == -keysPressed(i),1)*sr)) = 1;
 end
 %down(end+1,:) = sum(down);
 %up(end+1,:) = sum(up);
 %press = cumsum(down,2)-cumsum(up,2);
 
-y = [down];%;up];%;press
+y = [down;up];%];%;press
 %board = filtHigh(board,sr,.1);
-X = makeToeplitz(board,sr*1,1);
+X = makeToeplitz(board,sr*.2,1);
 for i = 1:size(y,1)
     ST{i} = X(:,y(i,:) > 0);
 end

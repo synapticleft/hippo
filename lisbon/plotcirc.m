@@ -1,9 +1,11 @@
 function plotcirc(traj,im,acts,cols)
 
-% f1 = figure;
-% f2 = figure;
+f1 = figure;
+f2 = figure;
+%keys = [37,38,39,40]; %['<','^','>','v'];
+keys = [14 18 1 16];
 offShifts = [];
-dt = .01;
+dt = .05;
 nVertices = 6;
 shiftrange = -1:dt:1;
 if ~exist('cols','var')
@@ -19,7 +21,7 @@ if isstruct(traj)
         for i = 1:numel(traj.users{j}.session)
             time = traj.users{j}.session{i}.event(:,9)+(traj.users{j}.session{i}.event(:,3)-1)*40;%fullData.users{j}.session{i}.position(:,1);
             position = mod(180-traj.users{j}.session{i}.event(:,6),360)/360*nVertices + 1;% + 1; 
-                inds = find(traj.users{j}.session{i}.event(:,2) == 38);
+                inds = find(traj.users{j}.session{i}.event(:,2) == keys(2));
                 values = max(0,traj.users{j}.session{i}.event(inds,5) - traj.users{j}.session{i}.event(inds-1,5));
                 offset = zeros(numel(inds),numel(shiftrange));
                 for n= 1:numel(inds)
@@ -28,10 +30,10 @@ if isstruct(traj)
                 offset(offset > .4 | offset == 0) = nan;
                 [~,offShift] = min(offset');
                 offShifts = [offShifts offShift];
-%                  figure(f1);hold all;plot(shiftrange,offset,cols(j));
-%              figure(f2);hold all;
-            for m = [2 4]
-                inds = traj.users{j}.session{i}.event(:,2) == m+36;
+                 figure(f1);hold all;plot(shiftrange,offset,cols(j));
+             figure(f2);hold all;
+            for m = 1:4
+                inds = traj.users{j}.session{i}.event(:,2) == keys(m);
                 scatter(time(inds),position(inds),cols(j),symbols(m),'filled');%-(offShift-1)*dt-min(shiftrange)
             end
             brk = find(abs(diff(position)) > 1 | diff(traj.users{j}.session{i}.event(:,9)) < 0);
