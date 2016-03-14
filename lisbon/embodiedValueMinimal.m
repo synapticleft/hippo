@@ -25,53 +25,21 @@ g_num = 51; %100
 sig2 = .2^2;
 dt = .0125;
 T = dt*y_num;
-gausSmooth = 2;
-
-%% compute the value function
-makeFlat = @(x) x(:);
 
 %% time steps
 ts = 0:dt:T;
+dg = 1/(g_num*2):1/g_num:1-1/(g_num*2);%0:1/g_num:1;%0:1/g_num:1;%
 N = length(ts);
-
-nInstances = 1000;
-numAccum = 1000;
-x = meshgrid((1:N)-1,1:nInstances);
 Vd = zeros(N,g_num,x_num*2+1);
-ggOr = 0;Vhist = 0;
-for i = 1:numAccum
-    runs = randn(nInstances,length(ts)-1)*sqrt(dt);
-    rates = randn(nInstances,1)*sqrt(sig2)*dt;%(floor(rand(nInstances,1)*2)-.5)*dt/3;%
-    runs = [zeros(nInstances,1) bsxfun(@plus,runs,rates)];
-    runs = binFun(cumsum(runs,2),g_num);
-    isRight = bsxfun(@times,ones(size(runs)),sign(rates))/2+.5;
-    Vd(:,:,end) = squeeze(Vd(:,:,end)) + accumarray([x(:)+1 runs(:)],isRight(:),[N g_num],@sum);
-    Vhist = Vhist + accumarray([x(:)+1 runs(:)],ones(1,numel(isRight)),[N g_num]);
-    ggOr = ggOr + accumarray([makeFlat(x(:,1:end-1))+1 makeFlat(runs(:,1:end-1)) ...
-        makeFlat(runs(:,2:end))],ones(1,(N-1)*nInstances),[N-1 g_num g_num]);%...
-        %min(g_num,max(1,round((makeFlat(runs(:,1:end-1))/scale+.5)*g_num))) ...
-        %min(g_num,max(1,round((makeFlat(runs(:,2:end))/scale+.5)*g_num)))],ones(1,(N-1)*nInstances));
-end
-% for i = 1:size(Vd,2)
-%     Vd(:,i,end) = filtfilt(gausswin(gausSmooth),sum(gausswin(gausSmooth)),Vd(:,i,end));
-%     Vhist(:,i) = filtfilt(gausswin(gausSmooth),sum(gausswin(gausSmooth)),Vhist(:,i));
-% end
-% for i = 1:size(Vd,1)
-%     Vd(i,:,end) = filtfilt(gausswin(gausSmooth),sum(gausswin(gausSmooth)),Vd(i,:,end));
-%     Vhist(i,:) = filtfilt(gausswin(gausSmooth),sum(gausswin(gausSmooth)),Vhist(i,:));
-% end
-Vd(:,:,end) = squeeze(Vd(:,:,end))./Vhist;
-%runs = binFun(runs,g_num);
-%for i = 1:size(ggOr,2)
-%     for j = 1:size(ggOr,3)
-%         ggOr(:,i,j) = filtfilt(gausswin(7),sum(gausswin(75)),ggOr(:,i,j));
-%
-%end
-
-Vd(isnan(Vd)) = 0.5;
-
+ggOr = zeros(N,g_num,g_num);
+for i = 1:numel(ts)
+    for g = 1:g_num 
+        ggOr(i,g,:)= BeliefTransitionDrugo(dg,ts(i),dt,dg(g),sig2);
+    end
+end    
+Vd(:,:,end) = repmat(dg,[N 1]);
 Vd(:,:,1) = 1-Vd(:,:,end);
-ggOr = bsxfun(@rdivide, ggOr, sum(ggOr, 3)+eps);
+%ggOr = bsxfun(@rdivide, ggOr, sum(ggOr, 3)+eps);
 Vm = NaN(N-1, g_num,x_num*2+1);
 
 for i = N-1:-1:1
@@ -85,18 +53,82 @@ for i = N-1:-1:1
     end
 end
 
-
 %% make some example runs
-runsBin = runs;%binFun(runs,g_num);%round((tanh(runs)+1)/2*(50-1)+1);
-p = nan*ones(size(runs,1),size(runs,2));
-p(:,1) = x_num+1;
+nInstances = 100;
+runs = randn(nInstances,length(ts)-1)*sqrt(dt);
+rates = randn(nInstances,1)*sqrt(sig2)*dt;%(floor(rand(nInstances,1)*2)-.5)*dt/3;%
+runs = [zeros(nInstances,1) bsxfun(@plus,runs,rates)];
+runs = cumsum(runs,2);
+p = 1-normcdf(0, runs./(1/sig2+dt*repmat(ts,size(runs,1),1)),1./(1/sig2+dt*repmat(ts,size(runs,1),1)));
+runsBin = round((g_num-1)*p)+1;
+%runsBin = runs;%binFun(runs,g_num);%round((tanh(runs)+1)/2*(50-1)+1);
+pos = nan(size(runs,1),size(runs,2));
+pos(:,1) = x_num+1;
 for i = 2:size(runsBin,2)
     for j = 1:size(runsBin,1)
-        if ~isnan(p(j,i-1))
-            p(j,i) = Vm(i-1,runsBin(j,i-1),p(j,i-1));
+        if ~isnan(pos(j,i-1))
+            pos(j,i) = Vm(i-1,runsBin(j,i-1),pos(j,i-1));
         end
     end
 end
+figure;subplot(211);plot(runsBin');
+subplot(212);plot(pos');
 
-function dat = binFun(dat,nBins)
-dat = round((tanh(dat)+1)/2*(nBins-1)+1);
+function gg = BeliefTransitionDrugo( gj, t, tao, gi,sigma2 )
+% This function calculates p(gj,tao|gi,t), the conditional probability 
+% density of belief go at time to, given an input belief gi at time=0.
+% The decision maker experiences an input stream i(t) = mu + eta(t) (white
+% noise), and calculates the probability g (belief) that mu>=0 using the
+% integral x(t) of i(t): dx/dt = i(t) (a diffusion model), together with a
+% prior on mu = Norm(0,varU). In principle, the temporal evolution of 
+% belief is given by p(gj,tao|gi,t), which depends on sigma2 and on t.
+% This formula was derived in Drugowitsch et al.,2012.
+
+invgs = norminv(gi);
+invgsp = norminv(gj);
+Steff = tao ./ (t + 1/sigma2);
+invgdiff = invgsp - sqrt(1 + Steff) .* invgs;
+% unnormalised gg
+ggu = 1./sqrt(Steff)*exp( invgsp.^2 / 2 - invgdiff.^2 ./ (2 * Steff));
+gg = ggu./sum(ggu,2);
+
+%function dat = binFun(dat,nBins)
+%dat = round((tanh(dat)+1)/2*(nBins-1)+1);
+
+% gausSmooth = 2;
+%% compute the value function
+% makeFlat = @(x) x(:);
+% nInstances = 1000;
+% numAccum = 1000;
+% x = meshgrid((1:N)-1,1:nInstances);
+% ggOr = 0;Vhist = 0;
+% for i = 1:numAccum
+%     runs = randn(nInstances,length(ts)-1)*sqrt(dt);
+%     rates = randn(nInstances,1)*sqrt(sig2)*dt;%(floor(rand(nInstances,1)*2)-.5)*dt/3;%
+%     runs = [zeros(nInstances,1) bsxfun(@plus,runs,rates)];
+%     runs = binFun(cumsum(runs,2),g_num);
+%     isRight = bsxfun(@times,ones(size(runs)),sign(rates))/2+.5;
+%     Vd(:,:,end) = squeeze(Vd(:,:,end)) + accumarray([x(:)+1 runs(:)],isRight(:),[N g_num],@sum);
+%     Vhist = Vhist + accumarray([x(:)+1 runs(:)],ones(1,numel(isRight)),[N g_num]);
+%     ggOr = ggOr + accumarray([makeFlat(x(:,1:end-1))+1 makeFlat(runs(:,1:end-1)) ...
+%         makeFlat(runs(:,2:end))],ones(1,(N-1)*nInstances),[N-1 g_num g_num]);%...
+%         %min(g_num,max(1,round((makeFlat(runs(:,1:end-1))/scale+.5)*g_num))) ...
+%         %min(g_num,max(1,round((makeFlat(runs(:,2:end))/scale+.5)*g_num)))],ones(1,(N-1)*nInstances));
+% end
+% % for i = 1:size(Vd,2)
+% %     Vd(:,i,end) = filtfilt(gausswin(gausSmooth),sum(gausswin(gausSmooth)),Vd(:,i,end));
+% %     Vhist(:,i) = filtfilt(gausswin(gausSmooth),sum(gausswin(gausSmooth)),Vhist(:,i));
+% % end
+% % for i = 1:size(Vd,1)
+% %     Vd(i,:,end) = filtfilt(gausswin(gausSmooth),sum(gausswin(gausSmooth)),Vd(i,:,end));
+% %     Vhist(i,:) = filtfilt(gausswin(gausSmooth),sum(gausswin(gausSmooth)),Vhist(i,:));
+% % end
+% Vd(:,:,end) = squeeze(Vd(:,:,end))./Vhist;
+% %runs = binFun(runs,g_num);
+% %for i = 1:size(ggOr,2)
+% %     for j = 1:size(ggOr,3)
+% %         ggOr(:,i,j) = filtfilt(gausswin(7),sum(gausswin(75)),ggOr(:,i,j));
+% %
+% %end
+% 
+% Vd(isnan(Vd)) = 0.5;

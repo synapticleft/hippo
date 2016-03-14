@@ -1,12 +1,35 @@
 function plotcirc(traj,im,acts,cols)
+% allow you to plot lines of the player's trajectory, but since the track
+% is circular, interrupts the plot when player goes from vertex '6' to '1' 
+% to prevent crowding. plots each player in a different color, as well as
+% their actions as triangles.
 
+% INPUTS
+% traj = the output of getKeyStrokesConstruct
+% im = matrix of the times and locations of the bubbles, serves as
+%   a background
+% acts = used only by plotcirc (legacy format)
+% cols = colors you want to assign to each player (has a default setting)
+
+% If we want to compare the internal consistency of timing as measured by
+% time reported by the game, to the time as estimated by the score upon a
+% bank event, set this to 1 to generate some plots
+scoreVsTimeCheck = 0; 
+
+% timestep, needs to match that used to generate 'im' (done by spinnerOptimum)
+dt = .05;
+
+%number of vertices, needs to match the trajectories
+nVertices = 6;
+
+if scoreVsTimeCheck == 1
 f1 = figure;
 f2 = figure;
-%keys = [37,38,39,40]; %['<','^','>','v'];
-keys = [14 18 1 16];
 offShifts = [];
-dt = .05;
-nVertices = 6;
+end
+
+%keys = {37,38,39,40}; %keyboard codes corresponding to [<,^,>,v];
+keys = {[14 18],[1 16], 15, 0}; %gamepad codes corresponding to the same (left = 14/18, bank = 1/16)
 shiftrange = -1:dt:1;
 if ~exist('cols','var')
     cols = ['b','r','g','y'];
@@ -15,13 +38,14 @@ if exist('im','var') && ~isempty(im)
     imagesc((1:size(im,2))*dt,(1:size(im,1)),im);
 end
 hold all;
-if isstruct(traj)
+if isstruct(traj) %getKeyStrokesConstruct used to generate data structure containing game events
     symbols = ['<','^','>','v'];
     for j = 1:numel(traj.users)
         for i = 1:numel(traj.users{j}.session)
             time = traj.users{j}.session{i}.event(:,9)+(traj.users{j}.session{i}.event(:,3)-1)*40;%fullData.users{j}.session{i}.position(:,1);
-            position = mod(180-traj.users{j}.session{i}.event(:,6),360)/360*nVertices + 1;% + 1; 
-                inds = find(traj.users{j}.session{i}.event(:,2) == keys(2));
+            position = mod(180-traj.users{j}.session{i}.event(:,6),360)/360*nVertices + 1;% + 1;
+            if scoreVsTimeCheck == 1
+                inds = find(ismember(traj.users{j}.session{i}.event(:,2),keys{2}));
                 values = max(0,traj.users{j}.session{i}.event(inds,5) - traj.users{j}.session{i}.event(inds-1,5));
                 offset = zeros(numel(inds),numel(shiftrange));
                 for n= 1:numel(inds)
@@ -30,10 +54,12 @@ if isstruct(traj)
                 offset(offset > .4 | offset == 0) = nan;
                 [~,offShift] = min(offset');
                 offShifts = [offShifts offShift];
-                 figure(f1);hold all;plot(shiftrange,offset,cols(j));
-             figure(f2);hold all;
+                figure(f1);hold all;plot(shiftrange,offset,cols(j));
+                figure(f2);
+            end
+            hold all;
             for m = 1:4
-                inds = traj.users{j}.session{i}.event(:,2) == keys(m);
+                inds = ismember(traj.users{j}.session{i}.event(:,2),keys{m});% == keys(m);
                 scatter(time(inds),position(inds),cols(j),symbols(m),'filled');%-(offShift-1)*dt-min(shiftrange)
             end
             brk = find(abs(diff(position)) > 1 | diff(traj.users{j}.session{i}.event(:,9)) < 0);

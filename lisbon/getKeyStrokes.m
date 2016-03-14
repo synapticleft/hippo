@@ -1,7 +1,13 @@
 function [dataOut,bonsDown] = getKeyStrokes(file1,file2)
 
-isReversed = 1;
+%there was a problem with labeling of 'up' and 'down' strokes
+% in bonsai (up timestamps preceded down, which is impossible), so this
+% variable reverses this.
+isReversed = 1; 
 
+% The following section gets all of the data from the txt file output by
+% the game. This was updated in getKeyStrokesConstruct, so I recommend
+% using that code for this section.
 data = loadjson(file1);
 data = data.data;
 num = [-40,-39,-38,-37,37,38,39,40];
@@ -29,6 +35,10 @@ end
 dataOut(~ismember(dataOut(:,2),num),:) = [];
 dataOut(dataOut(:,3) == 0,3) = 8;
 
+%This section gets all of the keystrokes registered by bonsai; this was
+%developed when we were using the keyboard, so it may need to be updated as
+%needed for the gamepad.
+
 pre = 'keydown_time';%up_time
 fid = fopen([pre file2]);
 temp = textscan(fid,'%s %f-%f-%fT%f:%f:%f+%f:00');
@@ -55,6 +65,9 @@ if isReversed
     downKeys = tempk;
 end
 
+% Bonsai outputs multiple timestamps when the player holds down the key 
+% for a while -- the following function removes these 'excess' timestamps,
+% just leaving the last timestamp of down press.
 [bonsDown,downKeys] = fixPress(bonsUp,upKeys,bonsDown,downKeys);
 for i = 1:numel(upKeys)
     upKeys{i} = ['R' upKeys{i}];
@@ -67,7 +80,8 @@ bonsKeys = [upKeys;downKeys'];
 bonsKeys = bonsKeys(ind);
 %figure;plot(bonsDown(2:end)-dataOut(dataOut(:,2) < 0,1))
 %dataOut(:,1) = dataOut(:,1) -bonsDown(1);
-%% the following is to get game keylog w.r.t. initiation of data collectiondataOut(:,1) = dataOut(:,1) + getDiff(downKeys,bonsDown)*24*3600;
+%% the following is to get game keylog w.r.t. initiation of data collection
+% dataOut(:,1) = dataOut(:,1) + getDiff(downKeys,bonsDown)*24*3600;
 [bonsDown,keys] = getKey(bonsKeys,bonsTimes,dataOut(:,2),startFile1);
 
 dataOut(ismember(dataOut(:,2),num),2) = keys(:,1);
@@ -107,7 +121,7 @@ dif = bt(i) - bt(1);
 
 function [bt,k] = getKey(bk,bt,gk,gameTimeRef)
 %isUp = 1-2*isUp;
-gk(gk == 0) = [];
+gk(gk == 0) = []; %removes all '0' events from file -- not appropriate for gamepad, since one of the buttons is 0
 %gk = gk*-1;
 
 let = {'RDown','RRight','RUp','RLeft','Left','Up','Right','Down'};

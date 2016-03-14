@@ -1,5 +1,15 @@
 function [dpValues,rawValues,traj,act, score] = spinnerOptimum4(fname,wavenums)
-%use dynamic programming to determine each state's value and optimum action
+% uses dynamic programming to determine each state's value and optimum action
+% INPUT
+% fname = input file of bubble spawn times (eg. 'abs6test.txt')
+% wavenums = which waves to consider (can be just one, or several, e.g. 1:10)
+% OUTPUT
+% dpValues = the value of being at a given vertex, at a given time
+% rawValues = the value of popping a bubble at a given vertex, at a given
+    % time (used by plotcirc)
+% traj = a time series of the trajectory used by the agent
+% acts = the actions taken by the agent
+% score = the cumulative score of the agent
 
 dat = importdata(fname);
 dat = dat(ismember(dat(:,3), wavenums),:);
