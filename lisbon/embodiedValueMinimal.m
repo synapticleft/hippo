@@ -22,28 +22,36 @@ if nargin < 3, x_cost = eps; end;
 if nargin < 4, t_cost = 1/y_num; end
 % discretisation of belief and time (coarse, as only visualisation)
 g_num = 51; %100
-sig2 = .2^2;
+sig2 = .5^2;
 dt = .0125;
 T = dt*y_num;
 
 %% time steps
 ts = 0:dt:T;
-dg = 1/(g_num*2):1/g_num:1-1/(g_num*2);%0:1/g_num:1;%0:1/g_num:1;%
+dg = linspace(1 / g_num / 2, 1 - 1 / g_num / 2, g_num);
+invgs = norminv(dg);
+%dg = 1/(g_num*2):1/g_num:1-1/(g_num*2);%0:1/g_num:1;%0:1/g_num:1;%
 N = length(ts);
 Vd = zeros(N,g_num,x_num*2+1);
-ggOr = zeros(N,g_num,g_num);
-for i = 1:numel(ts)
-    for g = 1:g_num 
-        ggOr(i,g,:)= BeliefTransitionDrugo(dg,ts(i),dt,dg(g),sig2);
-    end
-end    
+   
 Vd(:,:,end) = repmat(dg,[N 1]);
 Vd(:,:,1) = 1-Vd(:,:,end);
 %ggOr = bsxfun(@rdivide, ggOr, sum(ggOr, 3)+eps);
 Vm = NaN(N-1, g_num,x_num*2+1);
 
+    
+% %%OLD
+% ggOr = zeros(N,g_num,g_num);
+% ggOr1 = ggOr;
+% for i = 1:numel(ts)
+%     for g = 1:g_num 
+%         ggOr(i,g,:)= BeliefTransitionDrugo(dg,ts(i),dt,dg(g),1/sig2);
+%     end
+% %    ggOr(i,:,:) = belieftrans(invgs, dt / (ts(i) + sig2));
+% end 
 for i = N-1:-1:1
-    evidence = squeeze(ggOr(i,:,:))*squeeze(Vd(i+1,:,:));
+    gg = belieftrans(invgs, dt / (ts(i) + sig2));
+    evidence = gg*squeeze(Vd(i+1,:,:));%squeeze(ggOr(i,:,:))
     timeCosts = -t_cost*[0 ones(1,2*x_num-1) 0];%dt*    
     for j = 2:2*x_num
         moveCosts = abs((1:2*x_num+1)-j);
@@ -52,14 +60,14 @@ for i = N-1:-1:1
         [Vd(i,:,j), Vm(i,:,j)] = max(evidence+repmat(moveCosts+timeCosts,[g_num 1]),[],2);
     end
 end
-
 %% make some example runs
 nInstances = 100;
 runs = randn(nInstances,length(ts)-1)*sqrt(dt);
 rates = randn(nInstances,1)*sqrt(sig2)*dt;%(floor(rand(nInstances,1)*2)-.5)*dt/3;%
 runs = [zeros(nInstances,1) bsxfun(@plus,runs,rates)];
 runs = cumsum(runs,2);
-p = 1-normcdf(0, runs./(1/sig2+dt*repmat(ts,size(runs,1),1)),1./(1/sig2+dt*repmat(ts,size(runs,1),1)));
+%p = 1-normcdf(0, runs./(1/sig2+dt*repmat(ts,size(runs,1),1)),1./(1/sig2+dt*repmat(ts,size(runs,1),1)));
+p = normcdf(bsxfun(@rdivide,runs,sqrt(ts + 1/sig2)));
 runsBin = round((g_num-1)*p)+1;
 %runsBin = runs;%binFun(runs,g_num);%round((tanh(runs)+1)/2*(50-1)+1);
 pos = nan(size(runs,1),size(runs,2));
@@ -75,15 +83,6 @@ figure;subplot(211);plot(runsBin');
 subplot(212);plot(pos');
 
 function gg = BeliefTransitionDrugo( gj, t, tao, gi,sigma2 )
-% This function calculates p(gj,tao|gi,t), the conditional probability 
-% density of belief go at time to, given an input belief gi at time=0.
-% The decision maker experiences an input stream i(t) = mu + eta(t) (white
-% noise), and calculates the probability g (belief) that mu>=0 using the
-% integral x(t) of i(t): dx/dt = i(t) (a diffusion model), together with a
-% prior on mu = Norm(0,varU). In principle, the temporal evolution of 
-% belief is given by p(gj,tao|gi,t), which depends on sigma2 and on t.
-% This formula was derived in Drugowitsch et al.,2012.
-
 invgs = norminv(gi);
 invgsp = norminv(gj);
 Steff = tao ./ (t + 1/sigma2);
@@ -91,6 +90,12 @@ invgdiff = invgsp - sqrt(1 + Steff) .* invgs;
 % unnormalised gg
 ggu = 1./sqrt(Steff)*exp( invgsp.^2 / 2 - invgdiff.^2 ./ (2 * Steff));
 gg = ggu./sum(ggu,2);
+
+function gg = belieftrans(invgs, dteff)
+%% Returns the belief transition matrix p(g' | g, t)
+invgdiff = bsxfun(@minus, invgs, sqrt(1 + dteff) * invgs');
+gg = exp(bsxfun(@minus, invgs.^2 / 2, invgdiff.^2 / (2 * dteff)));
+gg = bsxfun(@rdivide, gg, sum(gg, 2));
 
 %function dat = binFun(dat,nBins)
 %dat = round((tanh(dat)+1)/2*(nBins-1)+1);
