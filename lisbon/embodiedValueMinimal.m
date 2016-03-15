@@ -22,7 +22,7 @@ if nargin < 3, x_cost = eps; end;
 if nargin < 4, t_cost = 1/y_num; end
 % discretisation of belief and time (coarse, as only visualisation)
 g_num = 51; %100
-sig2 = .5^2;
+sig2 = 1^2;
 dt = .0125;
 T = dt*y_num;
 
@@ -39,16 +39,6 @@ Vd(:,:,1) = 1-Vd(:,:,end);
 %ggOr = bsxfun(@rdivide, ggOr, sum(ggOr, 3)+eps);
 Vm = NaN(N-1, g_num,x_num*2+1);
 
-    
-% %%OLD
-% ggOr = zeros(N,g_num,g_num);
-% ggOr1 = ggOr;
-% for i = 1:numel(ts)
-%     for g = 1:g_num 
-%         ggOr(i,g,:)= BeliefTransitionDrugo(dg,ts(i),dt,dg(g),1/sig2);
-%     end
-% %    ggOr(i,:,:) = belieftrans(invgs, dt / (ts(i) + sig2));
-% end 
 for i = N-1:-1:1
     gg = belieftrans(invgs, dt / (ts(i) + sig2));
     evidence = gg*squeeze(Vd(i+1,:,:));%squeeze(ggOr(i,:,:))
@@ -79,23 +69,35 @@ for i = 2:size(runsBin,2)
         end
     end
 end
-figure;subplot(211);plot(runsBin');
-subplot(212);plot(pos');
-
-function gg = BeliefTransitionDrugo( gj, t, tao, gi,sigma2 )
-invgs = norminv(gi);
-invgsp = norminv(gj);
-Steff = tao ./ (t + 1/sigma2);
-invgdiff = invgsp - sqrt(1 + Steff) .* invgs;
-% unnormalised gg
-ggu = 1./sqrt(Steff)*exp( invgsp.^2 / 2 - invgdiff.^2 ./ (2 * Steff));
-gg = ggu./sum(ggu,2);
+%figure;subplot(211);plot(runsBin');
+%subplot(212);plot(pos');
+plot(pos',ts);set(gca,'xlim',[1 x_num*2+1],'ylim',[0 max(ts)]);
 
 function gg = belieftrans(invgs, dteff)
 %% Returns the belief transition matrix p(g' | g, t)
 invgdiff = bsxfun(@minus, invgs, sqrt(1 + dteff) * invgs');
 gg = exp(bsxfun(@minus, invgs.^2 / 2, invgdiff.^2 / (2 * dteff)));
 gg = bsxfun(@rdivide, gg, sum(gg, 2));
+
+
+    
+% %%OLD
+% ggOr = zeros(N,g_num,g_num);
+% ggOr1 = ggOr;
+% for i = 1:numel(ts)
+%     for g = 1:g_num 
+%         ggOr(i,g,:)= BeliefTransitionDrugo(dg,ts(i),dt,dg(g),1/sig2);
+%     end
+% %    ggOr(i,:,:) = belieftrans(invgs, dt / (ts(i) + sig2));
+% end 
+% function gg = BeliefTransitionDrugo( gj, t, tao, gi,sigma2 )
+% invgs = norminv(gi);
+% invgsp = norminv(gj);
+% Steff = tao ./ (t + 1/sigma2);
+% invgdiff = invgsp - sqrt(1 + Steff) .* invgs;
+% % unnormalised gg
+% ggu = 1./sqrt(Steff)*exp( invgsp.^2 / 2 - invgdiff.^2 ./ (2 * Steff));
+% gg = ggu./sum(ggu,2);
 
 %function dat = binFun(dat,nBins)
 %dat = round((tanh(dat)+1)/2*(nBins-1)+1);
