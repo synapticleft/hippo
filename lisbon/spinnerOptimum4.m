@@ -1,4 +1,4 @@
-function [dpValues,rawValues,traj,act, score] = spinnerOptimum4(fname,wavenums)
+function [dpValues,rawValues,traj,act, score,travelLength] = spinnerOptimum4(fname,wavenums,slidertime)
 % uses dynamic programming to determine each state's value and optimum action
 % INPUT
 % fname = input file of bubble spawn times (eg. 'abs6test.txt')
@@ -21,7 +21,9 @@ wavelen = 30;
 wavegap = 10;
 growtime = 5;
 poppabletime = .45;
-slidertime = .4;
+if ~exist('slidertime','var')
+slidertime = .1;
+end
 popTime = .0;
 dat(:,1) = dat(:,1) + (dat(:,3)-1)*(wavelen+wavegap);
 dt = .05;
@@ -32,7 +34,7 @@ movecost = .01; %cost of moving at all -- prevents agent from taking a break whi
 spawnAccess = [poppabletime 1];
 
 rawValues = zeros(numStates,totallen/dt);
-rampVal = linspace(spawnAccess(1),spawnAccess(2),diff(spawnAccess)*growtime/dt);
+rampVal = linspace(1/growtime,spawnAccess(2),diff(spawnAccess)*growtime/dt);%spawnAccess(1)
 %rampTime = linspace(spawnAccess(1)*growtime,spawnAccess(2)*growtime,diff(spawnAccess)*growtime/dt+1);
 theBubble = rawValues;
 
@@ -72,6 +74,7 @@ acts = traj;
 traj(1) = 1;
 score = zeros(size(traj));
 i = 2;
+travelLength = 0;
 while i <= size(traj,2)
     acta = act(traj(i-1),i-1);acts(i) = acta;
     score(i) = score(i-1);
@@ -90,6 +93,7 @@ while i <= size(traj,2)
     else
         iOld = i;
         slideTime = round(slidertime/dt*min(acta,numStates-acta));
+        travelLength = travelLength + min(acta,numStates-acta);
         i = i + slideTime;
         score(iOld:i) = score(iOld)-movecost - travelcost*min(acta,numStates-acta);
         if acta < numStates-acta
@@ -105,7 +109,6 @@ plotcirc(traj(2:end),rawValues,acts(2:end)>numStates,'k');
 subplot(312);imagesc(bsxfun(@minus,dpValues,min(dpValues)));
 [~,y] = meshgrid(1:size(act,2),1:size(act,1));
 subplot(313);imagesc(mod(y-act-1,numStates)+1);
+score = score(end);
 %figure;hist(act(:),0:numStates*2);
-figure;plot(dpValues');hold all;plot(score);
-end
-
+%figure;plot(dpValues');hold all;plot(score);
