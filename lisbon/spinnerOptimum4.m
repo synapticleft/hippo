@@ -1,4 +1,4 @@
-function [dpValues,rawValues,traj,act, score,travelLength] = spinnerOptimum4(fname,wavenums,slidertime)
+function [dpValues,rawValues, score,travelLength,totallen] = spinnerOptimum4(fname,wavenums,slidertime)%traj,act,
 % uses dynamic programming to determine each state's value and optimum action
 % INPUT
 % fname = input file of bubble spawn times (eg. 'abs6test.txt')
@@ -25,15 +25,15 @@ if ~exist('slidertime','var')
 slidertime = .1;
 end
 popTime = .0;
-dat(:,1) = dat(:,1) + (dat(:,3)-1)*(wavelen+wavegap);
+dat(:,1) = dat(:,1);% + (dat(:,3)-1)*(wavelen+wavegap); %%DOESNT WORK FOR VARIABLE LENGTHS
 dt = .05;
-totallen = (wavelen + wavegap)*numel(wavenums);
+totallen = dat(end,1)+growtime+1;%(wavelen + wavegap)*numel(wavenums);
 
 travelcost = .0; %cost of moving per vertex, 0 appears to be OK!!
 movecost = .01; %cost of moving at all -- prevents agent from taking a break while moving to a far target
 spawnAccess = [poppabletime 1];
 
-rawValues = zeros(numStates,totallen/dt);
+rawValues = zeros(numStates,ceil(totallen/dt));
 rampVal = linspace(1/growtime,spawnAccess(2),diff(spawnAccess)*growtime/dt);%spawnAccess(1)
 %rampTime = linspace(spawnAccess(1)*growtime,spawnAccess(2)*growtime,diff(spawnAccess)*growtime/dt+1);
 theBubble = rawValues;
@@ -110,5 +110,6 @@ subplot(312);imagesc(bsxfun(@minus,dpValues,min(dpValues)));
 [~,y] = meshgrid(1:size(act,2),1:size(act,1));
 subplot(313);imagesc(mod(y-act-1,numStates)+1);
 score = score(end);
+%[travelLength score totallen]
 %figure;hist(act(:),0:numStates*2);
 %figure;plot(dpValues');hold all;plot(score);
