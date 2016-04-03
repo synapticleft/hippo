@@ -18,7 +18,7 @@ spawn_window = slide_time*maxSpawnTime(n_positions);
 gap_subwaves = 3; %gap between subwaves
 dt = .01; %discretization of time
 dt2 = slide_time;
-jitter = .1;
+jitter = .2;
 
 event_log{3} = [];
 counter = 0;
@@ -39,7 +39,7 @@ for i = 1:n_waves
         event_log{3}(counter+(1:i+1),2) = order(1:i+1)-1;
         event_log{3}(counter+(1:i+1),3) = i;  
         event_log{3}(counter+1,1) = 0;
-        for k = 1:i
+        for k = 1:i %%I WOULD LIKE TO MAKE THIS USE THE PREVIOUS POINT THAT WOULD CAUSE THE LATEST SPAWN
             %travelTime = slide_time*min(abs(event_log{3}(counter+1+k,2)-event_log{3}(counter+k,2)),...
             %    abs(event_log{3}(counter+1+k,2)-(event_log{3}(counter+k,2)+1-n_positions)));
             travelTime = slide_time*min(mod(event_log{3}(counter+1+k,2)-event_log{3}(counter+k,2),n_positions),...

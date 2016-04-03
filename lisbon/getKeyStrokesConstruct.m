@@ -18,8 +18,8 @@ function fullData = getKeyStrokesConstruct %[dataOut,pos]
 %       time within the current wave
 
 % press (left, up, right, down); release (left up right down);land on vertex; lose life; lose bubble   
-num = [-40,-39,-38,-37,37,38,39,40,.1,.2,.3];%;0,1,
-num= [-18, -16, -15, -14, -1, 1, 14, 15, 16, 18,.1,.2,.3];
+%num = [-40,-39,-38,-37,37,38,39,40,0,.1,.2,.3];%;0,1,
+num= [-18, -16, -15, -14, -1,0, 1, 14, 15, 16, 18,.1,.2,.3];
 files = dir('*.txt');
 fullData.users = {};
 for k = 1:numel(files)

@@ -1,4 +1,4 @@
-function [dpValues,rawValues, score,travelLength,totallen,traj,acts] = spinnerOptimum4(fname,wavenums,slidertime)%traj,act,
+function [dpValues,rawValues, score,travelLength,totallen] = spinnerOptimum4Data(fname,wavenums,slidertime)%traj,act,
 % uses dynamic programming to determine each state's value and optimum action
 % INPUT
 % fname = input file of bubble spawn times (eg. 'abs6test.txt')
@@ -107,7 +107,6 @@ plotcirc(traj(2:end),rawValues,acts(2:end)>numStates,'k');
 subplot(312);imagesc(bsxfun(@minus,dpValues,min(dpValues)));
 [~,y] = meshgrid(1:size(act,2),1:size(act,1));
 subplot(313);imagesc(mod(y-act-1,numStates)+1);
-figure;plotcirc(traj(2:end),rawValues,acts(2:end)>numStates,'k');
 %score = score(end);
 %[travelLength score totallen]
 %figure;hist(act(:),0:numStates*2);
