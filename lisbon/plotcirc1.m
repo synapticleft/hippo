@@ -1,4 +1,4 @@
-function plotcirc(traj,im,acts,cols)
+function plotcirc1(traj,im,acts,cols)
 % allow you to plot lines of the player's trajectory, but since the track
 % is circular, interrupts the plot when player goes from vertex '6' to '1' 
 % to prevent crowding. plots each player in a different color, as well as
@@ -28,8 +28,8 @@ f2 = figure;
 offShifts = [];
 end
 
-keys = {37,38,39,40}; %keyboard codes corresponding to [<,^,>,v];
-%keys = {[14 18],[1 16], 15, 0}; %gamepad codes corresponding to the same (left = 14/18, bank = 1/16)
+%keys = {37,38,39,40}; %keyboard codes corresponding to [<,^,>,v];
+keys = {[14],[1], 15, 0}; %gamepad codes corresponding to the same (left = 14/18, bank = 1/16)
 shiftrange = -1:dt:1;
 if ~exist('cols','var')
     cols = ['b','r','g','y'];
@@ -42,8 +42,8 @@ if isstruct(traj) %getKeyStrokesConstruct used to generate data structure contai
     symbols = ['<','^','>','v'];
     for j = 1:numel(traj.users)
         for i = 1:numel(traj.users{j}.session)
-            events = traj.users{j}.session{i}.event;
-            events(events(:,3) ~= 3,:) = [];
+            events = traj.users{j}.session{i}.gameData.event;
+            events(events(:,3) ~= 5,:) = [];
             events(:,3) = 1;
             time = events(:,9)+(events(:,3)-1)*40;%fullData.users{j}.session{i}.position(:,1);
             position = mod(180-events(:,6),360)/360*nVertices + 1;% + 1;

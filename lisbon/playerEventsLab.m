@@ -11,25 +11,24 @@ function data = playerEventsLab(data,fname)
 % 7 - discrepancy spawnTime / gameTime estimate
 % 8 - event time within wave
 % 9 - score as of last play
+%% to do: is there a way of inferring which targets were intended but missed?
+%% occasionally a bubble vanishes at the very end of wave! LET TIAGO KNOW
 
 spawnDat = importdata(fname);
 numStates = numel(unique(spawnDat(:,2)));
 growTime = 5;
 maxScore = 10;
-anglePad = .4;
+anglePad = .49;
 %keys = {37,38,39,40}; %keyboard codes corresponding to [<,^,>,v];
 %keys = {[14 18],[1 16], 15, 0}; %gamepad codes corresponding to the same (left = 14/18, bank = 1/16)
 keys = {14,1,15,0};
 
-user = 1:numel(data.users);
-gameVersion = [0 0 0];%zeros(1,numel(data.users));
+%gameVersion = [0 0 0];%zeros(1,numel(data.users));
 %gameVersion(2:3) = 1;
 %empDiff = [0 0 0 0]; %manual correction
 
-
-for i = user
-    session = 1:numel(data.users{i}.session);
-    for j = session
+for i = 1:numel(data.users)
+    for j = 1:numel(data.users{i}.session)
 %        f = find(diff([0; sum(data.users{i}.session{j}.mergeData.merge_events(:,4:5),2)]) > 0);
 %        if gameVersion(i) == 1
  %           fa = f - 1;
@@ -43,7 +42,7 @@ for i = user
 %        end
         mergeEvents = data.users{i}.session{j}.mergeData.merge_events(:,2:end);
         changeScore = diff([0;sum(mergeEvents(:,3:4),2)]);
-        removeInds = mergeEvents(:,1) == .1 | ismember(mergeEvents(:,1),keys{1}) | ismember(mergeEvents(:,1),keys{3});
+        removeInds = mergeEvents(:,1) == .1 | mergeEvents(:,1) == .2 | ismember(mergeEvents(:,1),keys{1}) | ismember(mergeEvents(:,1),keys{3});
         mergeEvents(removeInds,:) = [];
         changeScore(removeInds) = [];
         gameEvents = zeros(size(mergeEvents,1),10);
@@ -51,7 +50,9 @@ for i = user
         gameEvents(ismember(mergeEvents(:,1),keys{2}),1) = 2;
         %gameEvents(ismember(mergeEvents(:,1),keys{1}),1) = 3;
         %gameEvents(ismember(mergeEvents(:,1),keys{3}),1) = 4;
-        gameEvents(changeScore == 0 & gameEvents(:,1) > 0,:) = [];
+        removeInds = changeScore == 0 & gameEvents(:,1) > 0;
+        gameEvents(removeInds,:) = [];
+        mergeEvents(removeInds,:) = [];
         gameEvents(mergeEvents(:,1) == .3,1) = -1;
         gameEvents(:,[2 8]) = mergeEvents(:,[2 6]);
         gameEvents(:,6) = diff([0;mergeEvents(:,6)]) < 0 & diff([0; mergeEvents(:,2)]) == 0;
@@ -64,10 +65,7 @@ for i = user
         gameEvents(:,3) = gameEvents(:,3)./abs(gameEvents(:,1));
         gameEvents(:,5) = mod(180-mergeEvents(:,5),360)/360*numStates;
         for k = 1:size(gameEvents,1)
-            if gameEvents(k,1) == -1
-                estSpawn = mergeEvents(k,8) - growTime;% - empDiff(i);
-                temp = find(gameEvents(k,2) == spawnDat(:,3));
-            else
+            if gameEvents(k,1) > 0
                 estSpawn = gameEvents(k,8) - gameEvents(k,3)/maxScore*growTime;% - empDiff(i);
                 angDiff = gameEvents(k,5) - spawnDat(:,2);
                 angDiff = min(mod(angDiff,numStates),mod(-angDiff,numStates)) < anglePad;
@@ -77,13 +75,20 @@ for i = user
             gameEvents(k,4) = temp(in);%find(gameEvents(k,2) == spawnDat(:,3)); & abs(gameEvents(k,2)-spawnDat(:,1))<timePad);
             gameEvents(k,7) = estSpawn-spawnDat(temp(in),1);
         end
+        f = find(gameEvents(:,1) == -1);
+        for k = 1:numel(f)%find(gameEvents(:,1) == -1)
+                estSpawn = gameEvents(f(k),8) - growTime;% - empDiff(i);
+                temp = find(gameEvents(f(k),2) == spawnDat(:,3) & ~ismember(1:size(spawnDat,1),gameEvents(:,4))');
+                [m,in] = min(abs(estSpawn-spawnDat(temp,1)));
+                gameEvents(f(k),4) = temp(in);
+ %               gameEvents(f(k),7) = estSpawn-spawnDat(temp(in),1);
+        end
+        gameEvents(f,4) = sort(gameEvents(f,4));
+        gameEvents(f,7) = gameEvents(f,8)-growTime-spawnDat(gameEvents(f,4),1);
         %subplot(4,8,8*(i-1)+j);hist(mod(gameEvents(:,5),1),0:.01:1);
         %hist(hist(gameEvents(:,4),1:max(gameEvents(:,4))),0:2);%plot(gameEvents(:,7));%plot(diff(gameEvents(:,4)));%
         data.users{i}.session{j}.gameEvents = gameEvents;
     end
-end
-for i = user
-%    subplot(2,2,i);
 end
 
 
